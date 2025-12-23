@@ -28,7 +28,7 @@ Route::get('/', fn () => redirect('/admin'));
 | AUTH
 |--------------------------------------------------------------------------
 */
-Route::middleware('guest')->group(function () {
+Route::middleware(['web', 'guest'])->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])
         ->name('login');
 
@@ -36,7 +36,7 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::post('/logout', [LoginController::class, 'logout'])
-    ->middleware('auth')
+    ->middleware(['web', 'auth'])
     ->name('logout');
 
 /*
@@ -108,7 +108,6 @@ Route::middleware(['auth', 'is_admin'])
             ->name('pelanggaran.')
             ->group(function () {
 
-                /* ===== LOG PELANGGARAN ===== */
                 Route::get('/', [PelanggaranController::class, 'index'])
                     ->name('index');
 
@@ -121,38 +120,28 @@ Route::middleware(['auth', 'is_admin'])
                 Route::get('/user/{user}', [PelanggaranController::class, 'show'])
                     ->name('riwayat');
 
-                /* ===== MASTER DATA PELANGGARAN ===== */
                 Route::prefix('master')
                     ->name('master.')
                     ->group(function () {
 
-                        /* MASTER JABATAN */
                         Route::get('/jabatan', [MasterJabatanController::class, 'index'])
                             ->name('jabatan.index');
-
                         Route::get('/jabatan/create', [MasterJabatanController::class, 'create'])
                             ->name('jabatan.create');
-
                         Route::post('/jabatan', [MasterJabatanController::class, 'store'])
                             ->name('jabatan.store');
 
-                        /* MASTER LOKASI */
                         Route::get('/lokasi', [MasterLokasiController::class, 'index'])
                             ->name('lokasi.index');
-
                         Route::get('/lokasi/create', [MasterLokasiController::class, 'create'])
                             ->name('lokasi.create');
-
                         Route::post('/lokasi', [MasterLokasiController::class, 'store'])
                             ->name('lokasi.store');
 
-                        /* MASTER KODE PELANGGARAN */
                         Route::get('/kode', [MasterPelanggaranController::class, 'index'])
                             ->name('kode.index');
-
                         Route::get('/kode/create', [MasterPelanggaranController::class, 'create'])
                             ->name('kode.create');
-
                         Route::post('/kode', [MasterPelanggaranController::class, 'store'])
                             ->name('kode.store');
                     });
