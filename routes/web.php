@@ -2,13 +2,19 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\AbsensiController;
-use App\Http\Controllers\Admin\LemburController;
-use App\Http\Controllers\Admin\LaporanController;
-use App\Http\Controllers\Admin\WorkScheduleController;
-use App\Http\Controllers\Admin\UserSalaryController;
-use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\{
+    DashboardController,
+    AbsensiController,
+    LemburController,
+    LaporanController,
+    WorkScheduleController,
+    UserSalaryController,
+    UserController,
+    PelanggaranController,
+    MasterJabatanController,
+    MasterLokasiController,
+    MasterPelanggaranController
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -19,7 +25,7 @@ Route::get('/', fn () => redirect('/admin'));
 
 /*
 |--------------------------------------------------------------------------
-| AUTH (ADMIN WEB)
+| AUTH
 |--------------------------------------------------------------------------
 */
 Route::middleware('guest')->group(function () {
@@ -43,85 +49,112 @@ Route::middleware(['auth', 'is_admin'])
     ->as('admin.')
     ->group(function () {
 
-        Route::get('/gaji/{user}/slip/pdf',
-    [UserSalaryController::class, 'slipPdf']
-)->name('gaji.slip.pdf');
-
-
-        /*
-        | DASHBOARD
-        */
+        /* ================= DASHBOARD ================= */
         Route::get('/', [DashboardController::class, 'index'])
             ->name('dashboard');
 
-        /*
-        | ABSENSI
-        */
+        /* ================= ABSENSI ================= */
         Route::get('/absensi', [AbsensiController::class, 'index'])
             ->name('absensi');
-
         Route::get('/absensi/create', [AbsensiController::class, 'create'])
             ->name('absensi.create');
-
         Route::post('/absensi', [AbsensiController::class, 'store'])
             ->name('absensi.store');
 
-        /*
-        | LEMBUR
-        */
+        /* ================= LEMBUR ================= */
         Route::get('/lembur', [LemburController::class, 'index'])
             ->name('lembur');
-
         Route::get('/lembur/create', [LemburController::class, 'create'])
             ->name('lembur.create');
-
         Route::post('/lembur', [LemburController::class, 'store'])
             ->name('lembur.store');
-
         Route::post('/lembur/{id}/approve', [LemburController::class, 'approve'])
             ->name('lembur.approve');
 
-        /*
-        | GAJI
-        */
+        /* ================= GAJI ================= */
         Route::get('/gaji', [UserSalaryController::class, 'index'])
             ->name('gaji');
-
         Route::get('/gaji/{user}/edit', [UserSalaryController::class, 'edit'])
             ->name('gaji.edit');
-
         Route::post('/gaji/{user}', [UserSalaryController::class, 'update'])
             ->name('gaji.update');
+        Route::get('/gaji/{user}/slip/pdf', [UserSalaryController::class, 'slipPdf'])
+            ->name('gaji.slip.pdf');
 
-        /*
-        | LAPORAN
-        */
+        /* ================= LAPORAN ================= */
         Route::get('/laporan', [LaporanController::class, 'index'])
             ->name('laporan');
 
-        /*
-        | JADWAL KERJA
-        */
+        /* ================= JADWAL ================= */
         Route::get('/jadwal-kerja', [WorkScheduleController::class, 'index'])
             ->name('jadwal');
-
         Route::get('/jadwal-kerja/{user}/edit', [WorkScheduleController::class, 'edit'])
             ->name('jadwal.edit');
-
         Route::post('/jadwal-kerja/{user}', [WorkScheduleController::class, 'update'])
             ->name('jadwal.update');
 
-        /*
-        | KARYAWAN
-        */
+        /* ================= KARYAWAN ================= */
         Route::get('/karyawan', [UserController::class, 'index'])
             ->name('karyawan.index');
-
         Route::get('/karyawan/create', [UserController::class, 'create'])
             ->name('karyawan.create');
-
         Route::post('/karyawan', [UserController::class, 'store'])
             ->name('karyawan.store');
+
+        /* ======================================================
+        | PELANGGARAN KARYAWAN
+        ====================================================== */
+        Route::prefix('pelanggaran')
+            ->name('pelanggaran.')
+            ->group(function () {
+
+                /* ===== LOG PELANGGARAN ===== */
+                Route::get('/', [PelanggaranController::class, 'index'])
+                    ->name('index');
+
+                Route::get('/create', [PelanggaranController::class, 'create'])
+                    ->name('create');
+
+                Route::post('/', [PelanggaranController::class, 'store'])
+                    ->name('store');
+
+                Route::get('/user/{user}', [PelanggaranController::class, 'show'])
+                    ->name('riwayat');
+
+                /* ===== MASTER DATA PELANGGARAN ===== */
+                Route::prefix('master')
+                    ->name('master.')
+                    ->group(function () {
+
+                        /* MASTER JABATAN */
+                        Route::get('/jabatan', [MasterJabatanController::class, 'index'])
+                            ->name('jabatan.index');
+
+                        Route::get('/jabatan/create', [MasterJabatanController::class, 'create'])
+                            ->name('jabatan.create');
+
+                        Route::post('/jabatan', [MasterJabatanController::class, 'store'])
+                            ->name('jabatan.store');
+
+                        /* MASTER LOKASI */
+                        Route::get('/lokasi', [MasterLokasiController::class, 'index'])
+                            ->name('lokasi.index');
+
+                        Route::get('/lokasi/create', [MasterLokasiController::class, 'create'])
+                            ->name('lokasi.create');
+
+                        Route::post('/lokasi', [MasterLokasiController::class, 'store'])
+                            ->name('lokasi.store');
+
+                        /* MASTER KODE PELANGGARAN */
+                        Route::get('/kode', [MasterPelanggaranController::class, 'index'])
+                            ->name('kode.index');
+
+                        Route::get('/kode/create', [MasterPelanggaranController::class, 'create'])
+                            ->name('kode.create');
+
+                        Route::post('/kode', [MasterPelanggaranController::class, 'store'])
+                            ->name('kode.store');
+                    });
+            });
     });
-
-

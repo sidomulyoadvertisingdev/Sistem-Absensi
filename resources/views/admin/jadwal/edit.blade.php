@@ -5,21 +5,15 @@
 @section('content')
 <div class="container-fluid">
 
+    {{-- HEADER --}}
     <div class="mb-4">
         <h1 class="mb-0">Atur Jadwal Kerja</h1>
         <small class="text-muted">
-            User: <strong>{{ $user->name }}</strong>
+            Karyawan: <strong>{{ $user->name }}</strong>
         </small>
     </div>
 
-    {{-- Alert --}}
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show">
-            {{ session('success') }}
-            <button type="button" class="close" data-dismiss="alert">&times;</button>
-        </div>
-    @endif
-
+    {{-- ERROR --}}
     @if ($errors->any())
         <div class="alert alert-danger">
             <ul class="mb-0">
@@ -30,69 +24,89 @@
         </div>
     @endif
 
-    <div class="card">
-        <div class="card-body">
+    @php
+        $hariList = [
+            'senin'  => 'Senin',
+            'selasa' => 'Selasa',
+            'rabu'   => 'Rabu',
+            'kamis'  => 'Kamis',
+            'jumat'  => 'Jumat',
+            'sabtu'  => 'Sabtu',
+            'minggu' => 'Minggu',
+        ];
+    @endphp
 
-            <form method="POST" action="{{ route('admin.jadwal.update', $user->id) }}">
-                @csrf
+    <form method="POST" action="{{ route('admin.jadwal.update', $user->id) }}">
+        @csrf
 
-                <div class="row">
+        <div class="card">
+            <div class="card-body">
 
-                    {{-- Jam Masuk --}}
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Jam Masuk</label>
-                        <input type="time"
-                               name="jam_masuk"
-                               class="form-control"
-                               value="{{ $user->workSchedule->jam_masuk ?? '' }}"
-                               required>
+                @foreach($hariList as $key => $label)
+                    @php
+                        $jadwal = $jadwal[$key] ?? null;
+                    @endphp
+
+                    <div class="border rounded p-3 mb-3">
+
+                        {{-- CHECKBOX HARI --}}
+                        <div class="form-check mb-3">
+                            <input type="checkbox"
+                                   class="form-check-input"
+                                   name="hari[{{ $key }}]"
+                                   id="hari_{{ $key }}"
+                                   {{ ($jadwal && $jadwal->aktif) ? 'checked' : '' }}>
+
+                            <label class="form-check-label font-weight-bold"
+                                   for="hari_{{ $key }}">
+                                {{ $label }}
+                            </label>
+
+                            <small class="text-muted ml-2">
+                                (tidak dicentang = libur)
+                            </small>
+                        </div>
+
+                        {{-- JAM --}}
+                        <div class="row">
+                            <div class="col-md-3 mb-2">
+                                <label>Jam Masuk</label>
+                                <input type="time"
+                                       name="jam_masuk[{{ $key }}]"
+                                       class="form-control"
+                                       value="{{ $jadwal->jam_masuk ?? '' }}">
+                            </div>
+
+                            <div class="col-md-3 mb-2">
+                                <label>Jam Pulang</label>
+                                <input type="time"
+                                       name="jam_pulang[{{ $key }}]"
+                                       class="form-control"
+                                       value="{{ $jadwal->jam_pulang ?? '' }}">
+                            </div>
+
+                            <div class="col-md-3 mb-2">
+                                <label>Istirahat Mulai</label>
+                                <input type="time"
+                                       name="istirahat_mulai[{{ $key }}]"
+                                       class="form-control"
+                                       value="{{ $jadwal->istirahat_mulai ?? '' }}">
+                            </div>
+
+                            <div class="col-md-3 mb-2">
+                                <label>Istirahat Selesai</label>
+                                <input type="time"
+                                       name="istirahat_selesai[{{ $key }}]"
+                                       class="form-control"
+                                       value="{{ $jadwal->istirahat_selesai ?? '' }}">
+                            </div>
+                        </div>
+
                     </div>
+                @endforeach
 
-                    {{-- Jam Pulang --}}
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Jam Pulang</label>
-                        <input type="time"
-                               name="jam_pulang"
-                               class="form-control"
-                               value="{{ $user->workSchedule->jam_pulang ?? '' }}"
-                               required>
-                    </div>
-
-                    {{-- Istirahat Mulai --}}
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Mulai Istirahat</label>
-                        <input type="time"
-                               name="istirahat_mulai"
-                               class="form-control"
-                               value="{{ $user->workSchedule->istirahat_mulai ?? '' }}"
-                               required>
-                    </div>
-
-                    {{-- Istirahat Selesai --}}
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Selesai Istirahat</label>
-                        <input type="time"
-                               name="istirahat_selesai"
-                               class="form-control"
-                               value="{{ $user->workSchedule->istirahat_selesai ?? '' }}"
-                               required>
-                    </div>
-
-                </div>
-
-                {{-- Status Aktif --}}
-                <div class="form-check mb-4">
-                    <input class="form-check-input"
-                           type="checkbox"
-                           name="aktif"
-                           id="aktif"
-                           {{ ($user->workSchedule->aktif ?? true) ? 'checked' : '' }}>
-                    <label class="form-check-label" for="aktif">
-                        Aktifkan jadwal kerja user ini
-                    </label>
-                </div>
-
-                <div class="d-flex justify-content-between">
+                {{-- BUTTON --}}
+                <div class="d-flex justify-content-between mt-4">
                     <a href="{{ route('admin.jadwal') }}" class="btn btn-secondary">
                         <i class="fas fa-arrow-left"></i> Kembali
                     </a>
@@ -102,10 +116,9 @@
                     </button>
                 </div>
 
-            </form>
-
+            </div>
         </div>
-    </div>
+    </form>
 
 </div>
 @endsection

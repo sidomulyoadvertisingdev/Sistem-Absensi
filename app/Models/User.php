@@ -16,7 +16,7 @@ class User extends Authenticatable
      * ===============================
      * FILLABLE
      * ===============================
-     * SEMUA FIELD WAJIB ADA DI SINI
+     * SEMUA FIELD USER & KARYAWAN
      */
     protected $fillable = [
         'name',
@@ -57,28 +57,50 @@ class User extends Authenticatable
      * ===============================
      */
 
-    // 🔗 USER → ABSENSI
+    /**
+     * 🔗 USER → ABSENSI
+     * 1 user punya banyak absensi
+     */
     public function absensis(): HasMany
     {
         return $this->hasMany(Absensi::class, 'user_id');
     }
 
-    // 🔗 USER → JADWAL KERJA
-    public function workSchedule(): HasOne
+    /**
+     * 🔗 USER → JADWAL KERJA
+     * 1 user punya banyak jadwal (Senin–Minggu)
+     */
+    public function workSchedules(): HasMany
     {
-        return $this->hasOne(WorkSchedule::class, 'user_id');
+        return $this->hasMany(WorkSchedule::class, 'user_id');
     }
 
-    // 🔗 USER → GAJI
+    /**
+     * 🔗 USER → GAJI
+     * 1 user punya 1 data gaji aktif
+     */
     public function salary(): HasOne
     {
         return $this->hasOne(UserSalary::class, 'user_id');
     }
 
     /**
+     * 🔗 USER → PELANGGARAN
+     * 1 user bisa punya banyak pelanggaran
+     */
+    public function pelanggarans(): HasMany
+    {
+        return $this->hasMany(Pelanggaran::class, 'user_id');
+    }
+
+    /**
      * ===============================
      * HELPER
      * ===============================
+     */
+
+    /**
+     * Cek apakah user admin
      */
     public function isAdmin(): bool
     {
