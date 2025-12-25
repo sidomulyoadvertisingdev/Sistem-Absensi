@@ -41,17 +41,16 @@ Route::post('/logout', [LoginController::class, 'logout'])
 
 /*
 |--------------------------------------------------------------------------
-| APP UPDATE POPUP (FIX SESSION ERROR)
+| APP UPDATE POPUP (TAMBAHAN AMAN)
 |--------------------------------------------------------------------------
-| WAJIB lewat middleware 'web' + 'auth'
 */
-Route::middleware(['web', 'auth'])->post('/app-update/acknowledge', function () {
+Route::post('/app-update/acknowledge', function () {
     auth()->user()->update([
         'app_version_seen' => config('app.app_version'),
     ]);
 
-    return redirect()->back();
-})->name('app.update.ack');
+    return back();
+})->middleware('auth')->name('app.update.ack');
 
 /*
 |--------------------------------------------------------------------------

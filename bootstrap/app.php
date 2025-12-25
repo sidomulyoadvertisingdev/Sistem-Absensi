@@ -26,40 +26,30 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
 
         /*
-        |--------------------------------------------------------------------------
-        | ALIAS (CUSTOM MIDDLEWARE)
-        |--------------------------------------------------------------------------
+        |----------------------------------------------------------
+        | NONAKTIFKAN CSRF (API-FIRST + NEXT.JS)
+        |----------------------------------------------------------
+        | Aman karena:
+        | - Tidak pakai Blade form dari frontend
+        | - Semua akses via API
+        */
+        $middleware->remove(
+            \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class
+        );
+
+        /*
+        |----------------------------------------------------------
+        | ALIAS
+        |----------------------------------------------------------
         */
         $middleware->alias([
             'is_admin' => \App\Http\Middleware\IsAdmin::class,
         ]);
 
         /*
-        |--------------------------------------------------------------------------
-        | WEB MIDDLEWARE (ADMIN PANEL + BLADE + SESSION)
-        |--------------------------------------------------------------------------
-        | ⚠️ INI WAJIB ADA
-        | Digunakan oleh:
-        | - auth()->user()
-        | - session
-        | - popup update
-        | - form admin
-        */
-        $middleware->group('web', [
-            \Illuminate\Cookie\Middleware\EncryptCookies::class,
-            \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
-            \Illuminate\Session\Middleware\StartSession::class,
-            \Illuminate\View\Middleware\ShareErrorsFromSession::class,
-            \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
-            \Illuminate\Routing\Middleware\SubstituteBindings::class,
-        ]);
-
-        /*
-        |--------------------------------------------------------------------------
-        | API MIDDLEWARE (NEXT.JS / MOBILE)
-        |--------------------------------------------------------------------------
-        | CSRF NONAKTIF (AMAN UNTUK API)
-        | Session tetap aktif jika dibutuhkan
+        |----------------------------------------------------------
+        | API MIDDLEWARE (WAJIB ADA SESSION)
+        |----------------------------------------------------------
         */
         $middleware->group('api', [
             \Illuminate\Cookie\Middleware\EncryptCookies::class,
@@ -67,16 +57,6 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Session\Middleware\StartSession::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ]);
-
-        /*
-        |--------------------------------------------------------------------------
-        | NONAKTIFKAN CSRF KHUSUS API (BUKAN WEB)
-        |--------------------------------------------------------------------------
-        */
-        $middleware->removeFromGroup(
-            'api',
-            \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class
-        );
     })
 
     /*
