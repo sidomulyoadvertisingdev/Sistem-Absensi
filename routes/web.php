@@ -29,6 +29,7 @@ Route::get('/', fn () => redirect('/admin'));
 |--------------------------------------------------------------------------
 */
 Route::middleware(['web', 'guest'])->group(function () {
+
     Route::get('/login', [LoginController::class, 'showLoginForm'])
         ->name('login');
 
@@ -41,23 +42,25 @@ Route::post('/logout', [LoginController::class, 'logout'])
 
 /*
 |--------------------------------------------------------------------------
-| APP UPDATE POPUP (TAMBAHAN AMAN)
+| APP UPDATE POPUP (AMAN, SESSION AKTIF)
 |--------------------------------------------------------------------------
 */
-Route::post('/app-update/acknowledge', function () {
+Route::middleware(['web', 'auth'])->post('/app-update/acknowledge', function () {
+
     auth()->user()->update([
         'app_version_seen' => config('app.app_version'),
     ]);
 
-    return back();
-})->middleware('auth')->name('app.update.ack');
+    return redirect()->back();
+
+})->name('app.update.ack');
 
 /*
 |--------------------------------------------------------------------------
 | ADMIN AREA
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'is_admin'])
+Route::middleware(['web', 'auth', 'is_admin'])
     ->prefix('admin')
     ->as('admin.')
     ->group(function () {
@@ -69,28 +72,36 @@ Route::middleware(['auth', 'is_admin'])
         /* ================= ABSENSI ================= */
         Route::get('/absensi', [AbsensiController::class, 'index'])
             ->name('absensi');
+
         Route::get('/absensi/create', [AbsensiController::class, 'create'])
             ->name('absensi.create');
+
         Route::post('/absensi', [AbsensiController::class, 'store'])
             ->name('absensi.store');
 
         /* ================= LEMBUR ================= */
         Route::get('/lembur', [LemburController::class, 'index'])
             ->name('lembur');
+
         Route::get('/lembur/create', [LemburController::class, 'create'])
             ->name('lembur.create');
+
         Route::post('/lembur', [LemburController::class, 'store'])
             ->name('lembur.store');
+
         Route::post('/lembur/{id}/approve', [LemburController::class, 'approve'])
             ->name('lembur.approve');
 
         /* ================= GAJI ================= */
         Route::get('/gaji', [UserSalaryController::class, 'index'])
             ->name('gaji');
+
         Route::get('/gaji/{user}/edit', [UserSalaryController::class, 'edit'])
             ->name('gaji.edit');
+
         Route::post('/gaji/{user}', [UserSalaryController::class, 'update'])
             ->name('gaji.update');
+
         Route::get('/gaji/{user}/slip/pdf', [UserSalaryController::class, 'slipPdf'])
             ->name('gaji.slip.pdf');
 
@@ -101,30 +112,38 @@ Route::middleware(['auth', 'is_admin'])
         /* ================= JADWAL ================= */
         Route::get('/jadwal-kerja', [WorkScheduleController::class, 'index'])
             ->name('jadwal');
+
         Route::get('/jadwal-kerja/{user}/edit', [WorkScheduleController::class, 'edit'])
             ->name('jadwal.edit');
+
         Route::post('/jadwal-kerja/{user}', [WorkScheduleController::class, 'update'])
             ->name('jadwal.update');
 
         /* ================= KARYAWAN ================= */
         Route::get('/karyawan', [UserController::class, 'index'])
             ->name('karyawan.index');
+
         Route::get('/karyawan/create', [UserController::class, 'create'])
             ->name('karyawan.create');
+
         Route::post('/karyawan', [UserController::class, 'store'])
             ->name('karyawan.store');
 
         // EDIT, UPDATE, DELETE (AMAN)
         Route::get('/karyawan/{id}/edit', [UserController::class, 'edit'])
             ->name('karyawan.edit');
+
         Route::put('/karyawan/{id}', [UserController::class, 'update'])
             ->name('karyawan.update');
+
         Route::delete('/karyawan/{id}', [UserController::class, 'destroy'])
             ->name('karyawan.destroy');
 
-        /* ======================================================
+        /*
+        ======================================================
         | PELANGGARAN KARYAWAN
-        ====================================================== */
+        ======================================================
+        */
         Route::prefix('pelanggaran')
             ->name('pelanggaran.')
             ->group(function () {
@@ -147,22 +166,28 @@ Route::middleware(['auth', 'is_admin'])
 
                         Route::get('/jabatan', [MasterJabatanController::class, 'index'])
                             ->name('jabatan.index');
+
                         Route::get('/jabatan/create', [MasterJabatanController::class, 'create'])
                             ->name('jabatan.create');
+
                         Route::post('/jabatan', [MasterJabatanController::class, 'store'])
                             ->name('jabatan.store');
 
                         Route::get('/lokasi', [MasterLokasiController::class, 'index'])
                             ->name('lokasi.index');
+
                         Route::get('/lokasi/create', [MasterLokasiController::class, 'create'])
                             ->name('lokasi.create');
+
                         Route::post('/lokasi', [MasterLokasiController::class, 'store'])
                             ->name('lokasi.store');
 
                         Route::get('/kode', [MasterPelanggaranController::class, 'index'])
                             ->name('kode.index');
+
                         Route::get('/kode/create', [MasterPelanggaranController::class, 'create'])
                             ->name('kode.create');
+
                         Route::post('/kode', [MasterPelanggaranController::class, 'store'])
                             ->name('kode.store');
                     });
