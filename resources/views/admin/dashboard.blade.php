@@ -86,7 +86,6 @@
 
     {{-- INFO BOX PENEMPATAN --}}
     <div class="row mt-4">
-
         <div class="col-lg-4 col-12">
             <div class="small-box bg-primary">
                 <div class="inner">
@@ -122,7 +121,6 @@
                 </div>
             </div>
         </div>
-
     </div>
 
     {{-- DATA TERBARU --}}
@@ -139,7 +137,8 @@
                         <thead>
                             <tr>
                                 <th>Nama</th>
-                                <th>Tanggal</th>
+                                <th>Jam</th>
+                                <th>Aksi</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
@@ -147,16 +146,21 @@
                             @forelse($absensiTerbaru as $item)
                                 <tr>
                                     <td>{{ $item->user->name ?? '-' }}</td>
-                                    <td>{{ $item->tanggal }}</td>
+                                    <td>{{ $item->jam_tampil ?? '-' }}</td>
                                     <td>
-                                        <span class="badge badge-success">
-                                            {{ ucfirst($item->status) }}
+                                        <span class="badge badge-{{ $item->aksi_badge }}">
+                                            {{ $item->aksi_label }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-{{ $item->status_badge }}">
+                                            {{ $item->status_label }}
                                         </span>
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="3" class="text-center text-muted">
+                                    <td colspan="4" class="text-center text-muted">
                                         Belum ada data absensi
                                     </td>
                                 </tr>

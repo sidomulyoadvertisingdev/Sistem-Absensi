@@ -30,6 +30,9 @@ class User extends Authenticatable
         'address',
         'jabatan',
         'penempatan',
+
+        // ✅ WAJIB UNTUK POPUP UPDATE APP
+        'app_version_seen',
     ];
 
     /**

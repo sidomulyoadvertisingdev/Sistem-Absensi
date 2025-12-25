@@ -27,7 +27,7 @@
                             value="{{ $search ?? '' }}"
                         >
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-md-3">
                         <button class="btn btn-primary">
                             <i class="fas fa-search"></i> Cari
                         </button>
@@ -60,6 +60,7 @@
                         <th>Jabatan</th>
                         <th>Penempatan</th>
                         <th>Tanggal Daftar</th>
+                        <th width="120" class="text-center">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -78,10 +79,31 @@
                         <td>
                             {{ $user->created_at?->format('d-m-Y') ?? '-' }}
                         </td>
+                        <td class="text-center">
+
+                            {{-- EDIT --}}
+                            <a href="{{ route('admin.karyawan.edit', $user->id) }}"
+                               class="btn btn-warning btn-sm">
+                                <i class="fas fa-edit"></i>
+                            </a>
+
+                            {{-- DELETE --}}
+                            <form action="{{ route('admin.karyawan.destroy', $user->id) }}"
+                                  method="POST"
+                                  class="d-inline"
+                                  onsubmit="return confirm('Yakin ingin menghapus karyawan ini?')">
+                                @csrf
+                                @method('DELETE')
+                                <button class="btn btn-danger btn-sm">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+
+                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="text-center text-muted">
+                        <td colspan="8" class="text-center text-muted">
                             Data karyawan tidak ditemukan
                         </td>
                     </tr>

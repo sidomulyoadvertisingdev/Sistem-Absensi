@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class WorkSchedule extends Model
 {
@@ -49,7 +50,7 @@ class WorkSchedule extends Model
 
     /**
      * ===============================
-     * SCOPES (OPSIONAL TAPI BERGUNA)
+     * SCOPES
      * ===============================
      */
 
@@ -71,7 +72,7 @@ class WorkSchedule extends Model
 
     /**
      * ===============================
-     * HELPERS
+     * HELPERS (AMAN, TIDAK MERUSAK)
      * ===============================
      */
 
@@ -97,5 +98,37 @@ class WorkSchedule extends Model
     public function hariLabel(): string
     {
         return ucfirst($this->hari);
+    }
+
+    /**
+     * ======================================================
+     * HELPER BARU (INTI UNTUK STATUS HADIR / TERLAMBAT)
+     * ======================================================
+     * TIDAK MENGUBAH SISTEM LAMA
+     * HANYA MEMUDAHKAN ABSENSI
+     */
+
+    /**
+     * Ambil jadwal aktif user untuk hari ini
+     * Return null jika libur / tidak ada jadwal
+     */
+    public static function jadwalHariIni(int $userId): ?self
+    {
+        // Hari sekarang (senin - minggu)
+        $hari = strtolower(Carbon::now()->locale('id')->isoFormat('dddd'));
+        // contoh: senin, selasa, rabu, dst
+
+        return self::where('user_id', $userId)
+            ->where('hari', $hari)
+            ->where('aktif', true)
+            ->first();
+    }
+
+    /**
+     * Ambil jam masuk + toleransi (default 15 menit)
+     */
+    public function batasTerlambat(int $menit = 15): Carbon
+    {
+        return Carbon::parse($this->jam_masuk)->addMinutes($menit);
     }
 }

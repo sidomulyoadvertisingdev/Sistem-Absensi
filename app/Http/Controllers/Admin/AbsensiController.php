@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Absensi;
 use App\Models\User;
+use App\Models\WorkSchedule;
+use Carbon\Carbon;
 
 class AbsensiController extends Controller
 {
@@ -18,6 +20,7 @@ class AbsensiController extends Controller
     {
         $data = Absensi::with('user')
             ->orderBy('tanggal', 'desc')
+            ->orderBy('id', 'desc')
             ->get();
 
         return view('admin.absensi.index', compact('data'));
@@ -51,8 +54,9 @@ class AbsensiController extends Controller
         ]);
 
         /**
-         * 🔑 Ambil / buat absensi DI TANGGAL YANG SAMA
-         * → supaya tidak dobel baris
+         * ==================================================
+         * Ambil / buat absensi di tanggal yang sama
+         * ==================================================
          */
         $absensi = Absensi::firstOrCreate(
             [
@@ -60,44 +64,77 @@ class AbsensiController extends Controller
                 'tanggal' => $request->tanggal,
             ],
             [
+                // default, akan ditentukan ulang saat MASUK
                 'status' => 'hadir',
             ]
         );
 
         /**
-         * 📸 Simpan foto (opsional)
+         * ==================================================
+         * SIMPAN FOTO (OPSIONAL)
+         * ==================================================
          */
         if ($request->hasFile('foto')) {
-            $path = $request->file('foto')->store('absensi', 'public');
-            $absensi->foto = $path;
+            $absensi->foto = $request->file('foto')
+                ->store('absensi', 'public');
         }
 
         /**
-         * 🎯 Mapping AKSI → KOLOM ABSENSI
+         * ==================================================
+         * AKSI MASUK → HITUNG STATUS HADIR / TERLAMBAT
+         * ==================================================
          */
-        switch ($request->aksi) {
-            case 'masuk':
-                $absensi->jam_masuk = $request->jam;
-                break;
+        if ($request->aksi === 'masuk') {
 
-            case 'istirahat_mulai':
-                $absensi->istirahat_mulai = $request->jam;
-                break;
+            $jamMasuk = Carbon::createFromFormat(
+                'Y-m-d H:i',
+                $request->tanggal . ' ' . $request->jam
+            );
 
-            case 'istirahat_selesai':
-                $absensi->istirahat_selesai = $request->jam;
-                break;
+            // Ambil jadwal kerja hari tersebut
+            $hari = strtolower($jamMasuk->locale('id')->isoFormat('dddd'));
 
-            case 'pulang':
-                $absensi->jam_pulang = $request->jam;
-                break;
+            $jadwal = WorkSchedule::where('user_id', $request->user_id)
+                ->where('hari', $hari)
+                ->where('aktif', true)
+                ->first();
+
+            // Default status
+            $status = 'hadir';
+
+            if ($jadwal && $jadwal->jam_masuk) {
+                $batasTerlambat = Carbon::parse(
+                    $request->tanggal . ' ' . $jadwal->jam_masuk
+                )->addMinutes(15);
+
+                $status = $jamMasuk->lte($batasTerlambat)
+                    ? 'hadir'
+                    : 'terlambat';
+            }
+
+            $absensi->jam_masuk = $request->jam;
+            $absensi->status    = $status;
+        }
+
+        /**
+         * ==================================================
+         * AKSI LAIN (TIDAK MENGUBAH STATUS)
+         * ==================================================
+         */
+        if ($request->aksi === 'istirahat_mulai') {
+            $absensi->istirahat_mulai = $request->jam;
+        }
+
+        if ($request->aksi === 'istirahat_selesai') {
+            $absensi->istirahat_selesai = $request->jam;
+        }
+
+        if ($request->aksi === 'pulang') {
+            $absensi->jam_pulang = $request->jam;
         }
 
         $absensi->save();
 
-        /**
-         * ✅ PENTING: redirect ke route yang BENAR
-         */
         return redirect()
             ->route('admin.absensi')
             ->with('success', 'Absensi berhasil diperbarui');

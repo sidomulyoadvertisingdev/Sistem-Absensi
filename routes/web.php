@@ -41,6 +41,19 @@ Route::post('/logout', [LoginController::class, 'logout'])
 
 /*
 |--------------------------------------------------------------------------
+| APP UPDATE POPUP (TAMBAHAN AMAN)
+|--------------------------------------------------------------------------
+*/
+Route::post('/app-update/acknowledge', function () {
+    auth()->user()->update([
+        'app_version_seen' => config('app.app_version'),
+    ]);
+
+    return back();
+})->middleware('auth')->name('app.update.ack');
+
+/*
+|--------------------------------------------------------------------------
 | ADMIN AREA
 |--------------------------------------------------------------------------
 */
@@ -100,6 +113,14 @@ Route::middleware(['auth', 'is_admin'])
             ->name('karyawan.create');
         Route::post('/karyawan', [UserController::class, 'store'])
             ->name('karyawan.store');
+
+        // EDIT, UPDATE, DELETE (AMAN)
+        Route::get('/karyawan/{id}/edit', [UserController::class, 'edit'])
+            ->name('karyawan.edit');
+        Route::put('/karyawan/{id}', [UserController::class, 'update'])
+            ->name('karyawan.update');
+        Route::delete('/karyawan/{id}', [UserController::class, 'destroy'])
+            ->name('karyawan.destroy');
 
         /* ======================================================
         | PELANGGARAN KARYAWAN
