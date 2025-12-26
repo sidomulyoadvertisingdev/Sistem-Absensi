@@ -4,13 +4,14 @@ namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable;
 
     /**
      * ===============================
@@ -19,6 +20,7 @@ class User extends Authenticatable
      * SEMUA FIELD USER & KARYAWAN
      */
     protected $fillable = [
+        // AUTH
         'name',
         'email',
         'password',
@@ -31,7 +33,7 @@ class User extends Authenticatable
         'jabatan',
         'penempatan',
 
-        // ✅ WAJIB UNTUK POPUP UPDATE APP
+        // MOBILE APP
         'app_version_seen',
     ];
 
@@ -52,6 +54,9 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+
+        // ✅ PENTING: auto hash password
+        'password' => 'hashed',
     ];
 
     /**
@@ -98,7 +103,7 @@ class User extends Authenticatable
 
     /**
      * ===============================
-     * HELPER
+     * HELPER METHODS
      * ===============================
      */
 
@@ -108,5 +113,13 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return $this->role === 'admin';
+    }
+
+    /**
+     * Cek apakah user karyawan
+     */
+    public function isEmployee(): bool
+    {
+        return $this->role === 'user';
     }
 }

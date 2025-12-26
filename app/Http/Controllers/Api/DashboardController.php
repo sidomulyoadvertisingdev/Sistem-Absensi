@@ -4,48 +4,47 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Absensi;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
-    public function stats(Request $request)
+    public function index(Request $request)
     {
         $user = $request->user();
+        $today = Carbon::today();
 
-        $bulan = now()->month;
-        $tahun = now()->year;
+        // contoh data (nanti bisa real query)
+        $absensiToday = $user->absensis()
+            ->whereDate('created_at', $today)
+            ->first();
 
-        // HADIR BULAN INI
-        $hadir = Absensi::where('user_id', $user->id)
-            ->whereMonth('tanggal', $bulan)
-            ->whereYear('tanggal', $tahun)
-            ->where('status', 'hadir')
-            ->count();
+        $jadwalToday = $user->workSchedules()
+            ->where('day', $today->format('l')) // Monday, Tuesday, etc
+            ->first();
 
-        // TERLAMBAT BULAN INI
-        $terlambat = Absensi::where('user_id', $user->id)
-            ->whereMonth('tanggal', $bulan)
-            ->whereYear('tanggal', $tahun)
-            ->where('terlambat', true)
-            ->count();
+        $salary = $user->salary;
 
-        // IZIN BULAN INI
-        $izin = Absensi::where('user_id', $user->id)
-            ->whereMonth('tanggal', $bulan)
-            ->whereYear('tanggal', $tahun)
-            ->where('status', 'izin')
-            ->count();
-
-        // RESPONSE HARUS SESUAI FRONTEND
         return response()->json([
-            'attendance' => [
-                'month' => [
-                    'hadir' => $hadir,
-                    'terlambat' => $terlambat,
-                    'izin' => $izin,
-                ]
-            ]
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'jabatan' => $user->jabatan,
+            ],
+            'absensi' => $absensiToday ? [
+                'status' => 'Sudah Absen',
+                'jam' => $absensiToday->created_at->format('H:i'),
+            ] : [
+                'status' => 'Belum Absen',
+                'jam' => null,
+            ],
+            'jadwal' => $jadwalToday ? [
+                'masuk' => $jadwalToday->start_time,
+                'pulang' => $jadwalToday->end_time,
+            ] : null,
+            'gaji' => $salary ? [
+                'bulan' => now()->format('F Y'),
+                'total' => $salary->total_salary,
+            ] : null,
         ]);
     }
 }

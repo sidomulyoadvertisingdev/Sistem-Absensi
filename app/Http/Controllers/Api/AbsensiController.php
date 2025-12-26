@@ -5,95 +5,112 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Absensi;
+use App\Models\WorkSchedule;
 use Carbon\Carbon;
 
 class AbsensiController extends Controller
 {
     /**
-     * CHECK-IN USER
-     * Hitung terlambat otomatis
+     * ===============================
+     * STATUS ABSENSI HARI INI
+     * ===============================
      */
-    public function checkin(Request $request)
+    public function today(Request $request)
     {
         $user = $request->user();
-
-        // Cegah double check-in di hari yang sama
-        $cek = Absensi::where('user_id', $user->id)
-            ->whereDate('tanggal', now())
-            ->first();
-
-        if ($cek) {
-            return response()->json([
-                'message' => 'Anda sudah check-in hari ini'
-            ], 400);
-        }
-
-        $jamMasuk = Carbon::now();
-
-        // JAM KERJA NORMAL (08:00)
-        $batasMasuk = Carbon::createFromTime(8, 0, 0);
-
-        // HITUNG TERLAMBAT
-        $terlambat = $jamMasuk->gt($batasMasuk);
-
-        Absensi::create([
-            'user_id'   => $user->id,
-            'tanggal'   => now()->toDateString(),
-            'jam_masuk' => $jamMasuk->toTimeString(),
-            'status'    => 'hadir',
-            'terlambat' => $terlambat
-        ]);
-
-        return response()->json([
-            'message'   => 'Check-in berhasil',
-            'jam_masuk' => $jamMasuk->toTimeString(),
-            'terlambat' => $terlambat
-        ]);
-    }
-
-    /**
-     * CHECK-OUT USER
-     */
-    public function checkout(Request $request)
-    {
-        $user = $request->user();
+        $today = Carbon::today()->toDateString();
 
         $absensi = Absensi::where('user_id', $user->id)
-            ->whereDate('tanggal', now())
+            ->where('tanggal', $today)
             ->first();
 
-        if (!$absensi) {
-            return response()->json([
-                'message' => 'Anda belum check-in'
-            ], 400);
-        }
-
-        if ($absensi->jam_pulang) {
-            return response()->json([
-                'message' => 'Anda sudah check-out'
-            ], 400);
-        }
-
-        $absensi->update([
-            'jam_pulang' => Carbon::now()->toTimeString()
-        ]);
-
         return response()->json([
-            'message'    => 'Check-out berhasil',
-            'jam_pulang' => $absensi->jam_pulang
+            'tanggal' => $today,
+            'status' => $absensi?->status ?? 'belum_absen',
+            'jam_masuk' => $absensi?->jam_masuk,
+            'istirahat_mulai' => $absensi?->istirahat_mulai,
+            'istirahat_selesai' => $absensi?->istirahat_selesai,
+            'jam_pulang' => $absensi?->jam_pulang,
         ]);
     }
 
     /**
-     * RIWAYAT ABSENSI USER (UNTUK FRONTEND)
+     * ===============================
+     * SIMPAN ABSENSI (MASUK / ISTIRAHAT / PULANG)
+     * ===============================
      */
-    public function riwayat(Request $request)
+    public function store(Request $request)
     {
-        $data = Absensi::where('user_id', $request->user()->id)
-            ->orderBy('tanggal', 'desc')
-            ->limit(30)
-            ->get();
+        $request->validate([
+            'aksi' => 'required|in:masuk,istirahat_mulai,istirahat_selesai,pulang',
+            'jam'  => 'required',
+            'foto' => 'nullable|image|max:2048',
+        ]);
 
-        return response()->json($data);
+        $user = $request->user();
+        $tanggal = Carbon::today()->toDateString();
+        $jam = Carbon::parse($request->jam)->format('H:i');
+
+        $absensi = Absensi::firstOrCreate(
+            [
+                'user_id' => $user->id,
+                'tanggal' => $tanggal,
+            ],
+            [
+                'status' => 'hadir',
+            ]
+        );
+
+        /**
+         * ===============================
+         * VALIDASI FOTO WAJIB
+         * ===============================
+         */
+        $fotoWajib = ['masuk', 'istirahat_selesai', 'pulang'];
+
+        if (in_array($request->aksi, $fotoWajib) && !$request->hasFile('foto')) {
+            return response()->json([
+                'message' => 'Foto wajib untuk aksi ini'
+            ], 422);
+        }
+
+        /**
+         * ===============================
+         * SIMPAN FOTO
+         * ===============================
+         */
+        if ($request->hasFile('foto')) {
+            $absensi->foto = $request->file('foto')
+                ->store('absensi', 'public');
+        }
+
+        /**
+         * ===============================
+         * SIMPAN AKSI
+         * ===============================
+         */
+        if ($request->aksi === 'masuk') {
+            $absensi->jam_masuk = $jam;
+            $absensi->status = 'hadir';
+        }
+
+        if ($request->aksi === 'istirahat_mulai') {
+            $absensi->istirahat_mulai = $jam;
+        }
+
+        if ($request->aksi === 'istirahat_selesai') {
+            $absensi->istirahat_selesai = $jam;
+        }
+
+        if ($request->aksi === 'pulang') {
+            $absensi->jam_pulang = $jam;
+        }
+
+        $absensi->save();
+
+        return response()->json([
+            'message' => 'Absensi berhasil disimpan',
+            'data' => $absensi,
+        ]);
     }
 }
