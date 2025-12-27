@@ -7,52 +7,34 @@ return [
     | Cross-Origin Resource Sharing (CORS) Configuration
     |--------------------------------------------------------------------------
     |
-    | Konfigurasi ini digunakan untuk:
-    | - Frontend React (Vite)
-    | - WebView / APK
-    | - Auth via Authorization: Bearer TOKEN (Sanctum)
-    |
-    | Backend:
-    | - https://admin.sidomulyoproject.com
+    | Konfigurasi ini dibuat untuk:
+    | - React (Vite) di http://localhost:5173
+    | - Mobile WebView / APK
+    | - Auth menggunakan Bearer Token (Sanctum)
     |
     */
 
-    /*
-     * Path yang dikenakan CORS
-     */
     'paths' => [
         'api/*',
         'sanctum/csrf-cookie',
     ],
 
     /*
-     * Izinkan semua HTTP Method
+     * Izinkan semua HTTP method
      */
     'allowed_methods' => ['*'],
 
     /*
      * Origin yang diizinkan
+     * (Vite default = 5173)
      */
     'allowed_origins' => [
-
-        // === LOCAL DEVELOPMENT ===
         'http://localhost:5173',
         'http://127.0.0.1:5173',
-
-        // === PRODUCTION FRONTEND ===
-        'https://sidomulyoproject.com',
-        'https://www.sidomulyoproject.com',
-
-        // === JIKA FRONTEND ADA SUBDOMAIN ===
-        'https://app.sidomulyoproject.com',
-
-        // === WEBVIEW / APK (AMAN) ===
-        'capacitor://localhost',
-        'ionic://localhost',
     ],
 
     /*
-     * Tidak pakai wildcard pattern
+     * Tidak pakai pattern dulu
      */
     'allowed_origins_patterns' => [],
 
@@ -67,13 +49,13 @@ return [
     'exposed_headers' => [],
 
     /*
-     * Cache preflight (0 = disable cache)
+     * Cache preflight
      */
     'max_age' => 0,
 
     /*
      * ❗ PENTING
-     * false karena auth pakai Bearer Token
+     * false karena kita pakai Authorization: Bearer TOKEN
      * BUKAN cookie / session
      */
     'supports_credentials' => false,
