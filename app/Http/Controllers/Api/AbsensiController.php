@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Absensi;
-use App\Models\WorkSchedule;
 use Carbon\Carbon;
 
 class AbsensiController extends Controller
@@ -36,15 +35,15 @@ class AbsensiController extends Controller
 
     /**
      * ===============================
-     * SIMPAN ABSENSI (MASUK / ISTIRAHAT / PULANG)
+     * SIMPAN ABSENSI
      * ===============================
      */
     public function store(Request $request)
     {
+        // ✅ VALIDASI DASAR (TANPA FOTO)
         $request->validate([
             'aksi' => 'required|in:masuk,istirahat_mulai,istirahat_selesai,pulang',
             'jam'  => 'required',
-            'foto' => 'nullable|image|max:2048',
         ]);
 
         $user = $request->user();
@@ -63,30 +62,33 @@ class AbsensiController extends Controller
 
         /**
          * ===============================
-         * VALIDASI FOTO WAJIB
+         * FOTO WAJIB UNTUK AKSI TERTENTU
          * ===============================
          */
         $fotoWajib = ['masuk', 'istirahat_selesai', 'pulang'];
 
-        if (in_array($request->aksi, $fotoWajib) && !$request->hasFile('foto')) {
-            return response()->json([
-                'message' => 'Foto wajib untuk aksi ini'
-            ], 422);
-        }
+        if (in_array($request->aksi, $fotoWajib)) {
 
-        /**
-         * ===============================
-         * SIMPAN FOTO
-         * ===============================
-         */
-        if ($request->hasFile('foto')) {
+            // ❌ TIDAK ADA FOTO
+            if (!$request->hasFile('foto')) {
+                return response()->json([
+                    'message' => 'Foto wajib untuk aksi ini'
+                ], 422);
+            }
+
+            // ✅ VALIDASI FOTO (SETELAH PASTI ADA)
+            $request->validate([
+                'foto' => 'image|mimes:jpg,jpeg,png|max:2048',
+            ]);
+
+            // ✅ SIMPAN FOTO
             $absensi->foto = $request->file('foto')
                 ->store('absensi', 'public');
         }
 
         /**
          * ===============================
-         * SIMPAN AKSI
+         * SIMPAN JAM SESUAI AKSI
          * ===============================
          */
         if ($request->aksi === 'masuk') {

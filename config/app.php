@@ -11,6 +11,15 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Application Domain (UNTUK BRANDING / LOGIN / TITLE)
+    |--------------------------------------------------------------------------
+    | Digunakan untuk menampilkan domain aplikasi
+    | Contoh: sistem-absensi.com
+    */
+    'domain' => env('APP_DOMAIN', 'localhost'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Version (UNTUK POPUP UPDATE)
     |--------------------------------------------------------------------------
     | Naikkan versi ini setiap kali aplikasi diperbarui
