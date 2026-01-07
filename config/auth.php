@@ -8,8 +8,8 @@ return [
     |--------------------------------------------------------------------------
     */
     'defaults' => [
-        'guard' => env('AUTH_GUARD', 'web'),
-        'passwords' => env('AUTH_PASSWORD_BROKER', 'users'),
+        'guard' => 'web', // default tetap web
+        'passwords' => 'users',
     ],
 
     /*
@@ -17,8 +17,8 @@ return [
     | Authentication Guards
     |--------------------------------------------------------------------------
     |
-    | web = Admin Panel (session)
-    | api = Mobile / React / WebView (Sanctum token)
+    | web      = Admin / Blade (session)
+    | sanctum  = API / Mobile / React (Bearer Token)
     |
     */
     'guards' => [
@@ -29,9 +29,9 @@ return [
             'provider' => 'users',
         ],
 
-        // Mobile / Frontend
-        'api' => [
-            'driver' => 'sanctum', // ✅ WAJIB SANCTUM
+        // API / Frontend (WAJIB NAMANYA sanctum)
+        'sanctum' => [
+            'driver' => 'sanctum',
             'provider' => 'users',
         ],
     ],
@@ -45,9 +45,8 @@ return [
 
         'users' => [
             'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', App\Models\User::class),
+            'model' => App\Models\User::class,
         ],
-
     ],
 
     /*
@@ -59,10 +58,7 @@ return [
 
         'users' => [
             'provider' => 'users',
-            'table' => env(
-                'AUTH_PASSWORD_RESET_TOKEN_TABLE',
-                'password_reset_tokens'
-            ),
+            'table' => 'password_reset_tokens',
             'expire' => 60,
             'throttle' => 60,
         ],
@@ -73,6 +69,5 @@ return [
     | Password Confirmation Timeout
     |--------------------------------------------------------------------------
     */
-    'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
-
+    'password_timeout' => 10800,
 ];

@@ -13,61 +13,67 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
 
-    /**
-     * ===============================
-     * FILLABLE
-     * ===============================
-     * SEMUA FIELD USER & KARYAWAN
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | ROLE CONSTANTS
+    |--------------------------------------------------------------------------
+    */
+    public const ROLE_ADMIN    = 'admin';
+    public const ROLE_KARYAWAN = 'karyawan';
+    public const ROLE_KEUANGAN = 'keuangan';
+    public const ROLE_USER     = 'user';
+
+    /*
+    |--------------------------------------------------------------------------
+    | MASS ASSIGNABLE
+    |--------------------------------------------------------------------------
+    */
     protected $fillable = [
-        // AUTH
+        // Auth
         'name',
         'email',
         'password',
         'role',
 
-        // DATA KARYAWAN
+        // Profile / Karyawan
         'nik',
         'phone',
         'address',
         'jabatan',
         'penempatan',
 
-        // MOBILE APP
+        // Mobile / App
         'app_version_seen',
     ];
 
-    /**
-     * ===============================
-     * HIDDEN
-     * ===============================
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | HIDDEN ATTRIBUTES
+    |--------------------------------------------------------------------------
+    */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * ===============================
-     * CASTS
-     * ===============================
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | CASTS
+    |--------------------------------------------------------------------------
+    */
     protected $casts = [
         'email_verified_at' => 'datetime',
-
-        // ✅ PENTING: auto hash password
-        'password' => 'hashed',
+        'password' => 'hashed', // Laravel 10+
     ];
 
-    /**
-     * ===============================
-     * RELATIONSHIPS
-     * ===============================
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | RELATIONSHIPS
+    |--------------------------------------------------------------------------
+    */
 
     /**
-     * 🔗 USER → ABSENSI
-     * 1 user punya banyak absensi
+     * 🕒 ABSENSI (KHUSUS KARYAWAN)
      */
     public function absensis(): HasMany
     {
@@ -75,8 +81,7 @@ class User extends Authenticatable
     }
 
     /**
-     * 🔗 USER → JADWAL KERJA
-     * 1 user punya banyak jadwal (Senin–Minggu)
+     * 📆 JADWAL KERJA
      */
     public function workSchedules(): HasMany
     {
@@ -84,8 +89,7 @@ class User extends Authenticatable
     }
 
     /**
-     * 🔗 USER → GAJI
-     * 1 user punya 1 data gaji aktif
+     * 💰 GAJI (KHUSUS KARYAWAN)
      */
     public function salary(): HasOne
     {
@@ -93,8 +97,7 @@ class User extends Authenticatable
     }
 
     /**
-     * 🔗 USER → PELANGGARAN
-     * 1 user bisa punya banyak pelanggaran
+     * ⚠️ PELANGGARAN
      */
     public function pelanggarans(): HasMany
     {
@@ -102,24 +105,47 @@ class User extends Authenticatable
     }
 
     /**
-     * ===============================
-     * HELPER METHODS
-     * ===============================
+     * 🧾 RIWAYAT LAMARAN PEKERJAAN (USER / PUBLIC)
      */
+    public function jobApplicants(): HasMany
+    {
+        return $this->hasMany(JobApplicant::class, 'user_id');
+    }
 
-    /**
-     * Cek apakah user admin
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | ROLE HELPERS (AUTHORIZATION)
+    |--------------------------------------------------------------------------
+    */
+
     public function isAdmin(): bool
     {
-        return $this->role === 'admin';
+        return $this->role === self::ROLE_ADMIN;
     }
 
-    /**
-     * Cek apakah user karyawan
-     */
-    public function isEmployee(): bool
+    public function isKaryawan(): bool
     {
-        return $this->role === 'user';
+        return $this->role === self::ROLE_KARYAWAN;
     }
+
+    public function isKeuangan(): bool
+    {
+        return $this->role === self::ROLE_KEUANGAN;
+    }
+
+    public function isUser(): bool
+    {
+        return $this->role === self::ROLE_USER;
+    }
+
+    public function jobTodos()
+{
+    return $this->belongsToMany(JobTodo::class)
+        ->withPivot([
+            'status',
+            'completed_at',
+        ])
+        ->withTimestamps();
+}
+
 }

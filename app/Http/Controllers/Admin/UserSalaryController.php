@@ -9,19 +9,26 @@ use App\Models\Lembur;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class UserSalaryController extends Controller
 {
     /**
      * ===============================
-     * LIST GAJI PER USER
+     * LIST GAJI (HANYA KARYAWAN)
      * ===============================
      */
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::with('salary')->orderBy('name')->get();
+        // BULAN DEFAULT (YYYY-MM)
+        $bulan = $request->bulan ?? now()->format('Y-m');
 
-        return view('admin.gaji.index', compact('users'));
+        $users = User::with('salary')
+            ->where('role', User::ROLE_KARYAWAN)
+            ->orderBy('name')
+            ->get();
+
+        return view('admin.gaji.index', compact('users', 'bulan'));
     }
 
     /**
@@ -31,6 +38,10 @@ class UserSalaryController extends Controller
      */
     public function edit(User $user)
     {
+        if (!$user->isKaryawan()) {
+            abort(403, 'Hanya karyawan yang boleh memiliki gaji');
+        }
+
         return view('admin.gaji.edit', compact('user'));
     }
 
@@ -41,6 +52,10 @@ class UserSalaryController extends Controller
      */
     public function update(Request $request, User $user)
     {
+        if (!$user->isKaryawan()) {
+            abort(403, 'Hanya karyawan yang boleh memiliki gaji');
+        }
+
         $request->validate([
             'gaji_pokok'     => 'required|numeric|min:0',
             'uang_makan'     => 'nullable|numeric|min:0',
@@ -69,24 +84,33 @@ class UserSalaryController extends Controller
      * 🖨 CETAK SLIP GAJI (PDF)
      * ===============================
      */
-    public function slipPdf(User $user)
+    public function slipPdf(Request $request, User $user)
     {
+        if (!$user->isKaryawan()) {
+            abort(403, 'Slip gaji hanya untuk karyawan');
+        }
+
         $salary = $user->salary;
 
         if (!$salary || !$salary->aktif) {
             abort(404, 'Gaji belum diatur atau tidak aktif');
         }
 
-        // ===============================
-        // BULAN & TAHUN AMAN (TANPA PARSE STRING)
-        // ===============================
-        $now   = Carbon::now();
-        $bulan = $now->month; // angka
-        $tahun = $now->year;  // angka
+        /**
+         * ===============================
+         * BULAN & TAHUN
+         * ===============================
+         */
+        $bulanInput = $request->bulan ?? now()->format('Y-m');
+        $date       = Carbon::createFromFormat('Y-m', $bulanInput);
+        $bulan      = $date->month;
+        $tahun      = $date->year;
 
-        // ===============================
-        // HITUNG TOTAL JAM LEMBUR
-        // ===============================
+        /**
+         * ===============================
+         * HITUNG LEMBUR
+         * ===============================
+         */
         $totalJamLembur = Lembur::where('user_id', $user->id)
             ->whereMonth('tanggal', $bulan)
             ->whereYear('tanggal', $tahun)
@@ -97,31 +121,60 @@ class UserSalaryController extends Controller
                     ->diffInHours(Carbon::parse($item->jam_selesai));
             });
 
-        // ===============================
-        // HITUNG TOTAL LEMBUR & GAJI
-        // ===============================
         $totalLembur = $totalJamLembur * ($salary->lembur_per_jam ?? 0);
 
+        /**
+         * ===============================
+         * 🔥 BONUS JOB TODO (PALING AMAN)
+         * ===============================
+         * - Ambil dari pivot job_todo_user
+         * - completed_at = sumber kebenaran
+         */
+        $jobBonus = DB::table('job_todo_user')
+            ->join('job_todos', 'job_todos.id', '=', 'job_todo_user.job_todo_id')
+            ->where('job_todo_user.user_id', $user->id)
+            ->where('job_todo_user.status', 'completed')
+            ->whereMonth('job_todo_user.completed_at', $bulan)
+            ->whereYear('job_todo_user.completed_at', $tahun)
+            ->select(
+                'job_todos.title',
+                'job_todos.bonus',
+                'job_todo_user.completed_at'
+            )
+            ->get();
+
+        $totalBonusJob = $jobBonus->sum('bonus');
+
+        /**
+         * ===============================
+         * TOTAL GAJI
+         * ===============================
+         */
         $totalGaji =
             $salary->gaji_pokok +
             $salary->uang_makan +
             $salary->transport +
-            $totalLembur;
+            $totalLembur +
+            $totalBonusJob;
 
-        // ===============================
-        // GENERATE PDF
-        // ===============================
+        /**
+         * ===============================
+         * GENERATE PDF
+         * ===============================
+         */
         $pdf = Pdf::loadView('admin.gaji.slip-pdf', [
             'user'           => $user,
             'salary'         => $salary,
             'totalJamLembur' => $totalJamLembur,
             'totalLembur'    => $totalLembur,
+            'jobBonus'       => $jobBonus,      // 🔎 detail bonus per job
+            'totalBonusJob'  => $totalBonusJob, // 💰 total bonus
             'totalGaji'      => $totalGaji,
-            'bulan'          => $now->translatedFormat('F Y'), // hanya untuk tampilan
+            'bulan'          => $date->translatedFormat('F Y'),
         ]);
 
         return $pdf->stream(
-            'Slip-Gaji-' . $user->name . '-' . $now->format('m-Y') . '.pdf'
+            'Slip-Gaji-' . $user->name . '-' . $date->format('m-Y') . '.pdf'
         );
     }
 }

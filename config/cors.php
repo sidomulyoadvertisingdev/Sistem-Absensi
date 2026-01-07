@@ -12,8 +12,8 @@ return [
     'allowed_origins' => [
         'http://localhost:5173',
         'http://127.0.0.1:5173',
-        'http://localhost:5174',        // ⬅ TAMBAHKAN INI
-        'http://127.0.0.1:5174',        // ⬅ DAN INI
+        'http://localhost:5174',
+        'http://127.0.0.1:5174',
     ],
 
     'allowed_origins_patterns' => [],
@@ -24,6 +24,6 @@ return [
 
     'max_age' => 0,
 
-    // BENAR → karena pakai Authorization: Bearer TOKEN
+    // ❗ Karena pakai Authorization: Bearer
     'supports_credentials' => false,
 ];

@@ -7,36 +7,84 @@
     <style>
         body {
             font-family: DejaVu Sans, sans-serif;
-            font-size: 12px;
+            font-size: 11px;
+            margin: 0;
+            padding: 0;
+            color: #222;
         }
 
-        h2 {
+        /* ================= HEADER ================= */
+        .header {
+            background: #1f4fa3;
+            color: #fff;
+            padding: 22px 20px;
             text-align: center;
-            margin-bottom: 5px;
         }
 
-        .subtitle {
-            text-align: center;
-            margin-bottom: 20px;
+        .company {
+            font-size: 14px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
         }
 
+        .header h1 {
+            margin: 0;
+            font-size: 22px;
+            letter-spacing: 1px;
+        }
+
+        .header small {
+            font-size: 11px;
+            opacity: 0.9;
+        }
+
+        /* ================= CONTAINER ================= */
+        .container {
+            padding: 22px;
+        }
+
+        /* ================= TABLE ================= */
         table {
             width: 100%;
             border-collapse: collapse;
         }
 
+        /* ================= INFO ================= */
+        .info th,
         .info td {
-            padding: 4px;
+            padding: 4px 6px;
+            vertical-align: top;
         }
 
-        .salary th,
-        .salary td {
-            border: 1px solid #000;
-            padding: 6px;
+        .info th {
+            font-weight: bold;
+            text-align: left;
+            width: 120px;
         }
 
-        .salary th {
-            background: #f2f2f2;
+        /* ================= SECTION ================= */
+        .section-title {
+            background: #1f4fa3;
+            color: #fff;
+            padding: 7px 10px;
+            font-weight: bold;
+            font-size: 12px;
+            margin-top: 12px;
+        }
+
+        .box {
+            border: 1px solid #dcdcdc;
+        }
+
+        .box td,
+        .box th {
+            padding: 6px 8px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .box th {
+            background: #f4f6fb;
             text-align: left;
         }
 
@@ -44,90 +92,143 @@
             text-align: right;
         }
 
-        .total {
+        .center {
+            text-align: center;
+        }
+
+        /* ================= TOTAL ================= */
+        .net-salary {
+            margin-top: 16px;
+            padding: 12px;
+            border: 2px solid #1f4fa3;
+            font-size: 14px;
             font-weight: bold;
-            background: #eaeaea;
+            text-align: center;
+        }
+
+        /* ================= SIGN ================= */
+        .sign {
+            margin-top: 45px;
+            width: 100%;
+        }
+
+        .sign td {
+            text-align: center;
+            padding-top: 45px;
+        }
+
+        .sign .name {
+            margin-top: 5px;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
 
-    <h2>SLIP GAJI KARYAWAN</h2>
+{{-- ================= HEADER ================= --}}
+<div class="header">
+    <div class="company">CV. Sidomulyo Advertising</div>
+    <h1>SLIP GAJI</h1>
+    <small>Payroll Slip – {{ $bulan }}</small>
+</div>
 
-    {{-- ❌ JANGAN PAKAI CARBON DI BLADE --}}
-    {{-- ✅ LANGSUNG TAMPILKAN --}}
-    <div class="subtitle">
-        Bulan {{ $bulan }}
-    </div>
+<div class="container">
 
+    {{-- ================= INFO KARYAWAN ================= --}}
     <table class="info">
         <tr>
-            <td width="120">Nama</td>
+            <th>Nama</th>
             <td>: {{ $user->name }}</td>
+            <th>Periode</th>
+            <td>: {{ $bulan }}</td>
         </tr>
         <tr>
-            <td>NIK</td>
-            <td>: {{ $user->nik }}</td>
+            <th>NIK</th>
+            <td>: {{ $user->nik ?? '-' }}</td>
+            <th>Jabatan</th>
+            <td>: {{ $user->jabatan ?? '-' }}</td>
         </tr>
         <tr>
-            <td>Jabatan</td>
-            <td>: {{ $user->jabatan }}</td>
-        </tr>
-        <tr>
-            <td>Penempatan</td>
-            <td>: {{ $user->penempatan }}</td>
+            <th>Penempatan</th>
+            <td>: {{ $user->penempatan ?? '-' }}</td>
+            <th>Tanggal Cetak</th>
+            <td>: {{ date('d F Y') }}</td>
         </tr>
     </table>
 
-    <br>
+    {{-- ================= PENERIMAAN ================= --}}
+    <div class="section-title">PENERIMAAN</div>
+    <div class="box">
+        <table>
+            <tr>
+                <td>Gaji Pokok</td>
+                <td class="right">Rp {{ number_format($salary->gaji_pokok,0,',','.') }}</td>
+            </tr>
+            <tr>
+                <td>Tunjangan Makan</td>
+                <td class="right">Rp {{ number_format($salary->uang_makan,0,',','.') }}</td>
+            </tr>
+            <tr>
+                <td>Tunjangan Transport</td>
+                <td class="right">Rp {{ number_format($salary->transport,0,',','.') }}</td>
+            </tr>
+            <tr>
+                <td>Lembur ({{ number_format($totalJamLembur,1) }} Jam)</td>
+                <td class="right">Rp {{ number_format($totalLembur,0,',','.') }}</td>
+            </tr>
+            <tr>
+                <th>Total Bonus Job Todo</th>
+                <th class="right">Rp {{ number_format($totalBonusJob ?? 0,0,',','.') }}</th>
+            </tr>
+        </table>
+    </div>
 
-    <table class="salary">
+    {{-- ================= TOTAL GAJI ================= --}}
+    <div class="net-salary">
+        TOTAL GAJI DITERIMA<br>
+        Rp {{ number_format($totalGaji,0,',','.') }}
+    </div>
+
+    {{-- ================= RINCIAN BONUS ================= --}}
+    <div class="section-title">RINCIAN BONUS JOB TODO</div>
+    <div class="box">
+        <table>
+            <tr>
+                <th width="70%">Job</th>
+                <th class="right">Bonus</th>
+            </tr>
+            @forelse($jobBonus as $job)
+                <tr>
+                    <td>{{ $job->title }}</td>
+                    <td class="right">Rp {{ number_format($job->bonus,0,',','.') }}</td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="2" class="center">Tidak ada bonus job</td>
+                </tr>
+            @endforelse
+        </table>
+    </div>
+
+    {{-- ================= SIGN ================= --}}
+    <table class="sign">
         <tr>
-            <th>Gaji Pokok</th>
-            <td class="right">
-                Rp {{ number_format($salary->gaji_pokok) }}
+            <td>
+                Disetujui oleh,<br>
+                HRD<br>
+                (__________________)<br>
+                <span class="name">HRD</span>
             </td>
-        </tr>
-        <tr>
-            <th>Uang Makan</th>
-            <td class="right">
-                Rp {{ number_format($salary->uang_makan) }}
-            </td>
-        </tr>
-        <tr>
-            <th>Transport</th>
-            <td class="right">
-                Rp {{ number_format($salary->transport) }}
-            </td>
-        </tr>
-        <tr>
-            <th>
-                Lembur ({{ number_format($totalJamLembur, 1) }} Jam)
-            </th>
-            <td class="right">
-                Rp {{ number_format($totalLembur) }}
-            </td>
-        </tr>
-        <tr class="total">
-            <th>TOTAL GAJI</th>
-            <td class="right">
-                Rp {{ number_format($totalGaji) }}
+            <td>
+                Diterima oleh,<br>
+                {{ $user->name }}<br>
+                (__________________)<br>
+                <span class="name">{{ $user->name }}</span>
             </td>
         </tr>
     </table>
 
-    <br><br>
-
-    <table width="100%">
-        <tr>
-            <td width="60%"></td>
-            <td align="center">
-                {{ now()->translatedFormat('d F Y') }}<br>
-                HRD<br><br><br>
-                (____________________)
-            </td>
-        </tr>
-    </table>
+</div>
 
 </body>
 </html>

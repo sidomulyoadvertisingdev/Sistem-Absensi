@@ -7,39 +7,62 @@ use Illuminate\Foundation\Configuration\Middleware;
 return Application::configure(basePath: dirname(__DIR__))
 
     /*
-    |----------------------------------------------------------------------
+    |--------------------------------------------------------------------------
     | ROUTING
-    |----------------------------------------------------------------------
+    |--------------------------------------------------------------------------
     */
     ->withRouting(
+        channels: __DIR__.'/../routes/channels.php',
         web: __DIR__ . '/../routes/web.php',
-        api: __DIR__ . '/../routes/api.php',
+
+        api: [
+            __DIR__ . '/../routes/api.php',
+            __DIR__ . '/../routes/api.sidomulyo.php',
+        ],
+
         commands: __DIR__ . '/../routes/console.php',
         health: '/up',
     )
 
     /*
-    |----------------------------------------------------------------------
+    |--------------------------------------------------------------------------
     | MIDDLEWARE
-    |----------------------------------------------------------------------
+    |--------------------------------------------------------------------------
     */
     ->withMiddleware(function (Middleware $middleware): void {
 
         /*
-        |----------------------------------------------------------
-        | ALIAS MIDDLEWARE (WAJIB UNTUK LARAVEL 11)
-        |----------------------------------------------------------
+        |--------------------------------------------------------------------------
+        | GLOBAL MIDDLEWARE (CORS)
+        |--------------------------------------------------------------------------
+        */
+        $middleware->use([
+            \Illuminate\Http\Middleware\HandleCors::class,
+        ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | ALIAS MIDDLEWARE
+        |--------------------------------------------------------------------------
         */
         $middleware->alias([
             'auth'     => \App\Http\Middleware\Authenticate::class,
             'guest'    => \App\Http\Middleware\RedirectIfAuthenticated::class,
             'is_admin' => \App\Http\Middleware\IsAdmin::class,
+
+            /*
+            |--------------------------------------------------------------------------
+            | ❗ JANGAN override auth:sanctum ❗
+            | Laravel akan otomatis pakai Sanctum Guard
+            |--------------------------------------------------------------------------
+            */
+            // ❌ JANGAN ADA auth:sanctum DI SINI
         ]);
 
         /*
-        |----------------------------------------------------------
-        | WEB MIDDLEWARE GROUP (WAJIB ADA SESSION)
-        |----------------------------------------------------------
+        |--------------------------------------------------------------------------
+        | WEB GROUP
+        |--------------------------------------------------------------------------
         */
         $middleware->group('web', [
             \Illuminate\Cookie\Middleware\EncryptCookies::class,
@@ -50,12 +73,9 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         /*
-        |----------------------------------------------------------
-        | API MIDDLEWARE (NEXT.JS / MOBILE)
-        |----------------------------------------------------------
-        | - TANPA CSRF
-        | - TANPA SESSION
-        | - AMAN & RINGAN
+        |--------------------------------------------------------------------------
+        | API GROUP (STATELESS)
+        |--------------------------------------------------------------------------
         */
         $middleware->group('api', [
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
@@ -63,9 +83,9 @@ return Application::configure(basePath: dirname(__DIR__))
     })
 
     /*
-    |----------------------------------------------------------------------
+    |--------------------------------------------------------------------------
     | EXCEPTIONS
-    |----------------------------------------------------------------------
+    |--------------------------------------------------------------------------
     */
     ->withExceptions(function (Exceptions $exceptions): void {
         //

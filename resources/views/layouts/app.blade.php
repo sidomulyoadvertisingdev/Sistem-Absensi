@@ -4,7 +4,6 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>@yield('title', config('app.name', 'Admin Panel'))</title>
@@ -21,7 +20,9 @@
     @stack('styles')
 </head>
 
-<body class="hold-transition sidebar-mini">
+{{-- 🔥 FIX SCROLL: layout-fixed --}}
+<body class="hold-transition sidebar-mini layout-fixed">
+
 <div class="wrapper">
 
     {{-- ================= NAVBAR ================= --}}
@@ -65,7 +66,10 @@
 
         <div class="sidebar">
             <nav class="mt-2">
-                <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview">
+                <ul class="nav nav-pills nav-sidebar flex-column"
+                    data-widget="treeview"
+                    role="menu"
+                    data-accordion="false">
 
                     {{-- Dashboard --}}
                     <li class="nav-item">
@@ -76,6 +80,25 @@
                         </a>
                     </li>
 
+                    {{-- Manajemen User --}}
+                    @if(Auth::user()->isAdmin())
+                    <li class="nav-item has-treeview {{ request()->is('admin/users*') ? 'menu-open' : '' }}">
+                        <a href="#" class="nav-link {{ request()->is('admin/users*') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-user-cog"></i>
+                            <p>Manajemen User<i class="right fas fa-angle-left"></i></p>
+                        </a>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item">
+                                <a href="{{ route('admin.users.index') }}"
+                                   class="nav-link {{ request()->routeIs('admin.users.index') ? 'active' : '' }}">
+                                    <i class="far fa-circle nav-icon"></i>
+                                    <p>Daftar User</p>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    @endif
+
                     {{-- Karyawan --}}
                     <li class="nav-item">
                         <a href="{{ route('admin.karyawan.index') }}"
@@ -85,10 +108,40 @@
                         </a>
                     </li>
 
+                    {{-- Lowongan & Pelamar --}}
+                    <li class="nav-item has-treeview {{ request()->is('admin/jobs*') ? 'menu-open' : '' }}">
+                        <a href="#" class="nav-link {{ request()->is('admin/jobs*') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-briefcase"></i>
+                            <p>Lowongan & Pelamar<i class="right fas fa-angle-left"></i></p>
+                        </a>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item">
+                                <a href="{{ route('admin.jobs.index') }}" class="nav-link">
+                                    <i class="far fa-circle nav-icon"></i>
+                                    <p>Data Lowongan</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('admin.jobs.applicants.all') }}" class="nav-link">
+                                    <i class="far fa-circle nav-icon"></i>
+                                    <p>Pelamar Pekerjaan</p>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    {{-- 🔥 JOB TODO (BARU) --}}
+                    <li class="nav-item">
+                        <a href="{{ route('admin.job-todos.index') }}"
+                           class="nav-link {{ request()->routeIs('admin.job-todos*') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-tasks"></i>
+                            <p>Job Todo</p>
+                        </a>
+                    </li>
+
                     {{-- Absensi --}}
                     <li class="nav-item">
-                        <a href="{{ route('admin.absensi') }}"
-                           class="nav-link {{ request()->routeIs('admin.absensi*') ? 'active' : '' }}">
+                        <a href="{{ route('admin.absensi') }}" class="nav-link">
                             <i class="nav-icon fas fa-user-check"></i>
                             <p>Absensi</p>
                         </a>
@@ -96,8 +149,7 @@
 
                     {{-- Lembur --}}
                     <li class="nav-item">
-                        <a href="{{ route('admin.lembur') }}"
-                           class="nav-link {{ request()->routeIs('admin.lembur*') ? 'active' : '' }}">
+                        <a href="{{ route('admin.lembur') }}" class="nav-link">
                             <i class="nav-icon fas fa-clock"></i>
                             <p>Lembur</p>
                         </a>
@@ -105,8 +157,7 @@
 
                     {{-- Jadwal --}}
                     <li class="nav-item">
-                        <a href="{{ route('admin.jadwal') }}"
-                           class="nav-link {{ request()->routeIs('admin.jadwal*') ? 'active' : '' }}">
+                        <a href="{{ route('admin.jadwal') }}" class="nav-link">
                             <i class="nav-icon fas fa-calendar-alt"></i>
                             <p>Jadwal Kerja</p>
                         </a>
@@ -114,8 +165,7 @@
 
                     {{-- Gaji --}}
                     <li class="nav-item">
-                        <a href="{{ route('admin.gaji') }}"
-                           class="nav-link {{ request()->routeIs('admin.gaji*') ? 'active' : '' }}">
+                        <a href="{{ route('admin.gaji') }}" class="nav-link">
                             <i class="nav-icon fas fa-money-bill-wave"></i>
                             <p>Gaji</p>
                         </a>
@@ -123,8 +173,7 @@
 
                     {{-- Laporan --}}
                     <li class="nav-item">
-                        <a href="{{ route('admin.laporan') }}"
-                           class="nav-link {{ request()->routeIs('admin.laporan*') ? 'active' : '' }}">
+                        <a href="{{ route('admin.laporan') }}" class="nav-link">
                             <i class="nav-icon fas fa-file-alt"></i>
                             <p>Laporan</p>
                         </a>
@@ -134,24 +183,17 @@
                     <li class="nav-item has-treeview {{ request()->is('admin/pelanggaran*') ? 'menu-open' : '' }}">
                         <a href="#" class="nav-link {{ request()->is('admin/pelanggaran*') ? 'active' : '' }}">
                             <i class="nav-icon fas fa-exclamation-triangle"></i>
-                            <p>
-                                Pelanggaran
-                                <i class="right fas fa-angle-left"></i>
-                            </p>
+                            <p>Pelanggaran<i class="right fas fa-angle-left"></i></p>
                         </a>
-
                         <ul class="nav nav-treeview">
                             <li class="nav-item">
-                                <a href="{{ route('admin.pelanggaran.index') }}"
-                                   class="nav-link {{ request()->routeIs('admin.pelanggaran.index') ? 'active' : '' }}">
+                                <a href="{{ route('admin.pelanggaran.index') }}" class="nav-link">
                                     <i class="far fa-circle nav-icon"></i>
                                     <p>Log Pelanggaran</p>
                                 </a>
                             </li>
-
                             <li class="nav-item">
-                                <a href="{{ route('admin.pelanggaran.create') }}"
-                                   class="nav-link {{ request()->routeIs('admin.pelanggaran.create') ? 'active' : '' }}">
+                                <a href="{{ route('admin.pelanggaran.create') }}" class="nav-link">
                                     <i class="far fa-circle nav-icon"></i>
                                     <p>Tambah Pelanggaran</p>
                                 </a>
@@ -163,32 +205,23 @@
                     <li class="nav-item has-treeview {{ request()->is('admin/pelanggaran/master*') ? 'menu-open' : '' }}">
                         <a href="#" class="nav-link {{ request()->is('admin/pelanggaran/master*') ? 'active' : '' }}">
                             <i class="nav-icon fas fa-database"></i>
-                            <p>
-                                Master Data
-                                <i class="right fas fa-angle-left"></i>
-                            </p>
+                            <p>Master Data<i class="right fas fa-angle-left"></i></p>
                         </a>
-
                         <ul class="nav nav-treeview">
                             <li class="nav-item">
-                                <a href="{{ route('admin.pelanggaran.master.jabatan.index') }}"
-                                   class="nav-link {{ request()->routeIs('admin.pelanggaran.master.jabatan*') ? 'active' : '' }}">
+                                <a href="{{ route('admin.pelanggaran.master.jabatan.index') }}" class="nav-link">
                                     <i class="far fa-circle nav-icon"></i>
                                     <p>Master Jabatan</p>
                                 </a>
                             </li>
-
                             <li class="nav-item">
-                                <a href="{{ route('admin.pelanggaran.master.lokasi.index') }}"
-                                   class="nav-link {{ request()->routeIs('admin.pelanggaran.master.lokasi*') ? 'active' : '' }}">
+                                <a href="{{ route('admin.pelanggaran.master.lokasi.index') }}" class="nav-link">
                                     <i class="far fa-circle nav-icon"></i>
                                     <p>Master Lokasi</p>
                                 </a>
                             </li>
-
                             <li class="nav-item">
-                                <a href="{{ route('admin.pelanggaran.master.kode.index') }}"
-                                   class="nav-link {{ request()->routeIs('admin.pelanggaran.master.kode*') ? 'active' : '' }}">
+                                <a href="{{ route('admin.pelanggaran.master.kode.index') }}" class="nav-link">
                                     <i class="far fa-circle nav-icon"></i>
                                     <p>Master Kode Pelanggaran</p>
                                 </a>
@@ -218,9 +251,11 @@
         </div>
     </aside>
 
-    {{-- ================= CONTENT ================= --}}
-    <div class="content-wrapper p-4">
-        @yield('content')
+    {{-- CONTENT --}}
+    <div class="content-wrapper">
+        <section class="content p-4">
+            @yield('content')
+        </section>
     </div>
 
 </div>
@@ -234,50 +269,5 @@
 <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
 
 @stack('scripts')
-
-{{-- ================= POPUP UPDATE APP ================= --}}
-@auth
-@php
-    $currentVersion = config('app.app_version');
-    $seenVersion = auth()->user()->app_version_seen;
-@endphp
-
-@if($seenVersion !== $currentVersion)
-<div class="modal fade show" style="display:block;background:rgba(0,0,0,.5);" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title">🚀 Pembaruan Aplikasi</h5>
-            </div>
-
-            <div class="modal-body">
-                <p class="mb-2">
-                    Aplikasi berhasil diperbarui ke versi
-                    <strong>v{{ $currentVersion }}</strong>
-                </p>
-
-                <ul class="mb-0">
-                    <li>Penyesuaian dan penyempurnaan <b>Dashboard</b></li>
-                    <li>Logika <b>keterlambatan otomatis</b> jika absen &gt; 15 menit</li>
-                    <li>Penambahan fitur <b>Edit & Hapus Karyawan</b></li>
-                </ul>
-            </div>
-
-            <div class="modal-footer">
-                <form method="POST" action="{{ route('app.update.ack') }}">
-                    @csrf
-                    <button type="submit" class="btn btn-primary">
-                        Mengerti
-                    </button>
-                </form>
-            </div>
-
-        </div>
-    </div>
-</div>
-@endif
-@endauth
-
 </body>
 </html>

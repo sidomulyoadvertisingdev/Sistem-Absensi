@@ -7,6 +7,11 @@
 
     <h1 class="mb-4">Pengaturan Gaji Per Karyawan</h1>
 
+    {{-- INFO BULAN --}}
+    <div class="mb-3">
+        <strong>Periode:</strong> {{ \Carbon\Carbon::parse($bulan)->translatedFormat('F Y') }}
+    </div>
+
     {{-- ALERT --}}
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
@@ -26,20 +31,20 @@
                     </tr>
                 </thead>
                 <tbody>
-                @foreach($users as $user)
+                @forelse($users as $user)
                     <tr>
                         <td>{{ $user->name }}</td>
 
                         <td>
-                            Rp {{ number_format($user->salary->gaji_pokok ?? 0) }}
+                            Rp {{ number_format($user->salary->gaji_pokok ?? 0, 0, ',', '.') }}
                         </td>
 
                         <td>
-                            Rp {{ number_format($user->salary->uang_makan ?? 0) }}
+                            Rp {{ number_format($user->salary->uang_makan ?? 0, 0, ',', '.') }}
                         </td>
 
                         <td>
-                            Rp {{ number_format($user->salary->transport ?? 0) }}
+                            Rp {{ number_format($user->salary->transport ?? 0, 0, ',', '.') }}
                         </td>
 
                         <td>
@@ -67,7 +72,13 @@
                             @endif
                         </td>
                     </tr>
-                @endforeach
+                @empty
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">
+                            Tidak ada data karyawan
+                        </td>
+                    </tr>
+                @endforelse
                 </tbody>
             </table>
         </div>

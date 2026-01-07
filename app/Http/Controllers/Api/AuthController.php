@@ -4,50 +4,69 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use App\Models\User;
 
 class AuthController extends Controller
 {
+    /**
+     * ==================================
+     * LOGIN (ABSENSI / KARIER / ADMIN)
+     * ==================================
+     */
     public function login(Request $request)
     {
-        // validasi input
         $request->validate([
-            'email' => 'required|email',
+            'email'    => 'required|email',
             'password' => 'required|string',
         ]);
 
-        // cek ke database users
-        if (!Auth::attempt($request->only('email', 'password'))) {
+        $user = User::where('email', $request->email)->first();
+
+        if (! $user || ! Hash::check($request->password, $user->password)) {
             return response()->json([
-                'message' => 'Email atau password salah'
+                'success' => false,
+                'message' => 'Email atau password salah',
             ], 401);
         }
 
-        $user = Auth::user();
+        // ambil client type (WAJIB beda tiap frontend)
+        $tokenName = $request->header('X-Client-Type', 'web');
 
-        // hapus token lama (biar 1 device / rapi)
-        $user->tokens()->delete();
+        // hapus token LAMA hanya untuk client ini
+        $user->tokens()
+            ->where('name', $tokenName)
+            ->delete();
 
         // buat token baru
-        $token = $user->createToken('mobile-app')->plainTextToken;
+        $token = $user->createToken($tokenName)->plainTextToken;
 
         return response()->json([
-            'token' => $token,
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
+            'success' => true,
+            'token'   => $token,
+            'user'    => [
+                'id'    => $user->id,
+                'name'  => $user->name,
                 'email' => $user->email,
-                'role' => $user->role,
-            ]
+                'role'  => $user->role,
+            ],
         ]);
     }
 
+    /**
+     * ===============================
+     * LOGOUT
+     * ===============================
+     */
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        if ($request->user() && $request->user()->currentAccessToken()) {
+            $request->user()->currentAccessToken()->delete();
+        }
 
         return response()->json([
-            'message' => 'Logout berhasil'
+            'success' => true,
+            'message' => 'Logout berhasil',
         ]);
     }
 }
