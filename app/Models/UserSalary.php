@@ -15,10 +15,11 @@ class UserSalary extends Model
     protected $fillable = [
         'user_id',
         'gaji_pokok',
-        'uang_makan',
-        'transport',
+        'tunjangan_umum',
+        'tunjangan_transport',
+        'tunjangan_thr',
+        'tunjangan_kesehatan',
         'lembur_per_jam',
-        'bonus',          // 🔥 BONUS JOB
         'aktif',
     ];
 
@@ -41,28 +42,42 @@ class UserSalary extends Model
 
     /**
      * ===============================
-     * HELPER METHOD (AMAN DIPAKAI)
+     * HELPER METHOD
      * ===============================
      */
 
     /**
-     * Tambah bonus ke gaji (dipakai saat job selesai)
+     * Hitung gaji per hari (GAJI POKOK SAJA)
      */
-    public function addBonus(int $amount): void
+    public function gajiPerHari(int $hariKerja = 22): float
     {
-        $this->bonus = ($this->bonus ?? 0) + $amount;
-        $this->save();
+        if ($hariKerja <= 0) {
+            return 0;
+        }
+
+        return ($this->gaji_pokok ?? 0) / $hariKerja;
     }
 
     /**
-     * Hitung total gaji keseluruhan
+     * Hitung total tunjangan tetap
      */
-    public function totalGaji(): int
+    public function totalTunjangan(): int
+    {
+        return
+            ($this->tunjangan_umum ?? 0) +
+            ($this->tunjangan_transport ?? 0) +
+            ($this->tunjangan_thr ?? 0) +
+            ($this->tunjangan_kesehatan ?? 0);
+    }
+
+    /**
+     * Hitung total gaji (TANPA ABSENSI & LEMBUR)
+     * ⚠️ Jangan dipakai untuk payroll final
+     */
+    public function totalGajiMaster(): int
     {
         return
             ($this->gaji_pokok ?? 0) +
-            ($this->uang_makan ?? 0) +
-            ($this->transport ?? 0) +
-            ($this->bonus ?? 0);
+            $this->totalTunjangan();
     }
 }

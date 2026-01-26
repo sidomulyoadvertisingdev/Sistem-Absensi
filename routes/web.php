@@ -17,7 +17,9 @@ use App\Http\Controllers\Admin\{
     JobController,
     JobFormFieldController,
     JobApplicantController,
-    JobTodoController // 🔥 JOB TODO
+    JobTodoController,
+    SalaryDeductionRuleController,
+    SubmissionTypeController
 };
 
 /*
@@ -50,7 +52,6 @@ Route::middleware(['web', 'auth'])->post('/app-update/acknowledge', function () 
     auth()->user()->update([
         'app_version_seen' => config('app.app_version'),
     ]);
-
     return redirect()->back();
 })->name('app.update.ack');
 
@@ -67,11 +68,7 @@ Route::middleware(['web', 'auth', 'is_admin'])
         /* ================= DASHBOARD ================= */
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
-        /*
-        ==================================================
-        | USER MANAGEMENT
-        ==================================================
-        */
+        /* ================= USERS ================= */
         Route::prefix('users')->name('users.')->group(function () {
             Route::get('/', [UserController::class, 'allUsers'])->name('index');
             Route::post('/{user}/promote', [UserController::class, 'promoteToKaryawan'])->name('promote');
@@ -97,17 +94,41 @@ Route::middleware(['web', 'auth', 'is_admin'])
 
         /* ================= LAPORAN ================= */
         Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan');
+        Route::get('/laporan/gaji/pdf', [LaporanController::class, 'exportPdf'])
+            ->name('laporan.gaji.pdf');
+
+        /* ================= ATURAN POTONGAN GAJI ================= */
+        Route::prefix('salary-deduction-rules')
+            ->name('salary-deduction-rules.')
+            ->group(function () {
+                Route::get('/', [SalaryDeductionRuleController::class, 'index'])->name('index');
+                Route::get('/create', [SalaryDeductionRuleController::class, 'create'])->name('create');
+                Route::post('/', [SalaryDeductionRuleController::class, 'store'])->name('store');
+                Route::get('/{rule}/edit', [SalaryDeductionRuleController::class, 'edit'])->name('edit');
+                Route::put('/{rule}', [SalaryDeductionRuleController::class, 'update'])->name('update');
+                Route::delete('/{rule}', [SalaryDeductionRuleController::class, 'destroy'])->name('destroy');
+                Route::post('/{rule}/toggle', [SalaryDeductionRuleController::class, 'toggle'])->name('toggle');
+            });
+
+        /* ================= POTONGAN GAJI (ALIAS UI) ================= */
+        Route::prefix('potongan-gaji')
+            ->name('potongan-gaji.')
+            ->group(function () {
+                Route::get('/', [SalaryDeductionRuleController::class, 'index'])->name('index');
+                Route::get('/create', [SalaryDeductionRuleController::class, 'create'])->name('create');
+                Route::post('/', [SalaryDeductionRuleController::class, 'store'])->name('store');
+                Route::get('/{rule}/edit', [SalaryDeductionRuleController::class, 'edit'])->name('edit');
+                Route::put('/{rule}', [SalaryDeductionRuleController::class, 'update'])->name('update');
+                Route::delete('/{rule}', [SalaryDeductionRuleController::class, 'destroy'])->name('destroy');
+                Route::post('/{rule}/toggle', [SalaryDeductionRuleController::class, 'toggle'])->name('toggle');
+            });
 
         /* ================= JADWAL KERJA ================= */
         Route::get('/jadwal-kerja', [WorkScheduleController::class, 'index'])->name('jadwal');
         Route::get('/jadwal-kerja/{user}/edit', [WorkScheduleController::class, 'edit'])->name('jadwal.edit');
         Route::post('/jadwal-kerja/{user}', [WorkScheduleController::class, 'update'])->name('jadwal.update');
 
-        /*
-        ==================================================
-        | KARYAWAN
-        ==================================================
-        */
+        /* ================= KARYAWAN ================= */
         Route::prefix('karyawan')->name('karyawan.')->group(function () {
             Route::get('/', [UserController::class, 'index'])->name('index');
             Route::get('/create', [UserController::class, 'create'])->name('create');
@@ -115,16 +136,11 @@ Route::middleware(['web', 'auth', 'is_admin'])
             Route::get('/{id}/edit', [UserController::class, 'edit'])->name('edit');
             Route::put('/{id}', [UserController::class, 'update'])->name('update');
             Route::delete('/{id}', [UserController::class, 'destroy'])->name('destroy');
-
             Route::get('/export/csv', [UserController::class, 'exportCsv'])->name('export.csv');
             Route::post('/import/csv', [UserController::class, 'importCsv'])->name('import.csv');
         });
 
-        /*
-        ==================================================
-        | LOWONGAN PEKERJAAN
-        ==================================================
-        */
+        /* ================= JOBS ================= */
         Route::prefix('jobs')->name('jobs.')->group(function () {
             Route::get('/', [JobController::class, 'index'])->name('index');
             Route::get('/create', [JobController::class, 'create'])->name('create');
@@ -136,47 +152,23 @@ Route::middleware(['web', 'auth', 'is_admin'])
             Route::post('/{job}/fields', [JobFormFieldController::class, 'store'])->name('fields.store');
             Route::delete('/fields/{field}', [JobFormFieldController::class, 'destroy'])->name('fields.destroy');
 
-            Route::get('/{job}/applicants', [JobApplicantController::class, 'index'])->name('applicants.index');
-            Route::put('/applicants/{applicant}/status', [JobApplicantController::class, 'updateStatus'])
-                ->name('applicants.updateStatus');
-
-            Route::get('/applicants/{applicant}/download/{field}',
-                [JobApplicantController::class, 'downloadFile']
-            )->name('applicants.download');
+            Route::get('/{job}/applicants', [JobApplicantController::class, 'index'])
+                ->name('applicants.index');
         });
 
         Route::get('/jobs/applicants', [JobApplicantController::class, 'indexAll'])
             ->name('jobs.applicants.all');
 
-        /*
-       /*
-|--------------------------------------------------------------------------
-| JOB TODO (BROADCAST & DIRECT ASSIGN)
-|--------------------------------------------------------------------------
-*/
-Route::prefix('job-todos')->name('job-todos.')->group(function () {
+        /* ================= JOB TODO ================= */
+        Route::prefix('job-todos')->name('job-todos.')->group(function () {
+            Route::get('/', [JobTodoController::class, 'index'])->name('index');
+            Route::get('/create', [JobTodoController::class, 'create'])->name('create');
+            Route::post('/', [JobTodoController::class, 'store'])->name('store');
+            Route::get('/{jobTodo}', [JobTodoController::class, 'show'])->name('show');
+            Route::put('/{jobTodo}/close', [JobTodoController::class, 'close'])->name('close');
+        });
 
-    Route::get('/', [JobTodoController::class, 'index'])
-        ->name('index');
-
-    Route::get('/create', [JobTodoController::class, 'create'])
-        ->name('create');
-
-    Route::post('/', [JobTodoController::class, 'store'])
-        ->name('store');
-
-    Route::get('/{jobTodo}', [JobTodoController::class, 'show'])
-        ->name('show');
-
-    Route::put('/{jobTodo}/close', [JobTodoController::class, 'close'])
-        ->name('close');
-});
-
-        /*
-        ==================================================
-        | PELANGGARAN
-        ==================================================
-        */
+        /* ================= PELANGGARAN ================= */
         Route::prefix('pelanggaran')->name('pelanggaran.')->group(function () {
             Route::get('/', [PelanggaranController::class, 'index'])->name('index');
             Route::get('/create', [PelanggaranController::class, 'create'])->name('create');
@@ -197,4 +189,67 @@ Route::prefix('job-todos')->name('job-todos.')->group(function () {
                 Route::post('/kode', [MasterPelanggaranController::class, 'store'])->name('kode.store');
             });
         });
+
+       /* ================= SUBMISSION TYPES ================= */
+Route::prefix('submission-types')
+    ->name('submission-types.')
+    ->group(function () {
+
+        Route::get('/', [SubmissionTypeController::class, 'index'])->name('index');
+        Route::get('/create', [SubmissionTypeController::class, 'create'])->name('create');
+        Route::post('/', [SubmissionTypeController::class, 'store'])->name('store');
+        Route::get('/{type}/edit', [SubmissionTypeController::class, 'edit'])->name('edit');
+        Route::put('/{type}', [SubmissionTypeController::class, 'update'])->name('update');
+        Route::delete('/{type}', [SubmissionTypeController::class, 'destroy'])->name('destroy');
+        Route::post('/{type}/toggle', [SubmissionTypeController::class, 'toggle'])->name('toggle');
+    });
+
+
+//* ================= SUBMISSION (ADMIN) ================= */
+Route::prefix('submission')
+    ->name('submission.')
+    ->group(function () {
+
+        // LIST semua pengajuan
+        Route::get('/', [\App\Http\Controllers\Admin\SubmissionController::class, 'index'])
+            ->name('index');
+
+        // DETAIL pengajuan
+        Route::get('/{submission}', [\App\Http\Controllers\Admin\SubmissionController::class, 'show'])
+            ->name('show');
+
+        // APPROVE
+        Route::post('/{submission}/approve', [\App\Http\Controllers\Admin\SubmissionController::class, 'approve'])
+            ->name('approve');
+
+        // REJECT
+        Route::post('/{submission}/reject', [\App\Http\Controllers\Admin\SubmissionController::class, 'reject'])
+            ->name('reject');
+
+        // CANCEL / RESET ke pending
+        Route::post('/{submission}/cancel', [\App\Http\Controllers\Admin\SubmissionController::class, 'cancel'])
+            ->name('cancel');
+    });
+
+/* ================= ANNOUNCEMENTS ================= */
+Route::prefix('announcements')
+    ->name('announcements.')
+    ->group(function () {
+
+        Route::get('/', [\App\Http\Controllers\Admin\AnnouncementController::class, 'index'])
+            ->name('index');
+
+        Route::get('/create', [\App\Http\Controllers\Admin\AnnouncementController::class, 'create'])
+            ->name('create');
+
+        Route::post('/', [\App\Http\Controllers\Admin\AnnouncementController::class, 'store'])
+            ->name('store');
+
+        Route::get('/{announcement}', [\App\Http\Controllers\Admin\AnnouncementController::class, 'show'])
+            ->name('show');
+
+        Route::post('/{announcement}/toggle', [\App\Http\Controllers\Admin\AnnouncementController::class, 'toggle'])
+            ->name('toggle');
+    });
+
     });

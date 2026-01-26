@@ -34,13 +34,12 @@ class AbsensiController extends Controller
     public function create()
     {
         $users = User::orderBy('name')->get();
-
         return view('admin.absensi.create', compact('users'));
     }
 
     /**
      * ===============================
-     * SIMPAN / UPDATE ABSENSI (ADMIN)
+     * SIMPAN / UPDATE ABSENSI
      * ===============================
      */
     public function store(Request $request)
@@ -53,27 +52,16 @@ class AbsensiController extends Controller
             'foto'    => 'nullable|image|max:2048',
         ]);
 
-        /**
-         * ==================================================
-         * Ambil / buat absensi di tanggal yang sama
-         * ==================================================
-         */
         $absensi = Absensi::firstOrCreate(
             [
                 'user_id' => $request->user_id,
                 'tanggal' => $request->tanggal,
             ],
             [
-                // default, akan ditentukan ulang saat MASUK
                 'status' => 'hadir',
             ]
         );
 
-        /**
-         * ==================================================
-         * SIMPAN FOTO (OPSIONAL)
-         * ==================================================
-         */
         if ($request->hasFile('foto')) {
             $absensi->foto = $request->file('foto')
                 ->store('absensi', 'public');
@@ -81,7 +69,21 @@ class AbsensiController extends Controller
 
         /**
          * ==================================================
-         * AKSI MASUK → HITUNG STATUS HADIR / TERLAMBAT
+         * AMBIL JADWAL KERJA HARI TERKAIT
+         * ==================================================
+         */
+        $hari = strtolower(
+            Carbon::parse($request->tanggal)->locale('id')->isoFormat('dddd')
+        );
+
+        $jadwal = WorkSchedule::where('user_id', $request->user_id)
+            ->where('hari', $hari)
+            ->where('aktif', true)
+            ->first();
+
+        /**
+         * ==================================================
+         * AKSI MASUK
          * ==================================================
          */
         if ($request->aksi === 'masuk') {
@@ -91,25 +93,21 @@ class AbsensiController extends Controller
                 $request->tanggal . ' ' . $request->jam
             );
 
-            // Ambil jadwal kerja hari tersebut
-            $hari = strtolower($jamMasuk->locale('id')->isoFormat('dddd'));
-
-            $jadwal = WorkSchedule::where('user_id', $request->user_id)
-                ->where('hari', $hari)
-                ->where('aktif', true)
-                ->first();
-
-            // Default status
             $status = 'hadir';
 
             if ($jadwal && $jadwal->jam_masuk) {
-                $batasTerlambat = Carbon::parse(
+                $batasMasuk = Carbon::parse(
                     $request->tanggal . ' ' . $jadwal->jam_masuk
-                )->addMinutes(15);
+                );
 
-                $status = $jamMasuk->lte($batasTerlambat)
-                    ? 'hadir'
-                    : 'terlambat';
+                // Tambah toleransi dari schedule (jika ada)
+                if (!empty($jadwal->toleransi_masuk)) {
+                    $batasMasuk->addMinutes($jadwal->toleransi_masuk);
+                }
+
+                if ($jamMasuk->gt($batasMasuk)) {
+                    $status = 'terlambat';
+                }
             }
 
             $absensi->jam_masuk = $request->jam;
@@ -118,7 +116,7 @@ class AbsensiController extends Controller
 
         /**
          * ==================================================
-         * AKSI LAIN (TIDAK MENGUBAH STATUS)
+         * AKSI ISTIRAHAT
          * ==================================================
          */
         if ($request->aksi === 'istirahat_mulai') {
@@ -129,7 +127,28 @@ class AbsensiController extends Controller
             $absensi->istirahat_selesai = $request->jam;
         }
 
+        /**
+         * ==================================================
+         * AKSI PULANG (CEK PULANG CEPAT)
+         * ==================================================
+         */
         if ($request->aksi === 'pulang') {
+
+            $jamPulang = Carbon::createFromFormat(
+                'Y-m-d H:i',
+                $request->tanggal . ' ' . $request->jam
+            );
+
+            if ($jadwal && $jadwal->jam_pulang) {
+                $batasPulang = Carbon::parse(
+                    $request->tanggal . ' ' . $jadwal->jam_pulang
+                );
+
+                if ($jamPulang->lt($batasPulang)) {
+                    $absensi->status = 'terlambat';
+                }
+            }
+
             $absensi->jam_pulang = $request->jam;
         }
 

@@ -51,24 +51,53 @@
 
             {{-- RINCIAN GAJI --}}
             <table class="table table-bordered">
+
                 <tr>
-                    <th>Gaji Pokok</th>
+                    <th>Gaji Pokok (Bulanan)</th>
                     <td class="text-right">
                         Rp {{ number_format($salary->gaji_pokok, 0, ',', '.') }}
                     </td>
                 </tr>
 
                 <tr>
-                    <th>Uang Makan</th>
+                    <th>Hitungan Per Hari</th>
                     <td class="text-right">
-                        Rp {{ number_format($salary->uang_makan, 0, ',', '.') }}
+                        Rp {{ number_format($gajiPerHari, 0, ',', '.') }}
                     </td>
                 </tr>
 
                 <tr>
-                    <th>Transport</th>
+                    <th>Gaji Pokok Dibayar ({{ $hariHadir }} Hari)</th>
                     <td class="text-right">
-                        Rp {{ number_format($salary->transport, 0, ',', '.') }}
+                        Rp {{ number_format($gajiPokokFix, 0, ',', '.') }}
+                    </td>
+                </tr>
+
+                <tr>
+                    <th>Tunjangan Umum</th>
+                    <td class="text-right">
+                        Rp {{ number_format($salary->tunjangan_umum, 0, ',', '.') }}
+                    </td>
+                </tr>
+
+                <tr>
+                    <th>Tunjangan Transport</th>
+                    <td class="text-right">
+                        Rp {{ number_format($salary->tunjangan_transport, 0, ',', '.') }}
+                    </td>
+                </tr>
+
+                <tr>
+                    <th>Tunjangan Hari Raya</th>
+                    <td class="text-right">
+                        Rp {{ number_format($salary->tunjangan_thr, 0, ',', '.') }}
+                    </td>
+                </tr>
+
+                <tr>
+                    <th>Tunjangan Kesehatan</th>
+                    <td class="text-right">
+                        Rp {{ number_format($salary->tunjangan_kesehatan, 0, ',', '.') }}
                     </td>
                 </tr>
 
@@ -83,7 +112,7 @@
                 <tr>
                     <th>Bonus Job Todo</th>
                     <td class="text-right">
-                        Rp {{ number_format($totalBonusJob ?? 0, 0, ',', '.') }}
+                        Rp {{ number_format($totalBonusJob, 0, ',', '.') }}
                     </td>
                 </tr>
 
@@ -93,6 +122,33 @@
                         Rp {{ number_format($totalGaji, 0, ',', '.') }}
                     </th>
                 </tr>
+            </table>
+
+            {{-- RINCIAN BONUS JOB --}}
+            <h5 class="mt-4">Rincian Bonus Job Todo</h5>
+            <table class="table table-sm table-bordered">
+                <thead>
+                    <tr>
+                        <th>Job</th>
+                        <th class="text-right">Bonus</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @forelse($jobBonus as $job)
+                    <tr>
+                        <td>{{ $job->title }}</td>
+                        <td class="text-right">
+                            Rp {{ number_format($job->bonus, 0, ',', '.') }}
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="2" class="text-center text-muted">
+                            Tidak ada bonus job
+                        </td>
+                    </tr>
+                @endforelse
+                </tbody>
             </table>
 
             {{-- ACTION --}}

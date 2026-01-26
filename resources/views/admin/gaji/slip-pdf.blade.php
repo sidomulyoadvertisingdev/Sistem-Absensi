@@ -13,7 +13,6 @@
             color: #222;
         }
 
-        /* ================= HEADER ================= */
         .header {
             background: #1f4fa3;
             color: #fff;
@@ -24,7 +23,6 @@
         .company {
             font-size: 14px;
             font-weight: bold;
-            letter-spacing: 0.5px;
             margin-bottom: 4px;
         }
 
@@ -34,27 +32,18 @@
             letter-spacing: 1px;
         }
 
-        .header small {
-            font-size: 11px;
-            opacity: 0.9;
-        }
-
-        /* ================= CONTAINER ================= */
         .container {
             padding: 22px;
         }
 
-        /* ================= TABLE ================= */
         table {
             width: 100%;
             border-collapse: collapse;
         }
 
-        /* ================= INFO ================= */
         .info th,
         .info td {
             padding: 4px 6px;
-            vertical-align: top;
         }
 
         .info th {
@@ -63,7 +52,6 @@
             width: 120px;
         }
 
-        /* ================= SECTION ================= */
         .section-title {
             background: #1f4fa3;
             color: #fff;
@@ -85,7 +73,6 @@
 
         .box th {
             background: #f4f6fb;
-            text-align: left;
         }
 
         .right {
@@ -96,7 +83,6 @@
             text-align: center;
         }
 
-        /* ================= TOTAL ================= */
         .net-salary {
             margin-top: 16px;
             padding: 12px;
@@ -106,7 +92,6 @@
             text-align: center;
         }
 
-        /* ================= SIGN ================= */
         .sign {
             margin-top: 45px;
             width: 100%;
@@ -125,16 +110,16 @@
 </head>
 <body>
 
-{{-- ================= HEADER ================= --}}
+{{-- HEADER --}}
 <div class="header">
     <div class="company">CV. Sidomulyo Advertising</div>
     <h1>SLIP GAJI</h1>
-    <small>Payroll Slip – {{ $bulan }}</small>
+    <small>Periode {{ $bulan }}</small>
 </div>
 
 <div class="container">
 
-    {{-- ================= INFO KARYAWAN ================= --}}
+    {{-- INFO KARYAWAN --}}
     <table class="info">
         <tr>
             <th>Nama</th>
@@ -156,61 +141,99 @@
         </tr>
     </table>
 
-    {{-- ================= PENERIMAAN ================= --}}
+    {{-- PENERIMAAN --}}
     <div class="section-title">PENERIMAAN</div>
     <div class="box">
         <table>
             <tr>
-                <td>Gaji Pokok</td>
-                <td class="right">Rp {{ number_format($salary->gaji_pokok,0,',','.') }}</td>
+                <td>Gaji Pokok (Bulanan)</td>
+                <td class="right">
+                    Rp {{ number_format($salary->gaji_pokok,0,',','.') }}
+                </td>
             </tr>
             <tr>
-                <td>Tunjangan Makan</td>
-                <td class="right">Rp {{ number_format($salary->uang_makan,0,',','.') }}</td>
+                <td>Hitungan Per Hari</td>
+                <td class="right">
+                    Rp {{ number_format($gajiPerHari,0,',','.') }}
+                </td>
+            </tr>
+            <tr>
+                <td>Gaji Pokok Dibayar ({{ $hariHadir }} Hari)</td>
+                <td class="right">
+                    Rp {{ number_format($gajiPokokFix,0,',','.') }}
+                </td>
+            </tr>
+            <tr>
+                <td>Tunjangan Umum</td>
+                <td class="right">
+                    Rp {{ number_format($salary->tunjangan_umum,0,',','.') }}
+                </td>
             </tr>
             <tr>
                 <td>Tunjangan Transport</td>
-                <td class="right">Rp {{ number_format($salary->transport,0,',','.') }}</td>
+                <td class="right">
+                    Rp {{ number_format($salary->tunjangan_transport,0,',','.') }}
+                </td>
             </tr>
             <tr>
-                <td>Lembur ({{ number_format($totalJamLembur,1) }} Jam)</td>
-                <td class="right">Rp {{ number_format($totalLembur,0,',','.') }}</td>
+                <td>Tunjangan Hari Raya</td>
+                <td class="right">
+                    Rp {{ number_format($salary->tunjangan_thr,0,',','.') }}
+                </td>
+            </tr>
+            <tr>
+                <td>Tunjangan Kesehatan</td>
+                <td class="right">
+                    Rp {{ number_format($salary->tunjangan_kesehatan,0,',','.') }}
+                </td>
+            </tr>
+            <tr>
+                <td>Lembur ({{ $totalJamLembur }} Jam)</td>
+                <td class="right">
+                    Rp {{ number_format($totalLembur,0,',','.') }}
+                </td>
             </tr>
             <tr>
                 <th>Total Bonus Job Todo</th>
-                <th class="right">Rp {{ number_format($totalBonusJob ?? 0,0,',','.') }}</th>
+                <th class="right">
+                    Rp {{ number_format($totalBonusJob,0,',','.') }}
+                </th>
             </tr>
         </table>
     </div>
 
-    {{-- ================= TOTAL GAJI ================= --}}
+    {{-- TOTAL GAJI --}}
     <div class="net-salary">
         TOTAL GAJI DITERIMA<br>
         Rp {{ number_format($totalGaji,0,',','.') }}
     </div>
 
-    {{-- ================= RINCIAN BONUS ================= --}}
+    {{-- RINCIAN BONUS JOB --}}
     <div class="section-title">RINCIAN BONUS JOB TODO</div>
     <div class="box">
         <table>
             <tr>
-                <th width="70%">Job</th>
+                <th>Job</th>
                 <th class="right">Bonus</th>
             </tr>
             @forelse($jobBonus as $job)
                 <tr>
                     <td>{{ $job->title }}</td>
-                    <td class="right">Rp {{ number_format($job->bonus,0,',','.') }}</td>
+                    <td class="right">
+                        Rp {{ number_format($job->bonus,0,',','.') }}
+                    </td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="2" class="center">Tidak ada bonus job</td>
+                    <td colspan="2" class="center">
+                        Tidak ada bonus job
+                    </td>
                 </tr>
             @endforelse
         </table>
     </div>
 
-    {{-- ================= SIGN ================= --}}
+    {{-- TTD --}}
     <table class="sign">
         <tr>
             <td>
@@ -229,6 +252,5 @@
     </table>
 
 </div>
-
 </body>
 </html>

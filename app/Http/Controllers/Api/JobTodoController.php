@@ -14,8 +14,6 @@ class JobTodoController extends Controller
     /**
      * ==================================================
      * JOB SAYA (DASHBOARD KARYAWAN)
-     * - DIRECT JOB (auto accepted)
-     * - BROADCAST JOB YANG SUDAH DIAMBIL
      * ==================================================
      */
     public function myJobs()
@@ -49,9 +47,6 @@ class JobTodoController extends Controller
     /**
      * ==================================================
      * JOB BROADCAST TERSEDIA
-     * - broadcast = true
-     * - status = open
-     * - BELUM ADA accepted
      * ==================================================
      */
     public function available()
@@ -71,7 +66,6 @@ class JobTodoController extends Controller
     /**
      * ==================================================
      * AMBIL JOB BROADCAST
-     * - HANYA 1 KARYAWAN
      * ==================================================
      */
     public function take($id)
@@ -94,7 +88,6 @@ class JobTodoController extends Controller
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            // pastikan pivot ada
             $job->users()->syncWithoutDetaching([
                 $user->id => ['status' => 'accepted'],
             ]);
@@ -112,7 +105,6 @@ class JobTodoController extends Controller
     /**
      * ==================================================
      * DETAIL JOB
-     * - HANYA JOB YANG SEDANG DIKERJAKAN USER
      * ==================================================
      */
     public function show($id)
@@ -144,9 +136,6 @@ class JobTodoController extends Controller
     /**
      * ==================================================
      * SELESAIKAN JOB
-     * - AMAN
-     * - TIDAK PAKAI QUEUE
-     * - TIDAK 500
      * ==================================================
      */
     public function done($id)
@@ -185,11 +174,10 @@ class JobTodoController extends Controller
         });
 
         /**
-         * 🔔 EVENT HARUS DI LUAR TRANSACTION
-         * 🔥 ShouldBroadcastNow → NO QUEUE
+         * 🔔 EVENT DI LUAR TRANSACTION (AMAM)
          */
         try {
-            event(new JobTodoDone($job, $user));
+            event(new JobTodoDone($job, $user->id)); // ✅ FIX MINIMAL
         } catch (\Throwable $e) {
             \Log::error('JobTodoDone broadcast gagal', [
                 'error' => $e->getMessage(),

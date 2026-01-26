@@ -7,6 +7,7 @@ use App\Models\JobTodo;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Events\JobTodoCreated;
 
 class JobTodoController extends Controller
@@ -44,9 +45,6 @@ class JobTodoController extends Controller
     /**
      * =====================================================
      * SIMPAN JOB TODO
-     * - BROADCAST  → OPEN + PENDING
-     * - DIRECT     → IN_PROGRESS + ACCEPTED
-     * - REALTIME NOTIFICATION
      * =====================================================
      */
     public function store(Request $request)
@@ -60,12 +58,20 @@ class JobTodoController extends Controller
             'users.*'     => 'exists:users,id',
         ]);
 
-        DB::transaction(function () use ($validated) {
+        $todo = null;
+        $targetUserIds = [];
+
+        /**
+         * =================================================
+         * DATABASE ADALAH SUMBER KEBENARAN
+         * =================================================
+         */
+        DB::transaction(function () use ($validated, &$todo, &$targetUserIds) {
 
             /**
-             * =================================================
-             * BROADCAST JOB (SEMUA KARYAWAN)
-             * =================================================
+             * =============================
+             * BROADCAST JOB
+             * =============================
              */
             if ((bool) $validated['broadcast'] === true) {
 
@@ -77,23 +83,21 @@ class JobTodoController extends Controller
                     'status'      => 'open',
                 ]);
 
-                $karyawanIds = User::where('role', User::ROLE_KARYAWAN)
-                    ->pluck('id');
+                $targetUserIds = User::where('role', User::ROLE_KARYAWAN)
+                    ->pluck('id')
+                    ->toArray();
 
-                foreach ($karyawanIds as $userId) {
+                foreach ($targetUserIds as $userId) {
                     $todo->users()->attach($userId, [
                         'status' => 'pending',
                     ]);
                 }
-
-                // 🔔 Realtime ke semua karyawan
-                broadcast(new JobTodoCreated($todo))->toOthers();
             }
 
             /**
-             * =================================================
-             * DIRECT JOB (LANGSUNG KE 1 KARYAWAN)
-             * =================================================
+             * =============================
+             * DIRECT JOB
+             * =============================
              */
             else {
 
@@ -102,8 +106,8 @@ class JobTodoController extends Controller
                 }
 
                 $userId = $validated['users'][0];
+                $targetUserIds = [$userId];
 
-                // 🔥 LANGSUNG DIKERJAKAN
                 $todo = JobTodo::create([
                     'title'       => $validated['title'],
                     'description' => $validated['description'] ?? null,
@@ -112,17 +116,29 @@ class JobTodoController extends Controller
                     'status'      => 'in_progress',
                 ]);
 
-                // 🔥 LANGSUNG ACCEPTED
                 $todo->users()->attach($userId, [
                     'status' => 'accepted',
                 ]);
-
-                // 🔔 Realtime khusus user ini
-                broadcast(
-                    new JobTodoCreated($todo, $userId)
-                )->toOthers();
             }
         });
+
+        /**
+         * =================================================
+         * 🔔 REALTIME EVENT (BONUS)
+         * DI LUAR TRANSACTION (WAJIB)
+         * =================================================
+         */
+        foreach ($targetUserIds as $userId) {
+            try {
+                event(new JobTodoCreated($todo, $userId));
+            } catch (\Throwable $e) {
+                Log::error('Broadcast JobTodoCreated gagal', [
+                    'job_id'  => $todo?->id,
+                    'user_id' => $userId,
+                    'error'   => $e->getMessage(),
+                ]);
+            }
+        }
 
         return redirect()
             ->route('admin.job-todos.index')
@@ -145,7 +161,7 @@ class JobTodoController extends Controller
 
     /**
      * =====================================================
-     * TUTUP JOB TODO (ADMIN ONLY)
+     * TUTUP JOB TODO
      * =====================================================
      */
     public function close(JobTodo $jobTodo)

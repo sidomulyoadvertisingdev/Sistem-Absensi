@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Absensi;
+use App\Models\WorkSchedule;
 use Carbon\Carbon;
 
 class AbsensiController extends Controller
@@ -35,20 +36,19 @@ class AbsensiController extends Controller
 
     /**
      * ===============================
-     * SIMPAN ABSENSI
+     * SIMPAN ABSENSI (API)
      * ===============================
      */
     public function store(Request $request)
     {
-        // ✅ VALIDASI DASAR (TANPA FOTO)
         $request->validate([
             'aksi' => 'required|in:masuk,istirahat_mulai,istirahat_selesai,pulang',
-            'jam'  => 'required',
+            'jam'  => 'required|date_format:H:i',
         ]);
 
         $user = $request->user();
         $tanggal = Carbon::today()->toDateString();
-        $jam = Carbon::parse($request->jam)->format('H:i');
+        $jam = $request->jam;
 
         $absensi = Absensi::firstOrCreate(
             [
@@ -68,34 +68,71 @@ class AbsensiController extends Controller
         $fotoWajib = ['masuk', 'istirahat_selesai', 'pulang'];
 
         if (in_array($request->aksi, $fotoWajib)) {
-
-            // ❌ TIDAK ADA FOTO
             if (!$request->hasFile('foto')) {
                 return response()->json([
                     'message' => 'Foto wajib untuk aksi ini'
                 ], 422);
             }
 
-            // ✅ VALIDASI FOTO (SETELAH PASTI ADA)
             $request->validate([
                 'foto' => 'image|mimes:jpg,jpeg,png|max:2048',
             ]);
 
-            // ✅ SIMPAN FOTO
             $absensi->foto = $request->file('foto')
                 ->store('absensi', 'public');
         }
 
         /**
          * ===============================
-         * SIMPAN JAM SESUAI AKSI
+         * AMBIL JADWAL KERJA HARI INI
+         * ===============================
+         */
+        $hari = strtolower(
+            Carbon::parse($tanggal)->locale('id')->isoFormat('dddd')
+        );
+
+        $jadwal = WorkSchedule::where('user_id', $user->id)
+            ->where('hari', $hari)
+            ->where('aktif', true)
+            ->first();
+
+        /**
+         * ===============================
+         * AKSI MASUK
          * ===============================
          */
         if ($request->aksi === 'masuk') {
+
+            $jamMasuk = Carbon::createFromFormat(
+                'Y-m-d H:i',
+                $tanggal . ' ' . $jam
+            );
+
+            $status = 'hadir';
+
+            if ($jadwal && $jadwal->jam_masuk) {
+                $batasMasuk = Carbon::parse(
+                    $tanggal . ' ' . $jadwal->jam_masuk
+                );
+
+                if (!empty($jadwal->toleransi_masuk)) {
+                    $batasMasuk->addMinutes($jadwal->toleransi_masuk);
+                }
+
+                if ($jamMasuk->gt($batasMasuk)) {
+                    $status = 'terlambat';
+                }
+            }
+
             $absensi->jam_masuk = $jam;
-            $absensi->status = 'hadir';
+            $absensi->status = $status;
         }
 
+        /**
+         * ===============================
+         * ISTIRAHAT
+         * ===============================
+         */
         if ($request->aksi === 'istirahat_mulai') {
             $absensi->istirahat_mulai = $jam;
         }
@@ -104,7 +141,28 @@ class AbsensiController extends Controller
             $absensi->istirahat_selesai = $jam;
         }
 
+        /**
+         * ===============================
+         * AKSI PULANG
+         * ===============================
+         */
         if ($request->aksi === 'pulang') {
+
+            $jamPulang = Carbon::createFromFormat(
+                'Y-m-d H:i',
+                $tanggal . ' ' . $jam
+            );
+
+            if ($jadwal && $jadwal->jam_pulang) {
+                $batasPulang = Carbon::parse(
+                    $tanggal . ' ' . $jadwal->jam_pulang
+                );
+
+                if ($jamPulang->lt($batasPulang)) {
+                    $absensi->status = 'terlambat';
+                }
+            }
+
             $absensi->jam_pulang = $jam;
         }
 

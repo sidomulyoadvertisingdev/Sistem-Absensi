@@ -10,98 +10,82 @@ use App\Http\Controllers\Api\JadwalController;
 use App\Http\Controllers\Api\GajiController;
 use App\Http\Controllers\Api\LemburController;
 use App\Http\Controllers\Api\JobTodoController;
+use App\Http\Controllers\Api\PelanggaranApiController;
+use App\Http\Controllers\Api\SubmissionApiController;
+use App\Http\Controllers\Api\AnnouncementApiController;
+use App\Http\Controllers\Api\EmployeeApiController;
 
 /*
 |--------------------------------------------------------------------------
 | API Routes
 |--------------------------------------------------------------------------
-| Prefix otomatis: /api
-| Auth: Sanctum (Bearer Token)
+| Prefix : /api
+| Auth   : Sanctum (Bearer Token)
 |--------------------------------------------------------------------------
 */
 
-/*
-|--------------------------------------------------------------------------
-| AUTH
-|--------------------------------------------------------------------------
-*/
+/* ================= AUTH ================= */
 Route::post('/login', [AuthController::class, 'login']);
 
-/*
-|--------------------------------------------------------------------------
-| PROTECTED ROUTES
-|--------------------------------------------------------------------------
-*/
+/* ================= PROTECTED ROUTES ================= */
 Route::middleware('auth:sanctum')->group(function () {
 
-    /*
-    |--------------------------------------------------------------------------
-    | DASHBOARD
-    |--------------------------------------------------------------------------
-    */
+    /* ================= DASHBOARD ================= */
     Route::get('/dashboard', [DashboardController::class, 'index']);
 
-    /*
-    |--------------------------------------------------------------------------
-    | ABSENSI
-    |--------------------------------------------------------------------------
-    */
+    /* ================= ABSENSI ================= */
     Route::get('/absensi/today', [AbsensiController::class, 'today']);
     Route::post('/absensi', [AbsensiController::class, 'store']);
 
-    /*
-    |--------------------------------------------------------------------------
-    | JADWAL
-    |--------------------------------------------------------------------------
-    */
+    /* ================= JADWAL ================= */
     Route::get('/jadwal', [JadwalController::class, 'index']);
 
-    /*
-    |--------------------------------------------------------------------------
-    | LEMBUR
-    |--------------------------------------------------------------------------
-    */
+    /* ================= LEMBUR ================= */
     Route::get('/lembur', [LemburController::class, 'index']);
     Route::post('/lembur', [LemburController::class, 'store']);
     Route::post('/lembur/{lembur}/finish', [LemburController::class, 'finish'])
         ->whereNumber('lembur');
 
-    /*
-    |--------------------------------------------------------------------------
-    | GAJI
-    |--------------------------------------------------------------------------
-    */
+    /* ================= GAJI ================= */
     Route::get('/gaji', [GajiController::class, 'index']);
 
-    /*
-    |--------------------------------------------------------------------------
-    | JOB TODO (🔥 FINAL & STABLE)
-    |--------------------------------------------------------------------------
-    */
-
-    // 🔹 Job milik saya (direct + broadcast yang diambil)
+    /* ================= JOB TODO ================= */
     Route::get('/job-todos/my', [JobTodoController::class, 'myJobs']);
-
-    // 🔹 Job broadcast yang masih tersedia (status = open)
     Route::get('/job-todos/available', [JobTodoController::class, 'available']);
-
-    // 🔹 Ambil job broadcast
     Route::post('/job-todos/{id}/take', [JobTodoController::class, 'take'])
         ->whereNumber('id');
-
-    // 🔹 Detail job (yang dimiliki user)
     Route::get('/job-todos/{id}', [JobTodoController::class, 'show'])
         ->whereNumber('id');
-
-    // 🔹 Selesaikan job
     Route::post('/job-todos/{id}/done', [JobTodoController::class, 'done'])
         ->whereNumber('id');
 
-    /*
-    |--------------------------------------------------------------------------
-    | USER PROFILE
-    |--------------------------------------------------------------------------
-    */
+    /* ================= PELANGGARAN ================= */
+    Route::get('/violations', [PelanggaranApiController::class, 'index']);
+    Route::get('/violations/{id}', [PelanggaranApiController::class, 'show'])
+        ->whereNumber('id');
+    Route::get('/violations/{id}/download-sp', [PelanggaranApiController::class, 'downloadSp'])
+        ->whereNumber('id');
+
+    /* ================= SUBMISSION / PENGAJUAN ================= */
+    Route::get('/submission-types', [SubmissionApiController::class, 'types']);
+    Route::get('/submissions', [SubmissionApiController::class, 'index']);
+    Route::post('/submissions', [SubmissionApiController::class, 'store']);
+    Route::get('/submissions/{id}', [SubmissionApiController::class, 'show'])
+        ->whereNumber('id');
+
+    /* ================= ANNOUNCEMENTS / PENGUMUMAN ================= */
+    Route::get('/announcements', [AnnouncementApiController::class, 'index']);
+    Route::get('/announcements/{id}', [AnnouncementApiController::class, 'show'])
+        ->whereNumber('id');
+
+    /* ================= EMPLOYEE (🔥 FITUR BARU) ================= */
+    // List semua employee (group by jabatan di frontend)
+    Route::get('/employees', [EmployeeApiController::class, 'index']);
+
+    // Leaderboard Top 1 - Top 3 (berdasarkan reward / produktivitas)
+    Route::get('/employees/leaderboard', [EmployeeApiController::class, 'leaderboard']);
+
+    /* ================= USER PROFILE ================= */
     Route::get('/me', function (Request $request) {
         return $request->user();
     });
