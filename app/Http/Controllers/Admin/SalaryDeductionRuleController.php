@@ -17,7 +17,6 @@ class SalaryDeductionRuleController extends Controller
     public function index()
     {
         $rules = SalaryDeductionRule::orderBy('nama')->get();
-
         return view('admin.potongan-gaji.index', compact('rules'));
     }
 
@@ -28,7 +27,6 @@ class SalaryDeductionRuleController extends Controller
      */
     public function create()
     {
-        // 🔥 ambil penempatan dari user (distinct)
         $penempatans = User::whereNotNull('penempatan')
             ->distinct()
             ->orderBy('penempatan')
@@ -58,6 +56,13 @@ class SalaryDeductionRuleController extends Controller
             'condition_type' => 'required|in:pelanggaran,off_day,terlambat',
             'condition_value' => 'nullable|integer|min:0',
 
+            // BATASAN
+            'max_occurrence' => 'nullable|integer|min:1',
+            'max_minutes'    => 'nullable|integer|min:1',
+
+            // PENEMPATAN
+            'penempatan'     => 'nullable|array',
+
             'aktif' => 'nullable|boolean',
         ]);
 
@@ -71,7 +76,22 @@ class SalaryDeductionRuleController extends Controller
             'base_amount' => $request->base_amount,
 
             'condition_type' => $request->condition_type,
-            'condition_value' => $request->condition_value ?? 0,
+            'condition_value' => $request->condition_value ?? 1,
+
+            // 🔥 PENEMPATAN
+            // null = berlaku untuk semua
+            'penempatan' => $request->filled('penempatan')
+                ? array_values($request->penempatan)
+                : null,
+
+            // 🔥 FIX INTEGER NULL
+            'max_occurrence' => $request->filled('max_occurrence')
+                ? (int) $request->max_occurrence
+                : null,
+
+            'max_minutes' => $request->filled('max_minutes')
+                ? (int) $request->max_minutes
+                : null,
 
             'aktif' => $request->boolean('aktif'),
         ]);
@@ -114,6 +134,11 @@ class SalaryDeductionRuleController extends Controller
             'condition_type' => 'required|in:pelanggaran,off_day,terlambat',
             'condition_value' => 'nullable|integer|min:0',
 
+            'max_occurrence' => 'nullable|integer|min:1',
+            'max_minutes'    => 'nullable|integer|min:1',
+
+            'penempatan'     => 'nullable|array',
+
             'aktif' => 'nullable|boolean',
         ]);
 
@@ -126,7 +151,20 @@ class SalaryDeductionRuleController extends Controller
             'base_amount' => $request->base_amount,
 
             'condition_type' => $request->condition_type,
-            'condition_value' => $request->condition_value ?? 0,
+            'condition_value' => $request->condition_value ?? 1,
+
+            // 🔥 WAJIB SAMA DENGAN STORE
+            'penempatan' => $request->filled('penempatan')
+                ? array_values($request->penempatan)
+                : null,
+
+            'max_occurrence' => $request->filled('max_occurrence')
+                ? (int) $request->max_occurrence
+                : null,
+
+            'max_minutes' => $request->filled('max_minutes')
+                ? (int) $request->max_minutes
+                : null,
 
             'aktif' => $request->boolean('aktif'),
         ]);

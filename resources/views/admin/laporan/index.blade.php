@@ -5,16 +5,12 @@
 @section('content')
 <div class="container-fluid">
 
-    {{-- ================= STYLE ================= --}}
     <style>
-        /* Paksa semua kolom 1 baris */
         .table-nowrap th,
         .table-nowrap td {
             white-space: nowrap;
             vertical-align: middle;
         }
-
-        /* Batasi kolom nama karyawan */
         .col-nama {
             max-width: 220px;
             overflow: hidden;
@@ -27,7 +23,7 @@
         {{ \Carbon\Carbon::create($tahun, $bulan)->translatedFormat('F Y') }}
     </h4>
 
-    {{-- ================= FILTER & ACTION ================= --}}
+    {{-- FILTER --}}
     <form method="GET" class="row mb-3 align-items-end">
         <div class="col-md-3">
             <label>Bulan</label>
@@ -56,11 +52,7 @@
                 <i class="fas fa-search"></i> Tampilkan
             </button>
 
-            {{-- 🔥 EXPORT PDF --}}
-            <a href="{{ route('admin.laporan.gaji.pdf', [
-                'bulan' => $bulan,
-                'tahun' => $tahun
-            ]) }}"
+            <a href="{{ route('admin.laporan.gaji.pdf', ['bulan'=>$bulan,'tahun'=>$tahun]) }}"
                target="_blank"
                class="btn btn-danger">
                 <i class="fas fa-file-pdf"></i> Export PDF
@@ -68,7 +60,7 @@
         </div>
     </form>
 
-    {{-- ================= TABLE ================= --}}
+    {{-- TABLE --}}
     <div class="card">
         <div class="card-body table-responsive p-0">
             <table class="table table-bordered table-sm text-center table-nowrap">
@@ -77,106 +69,99 @@
                         <th>No</th>
                         <th>Toko</th>
                         <th>Karyawan</th>
-                        <th>Jumlah Hari</th>
+                        <th>Hadir</th>
                         <th>Off Day</th>
-                        <th>Presensi</th>
+                        <th>Telat (Hari)</th>
+                        <th>Menit Telat</th>
                         <th>Gaji Pokok</th>
                         <th>Tunj. Umum</th>
                         <th>Tunj. Transport</th>
                         <th>THR</th>
                         <th>Kesehatan</th>
                         <th>Per Hari</th>
-                        <th>Telat (Hari)</th>
-                        <th>Lembur / Poin</th>
-                        <th>Menit Telat</th>
+                        <th>Lembur</th>
                         <th>Pot. Telat</th>
-                        <th>Salary</th>
+                        <th>Salary Kotor</th>
                         <th>Total Gaji</th>
                     </tr>
                 </thead>
 
                 <tbody>
-                    @forelse($laporan as $row)
-                        <tr>
-                            <td>{{ $row['no'] }}</td>
-                            <td>{{ $row['toko'] }}</td>
+                @forelse($laporan as $row)
+                    <tr>
+                        <td>{{ $row['no'] }}</td>
+                        <td>{{ $row['toko'] }}</td>
 
-                            {{-- NAMA (1 BARIS + TOOLTIP) --}}
-                            <td class="text-left col-nama" title="{{ $row['nama'] }}">
-                                {{ $row['nama'] }}
-                            </td>
+                        <td class="text-left col-nama" title="{{ $row['nama'] }}">
+                            {{ $row['nama'] }}
+                        </td>
 
-                            <td>{{ $row['jumlah_hari'] }}</td>
-                            <td>{{ $row['off_day'] }}</td>
-                            <td>{{ $row['presensi_masuk'] }}</td>
+                        <td>{{ $row['hari_hadir'] }}</td>
+                        <td>{{ $row['off_day'] }}</td>
 
-                            <td class="text-right">
-                                {{ number_format($row['gaji_pokok'],0,',','.') }}
-                            </td>
+                        {{-- TELAT HARI --}}
+                        <td>
+                            @if(($row['hari_telat'] ?? 0) > 0)
+                                <span class="badge badge-danger">
+                                    {{ $row['hari_telat'] }} Hari
+                                </span>
+                            @else
+                                0
+                            @endif
+                        </td>
 
-                            <td class="text-right">
-                                {{ number_format($row['tunjangan_umum'],0,',','.') }}
-                            </td>
+                        {{-- MENIT TELAT (INFO SAJA) --}}
+                        <td>
+                            {{ ($row['menit_telat'] ?? 0) > 0 ? $row['menit_telat'] : 0 }}
+                        </td>
 
-                            <td class="text-right">
-                                {{ number_format($row['tunjangan_transport'],0,',','.') }}
-                            </td>
+                        <td class="text-right">
+                            {{ number_format($row['gaji_pokok'],0,',','.') }}
+                        </td>
 
-                            <td class="text-right">
-                                {{ number_format($row['tunjangan_hari_raya'],0,',','.') }}
-                            </td>
+                        <td class="text-right">
+                            {{ number_format($row['tunjangan_umum'],0,',','.') }}
+                        </td>
 
-                            <td class="text-right">
-                                {{ number_format($row['tunjangan_kesehatan'],0,',','.') }}
-                            </td>
+                        <td class="text-right">
+                            {{ number_format($row['tunjangan_transport'],0,',','.') }}
+                        </td>
 
-                            <td class="text-right">
-                                {{ number_format($row['hitungan_per_hari'],0,',','.') }}
-                            </td>
+                        <td class="text-right">
+                            {{ number_format($row['tunjangan_thr'],0,',','.') }}
+                        </td>
 
-                            <td>
-                                @if($row['kerja_tidak_jam'] > 0)
-                                    <span class="badge badge-warning">
-                                        {{ $row['kerja_tidak_jam'] }}
-                                    </span>
-                                @else
-                                    0
-                                @endif
-                            </td>
+                        <td class="text-right">
+                            {{ number_format($row['tunjangan_kesehatan'],0,',','.') }}
+                        </td>
 
-                            <td class="text-right">
-                                {{ number_format($row['lembur_poin_lain'],0,',','.') }}
-                            </td>
+                        <td class="text-right">
+                            {{ number_format($row['gaji_per_hari'],0,',','.') }}
+                        </td>
 
-                            <td>
-                                @if($row['potongan_n_telat'] > 0)
-                                    <span class="text-danger">
-                                        {{ $row['potongan_n_telat'] }}
-                                    </span>
-                                @else
-                                    0
-                                @endif
-                            </td>
+                        <td class="text-right">
+                            {{ number_format($row['lembur'],0,',','.') }}
+                        </td>
 
-                            <td class="text-right text-danger">
-                                {{ number_format($row['nominal_potongan_telat'],0,',','.') }}
-                            </td>
+                        <td class="text-right text-danger">
+                            {{ number_format($row['potongan_telat'],0,',','.') }}
+                        </td>
 
-                            <td class="text-right">
-                                {{ number_format($row['salary'],0,',','.') }}
-                            </td>
+                        <td class="text-right">
+                            {{ number_format($row['salary_kotor'],0,',','.') }}
+                        </td>
 
-                            <td class="text-right font-weight-bold text-success">
-                                {{ number_format($row['total_gaji'],0,',','.') }}
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="18" class="text-center text-muted">
-                                Tidak ada data laporan
-                            </td>
-                        </tr>
-                    @endforelse
+                        <td class="text-right font-weight-bold text-success">
+                            {{ number_format($row['total_gaji'],0,',','.') }}
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="17" class="text-center text-muted">
+                            Tidak ada data laporan
+                        </td>
+                    </tr>
+                @endforelse
                 </tbody>
             </table>
         </div>

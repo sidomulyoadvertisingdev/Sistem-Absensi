@@ -110,22 +110,22 @@
 </head>
 <body>
 
-{{-- HEADER --}}
+{{-- ================= HEADER ================= --}}
 <div class="header">
     <div class="company">CV. Sidomulyo Advertising</div>
     <h1>SLIP GAJI</h1>
-    <small>Periode {{ $bulan }}</small>
+    <small>Periode {{ $periode }}</small>
 </div>
 
 <div class="container">
 
-    {{-- INFO KARYAWAN --}}
+    {{-- ================= INFO KARYAWAN ================= --}}
     <table class="info">
         <tr>
             <th>Nama</th>
             <td>: {{ $user->name }}</td>
             <th>Periode</th>
-            <td>: {{ $bulan }}</td>
+            <td>: {{ $periode }}</td>
         </tr>
         <tr>
             <th>NIK</th>
@@ -137,78 +137,79 @@
             <th>Penempatan</th>
             <td>: {{ $user->penempatan ?? '-' }}</td>
             <th>Tanggal Cetak</th>
-            <td>: {{ date('d F Y') }}</td>
+            <td>: {{ now()->translatedFormat('d F Y') }}</td>
         </tr>
     </table>
 
-    {{-- PENERIMAAN --}}
+    {{-- ================= PENERIMAAN ================= --}}
     <div class="section-title">PENERIMAAN</div>
     <div class="box">
         <table>
             <tr>
                 <td>Gaji Pokok (Bulanan)</td>
-                <td class="right">
-                    Rp {{ number_format($salary->gaji_pokok,0,',','.') }}
-                </td>
+                <td class="right">Rp {{ number_format($salary->gaji_pokok,0,',','.') }}</td>
             </tr>
             <tr>
                 <td>Hitungan Per Hari</td>
-                <td class="right">
-                    Rp {{ number_format($gajiPerHari,0,',','.') }}
-                </td>
+                <td class="right">Rp {{ number_format($gajiPerHari,0,',','.') }}</td>
             </tr>
             <tr>
                 <td>Gaji Pokok Dibayar ({{ $hariHadir }} Hari)</td>
-                <td class="right">
-                    Rp {{ number_format($gajiPokokFix,0,',','.') }}
-                </td>
+                <td class="right">Rp {{ number_format($gajiPokokFix,0,',','.') }}</td>
             </tr>
             <tr>
                 <td>Tunjangan Umum</td>
-                <td class="right">
-                    Rp {{ number_format($salary->tunjangan_umum,0,',','.') }}
-                </td>
+                <td class="right">Rp {{ number_format($salary->tunjangan_umum,0,',','.') }}</td>
             </tr>
             <tr>
                 <td>Tunjangan Transport</td>
-                <td class="right">
-                    Rp {{ number_format($salary->tunjangan_transport,0,',','.') }}
-                </td>
+                <td class="right">Rp {{ number_format($salary->tunjangan_transport,0,',','.') }}</td>
             </tr>
             <tr>
                 <td>Tunjangan Hari Raya</td>
-                <td class="right">
-                    Rp {{ number_format($salary->tunjangan_thr,0,',','.') }}
-                </td>
+                <td class="right">Rp {{ number_format($salary->tunjangan_thr,0,',','.') }}</td>
             </tr>
             <tr>
                 <td>Tunjangan Kesehatan</td>
-                <td class="right">
-                    Rp {{ number_format($salary->tunjangan_kesehatan,0,',','.') }}
-                </td>
+                <td class="right">Rp {{ number_format($salary->tunjangan_kesehatan,0,',','.') }}</td>
             </tr>
             <tr>
                 <td>Lembur ({{ $totalJamLembur }} Jam)</td>
-                <td class="right">
-                    Rp {{ number_format($totalLembur,0,',','.') }}
+                <td class="right">Rp {{ number_format($totalLembur,0,',','.') }}</td>
+            </tr>
+            <tr>
+                <th>Bonus Job Todo</th>
+                <th class="right">Rp {{ number_format($totalBonusJob,0,',','.') }}</th>
+            </tr>
+        </table>
+    </div>
+
+    {{-- ================= POTONGAN ================= --}}
+    <div class="section-title">POTONGAN</div>
+    <div class="box">
+        <table>
+            <tr>
+                <td>Keterlambatan ({{ $menitTerlambat }} Menit)</td>
+                <td class="right text-danger">
+                    Rp {{ number_format($potonganTelatNominal,0,',','.') }}
                 </td>
             </tr>
             <tr>
-                <th>Total Bonus Job Todo</th>
-                <th class="right">
-                    Rp {{ number_format($totalBonusJob,0,',','.') }}
+                <th>Total Potongan</th>
+                <th class="right text-danger">
+                    Rp {{ number_format($totalPotongan,0,',','.') }}
                 </th>
             </tr>
         </table>
     </div>
 
-    {{-- TOTAL GAJI --}}
+    {{-- ================= TOTAL GAJI ================= --}}
     <div class="net-salary">
         TOTAL GAJI DITERIMA<br>
         Rp {{ number_format($totalGaji,0,',','.') }}
     </div>
 
-    {{-- RINCIAN BONUS JOB --}}
+    {{-- ================= RINCIAN BONUS ================= --}}
     <div class="section-title">RINCIAN BONUS JOB TODO</div>
     <div class="box">
         <table>
@@ -233,7 +234,7 @@
         </table>
     </div>
 
-    {{-- TTD --}}
+    {{-- ================= TTD ================= --}}
     <table class="sign">
         <tr>
             <td>

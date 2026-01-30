@@ -38,8 +38,8 @@
         <strong>ℹ️ Informasi Sistem Gaji</strong>
         <ul class="mb-0 mt-2">
             <li>Gaji Pokok bersifat <strong>bulanan</strong></li>
-            <li>Perhitungan harian = <strong>Gaji Pokok / 22 hari</strong></li>
-            <li>Gaji dibayar sesuai <strong>hari hadir</strong></li>
+            <li>Perhitungan harian = <strong>Gaji Pokok / 26 hari</strong></li>
+            <li>Gaji dibayar sesuai <strong>hari hadir (hadir + terlambat)</strong></li>
             <li>Potongan mengikuti <strong>Aturan Potongan Gaji</strong> yang aktif</li>
             <li>Aturan potongan dapat berupa <strong>nominal</strong> atau <strong>persentase (%)</strong></li>
         </ul>
@@ -67,7 +67,7 @@
                                min="0"
                                required>
                         <small class="text-muted">
-                            Akan dibagi otomatis per hari (22 hari kerja)
+                            Akan dibagi otomatis per hari (<strong>26 hari kerja</strong>)
                         </small>
                     </div>
 

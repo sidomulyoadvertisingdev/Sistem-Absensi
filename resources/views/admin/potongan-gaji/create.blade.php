@@ -7,7 +7,7 @@
 
     <div class="card">
         <div class="card-header">
-            <h5 class="mb-0">Tambah Aturan Potongan Gaji</h5>
+            <h5 class="mb-0 font-weight-bold">Tambah Aturan Potongan Gaji</h5>
         </div>
 
         <form method="POST" action="{{ route('admin.potongan-gaji.store') }}">
@@ -36,7 +36,7 @@
                            name="nama"
                            class="form-control @error('nama') is-invalid @enderror"
                            value="{{ old('nama') }}"
-                           placeholder="Contoh: Terlambat 3 Kali"
+                           placeholder="Contoh: Terlambat Maksimal 3 Kali"
                            required>
                     @error('nama')
                         <div class="invalid-feedback">{{ $message }}</div>
@@ -91,6 +91,7 @@
                 <div class="form-group">
                     <label>Dihitung Dari</label>
                     <select name="base_amount"
+                            id="base_amount"
                             class="form-control @error('base_amount') is-invalid @enderror"
                             required>
                         <option value="">-- Pilih --</option>
@@ -98,7 +99,7 @@
                             Gaji Pokok
                         </option>
                         <option value="salary_kotor" {{ old('base_amount') === 'salary_kotor' ? 'selected' : '' }}>
-                            Gaji Kotor
+                            Salary Kotor
                         </option>
                         <option value="total_gaji" {{ old('base_amount') === 'total_gaji' ? 'selected' : '' }}>
                             Total Gaji
@@ -107,6 +108,10 @@
                     @error('base_amount')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
+
+                    <small class="text-muted">
+                        ⚠️ Untuk <strong>TERLAMBAT</strong>, sistem akan tetap memakai <strong>GAJI POKOK</strong>
+                    </small>
                 </div>
 
                 <hr>
@@ -115,6 +120,7 @@
                 <div class="form-group">
                     <label>Jenis Kondisi</label>
                     <select name="condition_type"
+                            id="condition_type"
                             class="form-control @error('condition_type') is-invalid @enderror"
                             required>
                         <option value="">-- Pilih --</option>
@@ -133,14 +139,38 @@
                     @enderror
                 </div>
 
-                {{-- ================= NILAI KONDISI ================= --}}
+                {{-- ================= TRIGGER ================= --}}
                 <div class="form-group">
-                    <label>Nilai Kondisi (Batas)</label>
+                    <label>Minimal Terjadi (Trigger)</label>
                     <input type="number"
                            name="condition_value"
                            class="form-control"
-                           value="{{ old('condition_value', 0) }}"
+                           value="{{ old('condition_value', 1) }}"
                            min="0">
+                    <small class="text-muted">
+                        Contoh: 1 = mulai dipotong sejak kejadian pertama
+                    </small>
+                </div>
+
+                {{-- ================= BATASAN TERLAMBAT ================= --}}
+                <div class="form-group">
+                    <label>Maksimal Jumlah Kejadian (Opsional)</label>
+                    <input type="number"
+                           name="max_occurrence"
+                           class="form-control"
+                           value="{{ old('max_occurrence') }}"
+                           min="1"
+                           placeholder="Contoh: 3">
+                </div>
+
+                <div class="form-group">
+                    <label>Maksimal Menit per Kejadian (Opsional)</label>
+                    <input type="number"
+                           name="max_minutes"
+                           class="form-control"
+                           value="{{ old('max_minutes') }}"
+                           min="1"
+                           placeholder="Contoh: 120">
                 </div>
 
                 <hr>
@@ -183,7 +213,7 @@
                         </div>
 
                         <small class="text-muted d-block mt-2">
-                            Jika tidak dipilih → aturan berlaku untuk semua karyawan
+                            Jika tidak dipilih → aturan berlaku untuk semua penempatan
                         </small>
                     </div>
                 </div>

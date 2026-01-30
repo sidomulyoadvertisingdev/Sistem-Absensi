@@ -8,87 +8,98 @@ class SalaryDeductionRule extends Model
 {
     protected $table = 'salary_deduction_rules';
 
-    /**
-     * Kolom yang boleh diisi (HARUS SAMA DENGAN DB)
-     */
     protected $fillable = [
-        // IDENTITAS
-        'kode',              // TELAT_3X, OFF_LEBIH_5, dll
-        'nama',              // Nama aturan
-        'penempatan',        // Lokasi / toko (nullable = global)
-        'keterangan',        // Deskripsi aturan
-
-        // SISTEM POTONGAN
-        'type',              // fixed | percentage
-        'value',             // nominal atau persen
-        'base_amount',       // gaji_pokok | salary_kotor | total_gaji
-
-        // KONDISI
-        'condition_type',    // pelanggaran | off_day | terlambat
-        'condition_value',   // batas trigger (misal 3x, 5 hari)
-
-        // STATUS
+        'kode',
+        'nama',
+        'penempatan',
+        'keterangan',
+        'type',
+        'value',
+        'base_amount',
+        'condition_type',
+        'condition_value',
+        'max_occurrence',
+        'max_minutes',
         'aktif',
     ];
 
-    /**
-     * Casting tipe data
-     */
     protected $casts = [
-        'aktif' => 'boolean',
-        'value' => 'float',
+        'aktif'           => 'boolean',
+        'value'           => 'float',
         'condition_value' => 'integer',
+        'max_occurrence'  => 'integer',
+        'max_minutes'     => 'integer',
+        'penempatan'      => 'array',
     ];
 
-    /* =====================================================
-     * HELPER METHODS
-     * ===================================================== */
+    /* ================= STATUS ================= */
 
-    /**
-     * Apakah rule berbentuk persentase
-     */
+    public function isActive(): bool
+    {
+        return $this->aktif === true;
+    }
+
     public function isPercentage(): bool
     {
         return $this->type === 'percentage';
     }
 
-    /**
-     * Apakah rule berbentuk nominal
-     */
     public function isFixed(): bool
     {
         return $this->type === 'fixed';
     }
 
-    /**
-     * Hitung nilai potongan berdasarkan basis
-     *
-     * @param float $baseValue (gaji pokok / salary kotor / total gaji)
-     * @return float
-     */
-    public function calculateDeduction(float $baseValue): float
+    /* ================= PENEMPATAN ================= */
+
+    public function isApplicableForPenempatan(?string $userPenempatan): bool
     {
-        if (!$this->aktif) {
+        if (empty($this->penempatan)) {
+            return true; // GLOBAL
+        }
+
+        if (empty($userPenempatan)) {
+            return false;
+        }
+
+        return in_array($userPenempatan, $this->penempatan, true);
+    }
+
+    /* ================= HITUNG POTONGAN ================= */
+
+    public function calculate(float $basis): float
+    {
+        if (!$this->isActive()) {
             return 0;
         }
 
-        if ($this->isPercentage()) {
-            return ($this->value / 100) * $baseValue;
-        }
-
-        return $this->value;
+        return $this->isPercentage()
+            ? ($this->value / 100) * $basis
+            : (float) $this->value;
     }
 
-    /**
-     * Cek apakah aturan berlaku untuk penempatan tertentu
-     * (null = global)
-     */
-    public function isApplicableForPenempatan(?string $penempatan): bool
+    public function calculateDeduction(float $basis): float
     {
-        if (empty($this->penempatan)) {
-            return true; // global
-        }
+        return $this->calculate($basis);
+    }
 
-        return $this->penempatan === $penempatan;
+    public function calculateBaseDeduction(float $basis): float
+    {
+        return $this->calculate($basis);
+    }
+
+    /* ================= BATASAN ================= */
+
+    public function limitOccurrence(int $actual): int
+    {
+        return $this->max_occurrence && $this->max_occurrence > 0
+            ? min($actual, $this->max_occurrence)
+            : $actual;
+    }
+
+    public function limitMinutes(int $minutes): int
+    {
+        return $this->max_minutes && $this->max_minutes > 0
+            ? min($minutes, $this->max_minutes)
+            : $minutes;
     }
 }

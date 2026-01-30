@@ -52,13 +52,17 @@ class AbsensiController extends Controller
             'foto'    => 'nullable|image|max:2048',
         ]);
 
+        // ===============================
+        // AMBIL / BUAT ABSENSI HARIAN
+        // ===============================
         $absensi = Absensi::firstOrCreate(
             [
                 'user_id' => $request->user_id,
                 'tanggal' => $request->tanggal,
             ],
             [
-                'status' => 'hadir',
+                'status'           => 'hadir',
+                'menit_terlambat'  => 0,
             ]
         );
 
@@ -67,13 +71,13 @@ class AbsensiController extends Controller
                 ->store('absensi', 'public');
         }
 
-        /**
-         * ==================================================
-         * AMBIL JADWAL KERJA HARI TERKAIT
-         * ==================================================
-         */
+        // ===============================
+        // AMBIL JADWAL KERJA SESUAI HARI
+        // ===============================
         $hari = strtolower(
-            Carbon::parse($request->tanggal)->locale('id')->isoFormat('dddd')
+            Carbon::parse($request->tanggal)
+                ->locale('id')
+                ->isoFormat('dddd')
         );
 
         $jadwal = WorkSchedule::where('user_id', $request->user_id)
@@ -83,35 +87,32 @@ class AbsensiController extends Controller
 
         /**
          * ==================================================
-         * AKSI MASUK
+         * AKSI MASUK (SATU-SATUNYA TEMPAT HITUNG TELAT)
          * ==================================================
          */
         if ($request->aksi === 'masuk') {
 
-            $jamMasuk = Carbon::createFromFormat(
-                'Y-m-d H:i',
-                $request->tanggal . ' ' . $request->jam
-            );
+            $jamMasuk = Carbon::parse($request->tanggal . ' ' . $request->jam);
 
-            $status = 'hadir';
+            $status          = 'hadir';
+            $menitTerlambat  = 0;
 
+            // 🔥 hanya jika ada jadwal & jam masuk
             if ($jadwal && $jadwal->jam_masuk) {
+
                 $batasMasuk = Carbon::parse(
                     $request->tanggal . ' ' . $jadwal->jam_masuk
-                );
-
-                // Tambah toleransi dari schedule (jika ada)
-                if (!empty($jadwal->toleransi_masuk)) {
-                    $batasMasuk->addMinutes($jadwal->toleransi_masuk);
-                }
+                )->addMinutes($jadwal->toleransi_masuk ?? 0);
 
                 if ($jamMasuk->gt($batasMasuk)) {
-                    $status = 'terlambat';
+                    $status = 'terlambat_masuk';
+                    $menitTerlambat = $batasMasuk->diffInMinutes($jamMasuk);
                 }
             }
 
-            $absensi->jam_masuk = $request->jam;
-            $absensi->status    = $status;
+            $absensi->jam_masuk        = $request->jam;
+            $absensi->status           = $status;
+            $absensi->menit_terlambat  = $menitTerlambat;
         }
 
         /**
@@ -129,23 +130,21 @@ class AbsensiController extends Controller
 
         /**
          * ==================================================
-         * AKSI PULANG (CEK PULANG CEPAT)
+         * AKSI PULANG (PULANG CEPAT ≠ TERLAMBAT MASUK)
          * ==================================================
          */
         if ($request->aksi === 'pulang') {
 
-            $jamPulang = Carbon::createFromFormat(
-                'Y-m-d H:i',
-                $request->tanggal . ' ' . $request->jam
-            );
+            $jamPulang = Carbon::parse($request->tanggal . ' ' . $request->jam);
 
             if ($jadwal && $jadwal->jam_pulang) {
+
                 $batasPulang = Carbon::parse(
                     $request->tanggal . ' ' . $jadwal->jam_pulang
                 );
 
                 if ($jamPulang->lt($batasPulang)) {
-                    $absensi->status = 'terlambat';
+                    $absensi->status = 'pulang_cepat';
                 }
             }
 
