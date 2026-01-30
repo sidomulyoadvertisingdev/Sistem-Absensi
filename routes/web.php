@@ -108,8 +108,19 @@ Route::middleware(['web', 'auth', 'is_admin'])
         Route::get('/laporan/gaji/pdf', [LaporanController::class, 'exportPdf'])
             ->name('laporan.gaji.pdf');
 
-        /* ================= ATURAN POTONGAN GAJI ================= */
+        /* ================= ATURAN POTONGAN GAJI (PRIMARY) ================= */
         Route::prefix('salary-deduction-rules')->name('salary-deduction-rules.')->group(function () {
+            Route::get('/', [SalaryDeductionRuleController::class, 'index'])->name('index');
+            Route::get('/create', [SalaryDeductionRuleController::class, 'create'])->name('create');
+            Route::post('/', [SalaryDeductionRuleController::class, 'store'])->name('store');
+            Route::get('/{rule}/edit', [SalaryDeductionRuleController::class, 'edit'])->name('edit');
+            Route::put('/{rule}', [SalaryDeductionRuleController::class, 'update'])->name('update');
+            Route::delete('/{rule}', [SalaryDeductionRuleController::class, 'destroy'])->name('destroy');
+            Route::post('/{rule}/toggle', [SalaryDeductionRuleController::class, 'toggle'])->name('toggle');
+        });
+
+        /* ================= ATURAN POTONGAN GAJI (ALIAS / LEGACY) ================= */
+        Route::prefix('potongan-gaji')->name('potongan-gaji.')->group(function () {
             Route::get('/', [SalaryDeductionRuleController::class, 'index'])->name('index');
             Route::get('/create', [SalaryDeductionRuleController::class, 'create'])->name('create');
             Route::post('/', [SalaryDeductionRuleController::class, 'store'])->name('store');
