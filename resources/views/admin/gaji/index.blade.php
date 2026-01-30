@@ -50,62 +50,73 @@
                         <th>Tunj. THR</th>
                         <th>Tunj. Kesehatan</th>
                         <th>Status</th>
-                        <th width="200">Aksi</th>
+                        <th width="160">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
                 @forelse($users as $user)
                     @php
                         $salary = $user->salary;
+                        $isPaidThisMonth = $salary
+                            && $salary->is_paid
+                            && $salary->payroll_period === $bulan;
                     @endphp
                     <tr>
                         <td>{{ $user->name }}</td>
 
-                        <td class="text-right">
-                            Rp {{ number_format($salary->gaji_pokok ?? 0, 0, ',', '.') }}
-                        </td>
+                        <td class="text-right">Rp {{ number_format($salary->gaji_pokok ?? 0,0,',','.') }}</td>
+                        <td class="text-right">Rp {{ number_format($salary->tunjangan_umum ?? 0,0,',','.') }}</td>
+                        <td class="text-right">Rp {{ number_format($salary->tunjangan_transport ?? 0,0,',','.') }}</td>
+                        <td class="text-right">Rp {{ number_format($salary->tunjangan_thr ?? 0,0,',','.') }}</td>
+                        <td class="text-right">Rp {{ number_format($salary->tunjangan_kesehatan ?? 0,0,',','.') }}</td>
 
-                        <td class="text-right">
-                            Rp {{ number_format($salary->tunjangan_umum ?? 0, 0, ',', '.') }}
-                        </td>
-
-                        <td class="text-right">
-                            Rp {{ number_format($salary->tunjangan_transport ?? 0, 0, ',', '.') }}
-                        </td>
-
-                        <td class="text-right">
-                            Rp {{ number_format($salary->tunjangan_thr ?? 0, 0, ',', '.') }}
-                        </td>
-
-                        <td class="text-right">
-                            Rp {{ number_format($salary->tunjangan_kesehatan ?? 0, 0, ',', '.') }}
-                        </td>
-
-                        {{-- STATUS --}}
+                        {{-- STATUS BAYAR (PER PERIODE) --}}
                         <td class="text-center">
-                            @if($salary && $salary->aktif)
-                                <span class="badge badge-success">Aktif</span>
-                            @else
+                            @if(!$salary || !$salary->aktif)
                                 <span class="badge badge-secondary">Belum Diatur</span>
+                            @elseif($isPaidThisMonth)
+                                <span class="badge badge-success">
+                                    <i class="fas fa-check-circle"></i> Sudah Dibayar
+                                </span>
+                            @else
+                                <span class="badge badge-warning">
+                                    <i class="fas fa-clock"></i> Belum Dibayar
+                                </span>
                             @endif
                         </td>
 
                         {{-- AKSI --}}
                         <td class="text-center">
-                            {{-- ATUR GAJI --}}
-                            <a href="{{ route('admin.gaji.edit', $user->id) }}"
-                               class="btn btn-sm btn-primary mb-1">
-                                <i class="fas fa-cog"></i> Atur
-                            </a>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-primary dropdown-toggle"
+                                        data-toggle="dropdown">
+                                    <i class="fas fa-cogs"></i> Aksi
+                                </button>
 
-                            {{-- SLIP GAJI --}}
-                            @if($salary && $salary->aktif)
-                                <a href="{{ route('admin.gaji.slip.pdf', [$user->id, 'bulan' => $bulan]) }}"
-                                   target="_blank"
-                                   class="btn btn-sm btn-danger mb-1">
-                                    <i class="fas fa-file-pdf"></i> Slip
-                                </a>
-                            @endif
+                                <div class="dropdown-menu dropdown-menu-right">
+
+                                    @if($salary && $salary->aktif)
+                                        <a class="dropdown-item"
+                                           href="{{ route('admin.gaji.detail', [$user->id, 'bulan' => $bulan]) }}">
+                                            <i class="fas fa-eye text-info"></i> Detail Gaji
+                                        </a>
+                                    @endif
+
+                                    <a class="dropdown-item"
+                                       href="{{ route('admin.gaji.edit', $user->id) }}">
+                                        <i class="fas fa-cog text-primary"></i> Atur Gaji
+                                    </a>
+
+                                    @if($isPaidThisMonth)
+                                        <a class="dropdown-item"
+                                           target="_blank"
+                                           href="{{ route('admin.gaji.slip.pdf', [$user->id, 'bulan' => $bulan]) }}">
+                                            <i class="fas fa-file-pdf text-danger"></i> Slip Gaji
+                                        </a>
+                                    @endif
+
+                                </div>
+                            </div>
                         </td>
                     </tr>
                 @empty

@@ -14,20 +14,32 @@ class UserSalary extends Model
      */
     protected $fillable = [
         'user_id',
+
+        // Gaji
         'gaji_pokok',
         'tunjangan_umum',
         'tunjangan_transport',
         'tunjangan_thr',
         'tunjangan_kesehatan',
         'lembur_per_jam',
+
+        // Status
         'aktif',
+
+        // 🔥 PAYROLL
+        'is_paid',
+        'payroll_period',
+        'paid_at',
+        'paid_by',
     ];
 
     /**
      * Casting tipe data
      */
     protected $casts = [
-        'aktif' => 'boolean',
+        'aktif'     => 'boolean',
+        'is_paid'   => 'boolean',
+        'paid_at'   => 'datetime',
     ];
 
     /**
@@ -41,6 +53,14 @@ class UserSalary extends Model
     }
 
     /**
+     * Admin yang membayar gaji
+     */
+    public function payer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'paid_by');
+    }
+
+    /**
      * ===============================
      * HELPER METHOD
      * ===============================
@@ -49,7 +69,7 @@ class UserSalary extends Model
     /**
      * Hitung gaji per hari (GAJI POKOK SAJA)
      */
-    public function gajiPerHari(int $hariKerja = 22): float
+    public function gajiPerHari(int $hariKerja = 26): float
     {
         if ($hariKerja <= 0) {
             return 0;
@@ -59,7 +79,7 @@ class UserSalary extends Model
     }
 
     /**
-     * Hitung total tunjangan tetap
+     * Total tunjangan tetap
      */
     public function totalTunjangan(): int
     {
@@ -71,13 +91,21 @@ class UserSalary extends Model
     }
 
     /**
-     * Hitung total gaji (TANPA ABSENSI & LEMBUR)
-     * ⚠️ Jangan dipakai untuk payroll final
+     * Total gaji master (TANPA absensi & lembur)
+     * ⚠️ BUKAN payroll final
      */
     public function totalGajiMaster(): int
     {
         return
             ($this->gaji_pokok ?? 0) +
             $this->totalTunjangan();
+    }
+
+    /**
+     * Apakah gaji sudah dibayar untuk bulan tertentu
+     */
+    public function isPaidFor(string $bulanYm): bool
+    {
+        return $this->is_paid === true && $this->payroll_period === $bulanYm;
     }
 }

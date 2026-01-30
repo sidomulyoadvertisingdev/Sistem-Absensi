@@ -29,7 +29,8 @@ class LaporanController extends Controller
 
     /**
      * ======================================
-     * INTI LAPORAN GAJI (SUMBER DATA TUNGGAL)
+     * INTI LAPORAN GAJI
+     * SUMBER DATA TUNGGAL: DATABASE
      * ======================================
      */
     private function buildLaporan(Request $request): array
@@ -63,19 +64,19 @@ class LaporanController extends Controller
                 ->whereYear('tanggal', $tahun)
                 ->get();
 
+            // 🔥 STATUS FINAL (HANYA 2)
             $hariHadir = $absensis->where('status', 'hadir')->count();
-            $hariTelat = $absensis->where('status', 'terlambat_masuk')->count();
-            $presensi  = $hariHadir + $hariTelat;
+            $hariTelat = $absensis->where('status', 'terlambat')->count();
 
-            $offDay = max($hariKerjaStandar - $presensi, 0);
+            $presensi = $hariHadir + $hariTelat;
+            $offDay   = max($hariKerjaStandar - $presensi, 0);
 
             /**
-             * ==================================================
-             * 🔥 MENIT TERLAMBAT (SUM DARI DATABASE)
-             * ==================================================
+             * 🔥 MENIT TERLAMBAT
+             * LANGSUNG DARI DATABASE
              */
             $menitTerlambat = $absensis
-                ->where('status', 'terlambat_masuk')
+                ->where('status', 'terlambat')
                 ->sum('menit_terlambat');
 
             /* ================= LEMBUR ================= */
@@ -109,6 +110,7 @@ class LaporanController extends Controller
 
             foreach ($rules as $rule) {
 
+                // 🔥 FILTER PENEMPATAN
                 if (!$rule->isApplicableForPenempatan($user->penempatan)) {
                     continue;
                 }
@@ -135,6 +137,7 @@ class LaporanController extends Controller
 
                 $nilai = $rule->calculate($basis);
 
+                // 🔥 TELAT DIPOTONG SEKALI
                 if ($rule->condition_type === 'terlambat') {
                     $potonganTelatTotal = $nilai;
                 }

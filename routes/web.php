@@ -19,7 +19,8 @@ use App\Http\Controllers\Admin\{
     JobApplicantController,
     JobTodoController,
     SalaryDeductionRuleController,
-    SubmissionTypeController
+    SubmissionTypeController,
+    PayrollController
 };
 
 /*
@@ -92,36 +93,31 @@ Route::middleware(['web', 'auth', 'is_admin'])
         Route::post('/gaji/{user}', [UserSalaryController::class, 'update'])->name('gaji.update');
         Route::get('/gaji/{user}/slip/pdf', [UserSalaryController::class, 'slipPdf'])->name('gaji.slip.pdf');
 
+        /* ================= DETAIL GAJI & PAYROLL ================= */
+        Route::get('/gaji/{user}/detail', [PayrollController::class, 'show'])
+            ->name('gaji.detail');
+
+        Route::post('/gaji/{user}/pay', [PayrollController::class, 'pay'])
+            ->name('gaji.pay');
+
+        Route::get('/gaji/{user}/slip/final/pdf', [PayrollController::class, 'exportPdf'])
+            ->name('gaji.slip.final.pdf');
+
         /* ================= LAPORAN ================= */
         Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan');
         Route::get('/laporan/gaji/pdf', [LaporanController::class, 'exportPdf'])
             ->name('laporan.gaji.pdf');
 
         /* ================= ATURAN POTONGAN GAJI ================= */
-        Route::prefix('salary-deduction-rules')
-            ->name('salary-deduction-rules.')
-            ->group(function () {
-                Route::get('/', [SalaryDeductionRuleController::class, 'index'])->name('index');
-                Route::get('/create', [SalaryDeductionRuleController::class, 'create'])->name('create');
-                Route::post('/', [SalaryDeductionRuleController::class, 'store'])->name('store');
-                Route::get('/{rule}/edit', [SalaryDeductionRuleController::class, 'edit'])->name('edit');
-                Route::put('/{rule}', [SalaryDeductionRuleController::class, 'update'])->name('update');
-                Route::delete('/{rule}', [SalaryDeductionRuleController::class, 'destroy'])->name('destroy');
-                Route::post('/{rule}/toggle', [SalaryDeductionRuleController::class, 'toggle'])->name('toggle');
-            });
-
-        /* ================= POTONGAN GAJI (ALIAS UI) ================= */
-        Route::prefix('potongan-gaji')
-            ->name('potongan-gaji.')
-            ->group(function () {
-                Route::get('/', [SalaryDeductionRuleController::class, 'index'])->name('index');
-                Route::get('/create', [SalaryDeductionRuleController::class, 'create'])->name('create');
-                Route::post('/', [SalaryDeductionRuleController::class, 'store'])->name('store');
-                Route::get('/{rule}/edit', [SalaryDeductionRuleController::class, 'edit'])->name('edit');
-                Route::put('/{rule}', [SalaryDeductionRuleController::class, 'update'])->name('update');
-                Route::delete('/{rule}', [SalaryDeductionRuleController::class, 'destroy'])->name('destroy');
-                Route::post('/{rule}/toggle', [SalaryDeductionRuleController::class, 'toggle'])->name('toggle');
-            });
+        Route::prefix('salary-deduction-rules')->name('salary-deduction-rules.')->group(function () {
+            Route::get('/', [SalaryDeductionRuleController::class, 'index'])->name('index');
+            Route::get('/create', [SalaryDeductionRuleController::class, 'create'])->name('create');
+            Route::post('/', [SalaryDeductionRuleController::class, 'store'])->name('store');
+            Route::get('/{rule}/edit', [SalaryDeductionRuleController::class, 'edit'])->name('edit');
+            Route::put('/{rule}', [SalaryDeductionRuleController::class, 'update'])->name('update');
+            Route::delete('/{rule}', [SalaryDeductionRuleController::class, 'destroy'])->name('destroy');
+            Route::post('/{rule}/toggle', [SalaryDeductionRuleController::class, 'toggle'])->name('toggle');
+        });
 
         /* ================= JADWAL KERJA ================= */
         Route::get('/jadwal-kerja', [WorkScheduleController::class, 'index'])->name('jadwal');
@@ -190,66 +186,32 @@ Route::middleware(['web', 'auth', 'is_admin'])
             });
         });
 
-       /* ================= SUBMISSION TYPES ================= */
-Route::prefix('submission-types')
-    ->name('submission-types.')
-    ->group(function () {
+        /* ================= SUBMISSION TYPES ================= */
+        Route::prefix('submission-types')->name('submission-types.')->group(function () {
+            Route::get('/', [SubmissionTypeController::class, 'index'])->name('index');
+            Route::get('/create', [SubmissionTypeController::class, 'create'])->name('create');
+            Route::post('/', [SubmissionTypeController::class, 'store'])->name('store');
+            Route::get('/{type}/edit', [SubmissionTypeController::class, 'edit'])->name('edit');
+            Route::put('/{type}', [SubmissionTypeController::class, 'update'])->name('update');
+            Route::delete('/{type}', [SubmissionTypeController::class, 'destroy'])->name('destroy');
+            Route::post('/{type}/toggle', [SubmissionTypeController::class, 'toggle'])->name('toggle');
+        });
 
-        Route::get('/', [SubmissionTypeController::class, 'index'])->name('index');
-        Route::get('/create', [SubmissionTypeController::class, 'create'])->name('create');
-        Route::post('/', [SubmissionTypeController::class, 'store'])->name('store');
-        Route::get('/{type}/edit', [SubmissionTypeController::class, 'edit'])->name('edit');
-        Route::put('/{type}', [SubmissionTypeController::class, 'update'])->name('update');
-        Route::delete('/{type}', [SubmissionTypeController::class, 'destroy'])->name('destroy');
-        Route::post('/{type}/toggle', [SubmissionTypeController::class, 'toggle'])->name('toggle');
-    });
+        /* ================= SUBMISSION ================= */
+        Route::prefix('submission')->name('submission.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\SubmissionController::class, 'index'])->name('index');
+            Route::get('/{submission}', [\App\Http\Controllers\Admin\SubmissionController::class, 'show'])->name('show');
+            Route::post('/{submission}/approve', [\App\Http\Controllers\Admin\SubmissionController::class, 'approve'])->name('approve');
+            Route::post('/{submission}/reject', [\App\Http\Controllers\Admin\SubmissionController::class, 'reject'])->name('reject');
+            Route::post('/{submission}/cancel', [\App\Http\Controllers\Admin\SubmissionController::class, 'cancel'])->name('cancel');
+        });
 
-
-//* ================= SUBMISSION (ADMIN) ================= */
-Route::prefix('submission')
-    ->name('submission.')
-    ->group(function () {
-
-        // LIST semua pengajuan
-        Route::get('/', [\App\Http\Controllers\Admin\SubmissionController::class, 'index'])
-            ->name('index');
-
-        // DETAIL pengajuan
-        Route::get('/{submission}', [\App\Http\Controllers\Admin\SubmissionController::class, 'show'])
-            ->name('show');
-
-        // APPROVE
-        Route::post('/{submission}/approve', [\App\Http\Controllers\Admin\SubmissionController::class, 'approve'])
-            ->name('approve');
-
-        // REJECT
-        Route::post('/{submission}/reject', [\App\Http\Controllers\Admin\SubmissionController::class, 'reject'])
-            ->name('reject');
-
-        // CANCEL / RESET ke pending
-        Route::post('/{submission}/cancel', [\App\Http\Controllers\Admin\SubmissionController::class, 'cancel'])
-            ->name('cancel');
-    });
-
-/* ================= ANNOUNCEMENTS ================= */
-Route::prefix('announcements')
-    ->name('announcements.')
-    ->group(function () {
-
-        Route::get('/', [\App\Http\Controllers\Admin\AnnouncementController::class, 'index'])
-            ->name('index');
-
-        Route::get('/create', [\App\Http\Controllers\Admin\AnnouncementController::class, 'create'])
-            ->name('create');
-
-        Route::post('/', [\App\Http\Controllers\Admin\AnnouncementController::class, 'store'])
-            ->name('store');
-
-        Route::get('/{announcement}', [\App\Http\Controllers\Admin\AnnouncementController::class, 'show'])
-            ->name('show');
-
-        Route::post('/{announcement}/toggle', [\App\Http\Controllers\Admin\AnnouncementController::class, 'toggle'])
-            ->name('toggle');
-    });
-
+        /* ================= ANNOUNCEMENTS ================= */
+        Route::prefix('announcements')->name('announcements.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\AnnouncementController::class, 'index'])->name('index');
+            Route::get('/create', [\App\Http\Controllers\Admin\AnnouncementController::class, 'create'])->name('create');
+            Route::post('/', [\App\Http\Controllers\Admin\AnnouncementController::class, 'store'])->name('store');
+            Route::get('/{announcement}', [\App\Http\Controllers\Admin\AnnouncementController::class, 'show'])->name('show');
+            Route::post('/{announcement}/toggle', [\App\Http\Controllers\Admin\AnnouncementController::class, 'toggle'])->name('toggle');
+        });
     });

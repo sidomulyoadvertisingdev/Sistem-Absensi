@@ -5,16 +5,21 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\UserSalary;
-use App\Models\Lembur;
 use App\Models\Absensi;
+use App\Models\Lembur;
 use App\Models\SalaryDeductionRule;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class UserSalaryController extends Controller
 {
+    /**
+     * =================================================
+     * INDEX GAJI KARYAWAN
+     * =================================================
+     */
     public function index(Request $request)
     {
         $bulan = $request->bulan ?? now()->format('Y-m');
@@ -27,12 +32,23 @@ class UserSalaryController extends Controller
         return view('admin.gaji.index', compact('users', 'bulan'));
     }
 
+    /**
+     * =================================================
+     * FORM EDIT GAJI
+     * =================================================
+     */
     public function edit(User $user)
     {
         abort_if(!$user->isKaryawan(), 403);
+
         return view('admin.gaji.edit', compact('user'));
     }
 
+    /**
+     * =================================================
+     * SIMPAN / UPDATE MASTER GAJI
+     * =================================================
+     */
     public function update(Request $request, User $user)
     {
         abort_if(!$user->isKaryawan(), 403);
@@ -61,12 +77,13 @@ class UserSalaryController extends Controller
 
         return redirect()
             ->route('admin.gaji')
-            ->with('success', 'Data gaji berhasil disimpan');
+            ->with('success', 'Data gaji berhasil disimpan.');
     }
 
     /**
      * =================================================
-     * SLIP GAJI (100% DARI DATA ABSENSI)
+     * SLIP GAJI PDF
+     * (DIPAKAI OLEH INDEX & DETAIL)
      * =================================================
      */
     public function slipPdf(Request $request, User $user)
@@ -76,7 +93,8 @@ class UserSalaryController extends Controller
         $salary = $user->salary;
         abort_if(!$salary || !$salary->aktif, 404);
 
-        $date    = Carbon::createFromFormat('Y-m', $request->bulan ?? now()->format('Y-m'));
+        $bulanYm = $request->bulan ?? now()->format('Y-m');
+        $date    = Carbon::createFromFormat('Y-m', $bulanYm);
         $bulan   = $date->month;
         $tahun   = $date->year;
         $periode = $date->translatedFormat('F Y');
@@ -89,16 +107,15 @@ class UserSalaryController extends Controller
             ->whereYear('tanggal', $tahun)
             ->get();
 
-        $hariHadir = $absensis->where('status', 'hadir')->count();
-        $hariTelat = $absensis->where('status', 'terlambat_masuk')->count();
-        $presensi  = $hariHadir + $hariTelat;
-
-        // 🔥 INI KUNCI UTAMA (JANGAN HITUNG ULANG!)
+        $hariHadir      = $absensis->where('status', 'hadir')->count();
+        $hariTelat      = $absensis->where('status', 'terlambat')->count();
         $menitTerlambat = $absensis
-            ->where('status', 'terlambat_masuk')
+            ->where('status', 'terlambat')
             ->sum('menit_terlambat');
 
-        /* ================= GAJI ================= */
+        $presensi = $hariHadir + $hariTelat;
+
+        /* ================= GAJI POKOK ================= */
         $gajiPerHari  = $salary->gaji_pokok / $hariKerjaStandar;
         $gajiPokokFix = $gajiPerHari * $presensi;
 
@@ -150,25 +167,20 @@ class UserSalaryController extends Controller
             }
 
             $kena = match ($rule->condition_type) {
-                'terlambat'   => $hariTelat >= $rule->condition_value,
-                'pelanggaran' => true,
-                default       => false,
+                'terlambat' => $hariTelat >= $rule->condition_value,
+                default     => true,
             };
 
             if (!$kena) continue;
 
             $basis = $rule->condition_type === 'terlambat'
                 ? $salary->gaji_pokok
-                : match ($rule->base_amount) {
-                    'gaji_pokok'   => $gajiPokokFix,
-                    'salary_kotor' => $salaryKotor,
-                    'total_gaji'   => max($salaryKotor - $totalPotongan, 0),
-                };
+                : $salaryKotor;
 
             $nilai = $rule->calculate($basis);
 
             if ($rule->condition_type === 'terlambat') {
-                $potonganTelatNominal = $nilai;
+                $potonganTelatNominal += $nilai;
             }
 
             $totalPotongan += $nilai;
@@ -183,11 +195,12 @@ class UserSalaryController extends Controller
             'gajiPerHari',
             'gajiPokokFix',
             'hariHadir',
+            'hariTelat',
+            'menitTerlambat',
             'totalJamLembur',
             'totalLembur',
             'jobBonus',
             'totalBonusJob',
-            'menitTerlambat',
             'potonganTelatNominal',
             'totalPotongan',
             'salaryKotor',
