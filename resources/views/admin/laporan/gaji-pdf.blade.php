@@ -63,7 +63,7 @@
 
         .summary {
             margin-top: 12px;
-            width: 50%;
+            width: 45%;
             float: right;
         }
 
@@ -82,7 +82,7 @@
 @php
     $totalSalaryKotor = 0;
     $totalPotongan   = 0;
-    $totalBersih     = 0;
+    $totalDiterima   = 0;
 @endphp
 
 <table>
@@ -95,16 +95,19 @@
             <th width="4%">Hadir</th>
             <th width="4%">Telat</th>
             <th width="4%">Off</th>
+
             <th width="6%">Gaji</th>
             <th width="5%">Umum</th>
             <th width="5%">Trans</th>
             <th width="5%">THR</th>
             <th width="5%">Kes</th>
+
             <th width="5%">/Hari</th>
             <th width="6%">Lembur</th>
             <th width="6%">Pot. Telat</th>
+
             <th width="7%">Salary Kotor</th>
-            <th width="8%">Total Gaji</th>
+            <th width="8%">Gaji Diterima</th>
         </tr>
     </thead>
 
@@ -113,8 +116,8 @@
 
         @php
             $totalSalaryKotor += $row['salary_kotor'] ?? 0;
-            $totalPotongan   += $row['potongan_telat'] ?? 0;
-            $totalBersih     += $row['total_gaji'] ?? 0;
+            $totalPotongan   += $row['total_potongan'] ?? 0;
+            $totalDiterima   += $row['gaji_diterima'] ?? 0;
         @endphp
 
         <tr>
@@ -125,7 +128,7 @@
                 {{ $row['nama'] ?? '-' }}
             </td>
 
-            <td>{{ $row['hari_kerja_standar'] ?? 26 }}</td>
+            <td>{{ 26 }}</td>
             <td>{{ $row['hari_hadir'] ?? 0 }}</td>
             <td>{{ $row['hari_telat'] ?? 0 }}</td>
             <td>{{ $row['off_day'] ?? 0 }}</td>
@@ -167,7 +170,9 @@
             </td>
 
             <td class="text-right">
-                <strong>{{ number_format($row['total_gaji'] ?? 0,0,',','.') }}</strong>
+                <strong>
+                    {{ number_format($row['gaji_diterima'] ?? 0,0,',','.') }}
+                </strong>
             </td>
         </tr>
 
@@ -181,7 +186,7 @@
     </tbody>
 </table>
 
-{{-- ================= TOTAL ================= --}}
+{{-- ================= RINGKASAN ================= --}}
 <table class="summary">
     <tr>
         <td>Total Salary Kotor</td>
@@ -190,15 +195,15 @@
         </td>
     </tr>
     <tr>
-        <td>Total Potongan Telat</td>
+        <td>Total Potongan</td>
         <td class="text-right">
             Rp {{ number_format($totalPotongan,0,',','.') }}
         </td>
     </tr>
     <tr>
-        <td>Total Gaji Dibayarkan</td>
+        <td>Total Gaji Diterima</td>
         <td class="text-right">
-            <strong>Rp {{ number_format($totalBersih,0,',','.') }}</strong>
+            <strong>Rp {{ number_format($totalDiterima,0,',','.') }}</strong>
         </td>
     </tr>
 </table>

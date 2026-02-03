@@ -5,13 +5,14 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\SalaryDeductionRule;
 use App\Models\User;
+use App\Models\UserSalary;
 use Illuminate\Http\Request;
 
 class SalaryDeductionRuleController extends Controller
 {
     /**
      * ===============================
-     * LIST ATURAN POTONGAN GAJI
+     * LIST ATURAN
      * ===============================
      */
     public function index()
@@ -22,79 +23,82 @@ class SalaryDeductionRuleController extends Controller
 
     /**
      * ===============================
-     * FORM TAMBAH ATURAN
+     * FORM TAMBAH
      * ===============================
      */
     public function create()
     {
+        /**
+         * ===============================
+         * PENEMPATAN
+         * ===============================
+         */
         $penempatans = User::whereNotNull('penempatan')
             ->distinct()
             ->orderBy('penempatan')
-            ->pluck('penempatan');
+            ->pluck('penempatan')
+            ->toArray();
 
-        return view('admin.potongan-gaji.create', compact('penempatans'));
+        /**
+         * ===============================
+         * JENIS TUNJANGAN (DARI USER_SALARIES)
+         * ===============================
+         * HARD SOURCE OF TRUTH
+         */
+        $tunjangans = [
+            'tunjangan_umum'       => 'Tunjangan Umum',
+            'tunjangan_transport'  => 'Tunjangan Transport',
+            'tunjangan_thr'        => 'Tunjangan THR',
+            'tunjangan_kesehatan'  => 'Tunjangan Kesehatan',
+        ];
+
+        return view('admin.potongan-gaji.create', compact(
+            'penempatans',
+            'tunjangans'
+        ));
     }
 
     /**
      * ===============================
-     * SIMPAN DATA
+     * SIMPAN
      * ===============================
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'kode' => 'required|string|max:50|unique:salary_deduction_rules,kode',
-            'nama' => 'required|string|max:255',
-            'keterangan' => 'nullable|string',
+        $data = $request->validate([
+            'kode'        => 'required|string|max:50|unique:salary_deduction_rules,kode',
+            'nama'        => 'required|string|max:255',
+            'keterangan'  => 'nullable|string',
 
-            // SISTEM POTONGAN
-            'type' => 'required|in:fixed,percentage',
-            'value' => 'required|numeric|min:0',
-            'base_amount' => 'required|in:gaji_pokok,salary_kotor,total_gaji',
+            'type'        => 'required|in:fixed,percentage',
+            'value'       => 'required|numeric|min:0',
 
-            // KONDISI
-            'condition_type' => 'required|in:pelanggaran,off_day,terlambat',
-            'condition_value' => 'nullable|integer|min:0',
+            'base_source' => 'required|in:gaji_pokok,tunjangan,total_gaji',
+            'tunjangan_items' => 'nullable|array',
 
-            // BATASAN
+            'condition_type'  => 'required|in:pelanggaran,off_day,terlambat',
+            'condition_value' => 'nullable|integer|min:1',
+
             'max_occurrence' => 'nullable|integer|min:1',
             'max_minutes'    => 'nullable|integer|min:1',
 
-            // PENEMPATAN
-            'penempatan'     => 'nullable|array',
-
-            'aktif' => 'nullable|boolean',
+            'penempatan'     => 'required|array|min:1',
+            'aktif'          => 'nullable|boolean',
         ]);
 
-        SalaryDeductionRule::create([
-            'kode' => strtoupper($request->kode),
-            'nama' => $request->nama,
-            'keterangan' => $request->keterangan,
+        // ===============================
+        // NORMALISASI
+        // ===============================
+        $data['kode'] = strtoupper($data['kode']);
+        $data['condition_value'] = $data['condition_value'] ?? 1;
+        $data['aktif'] = $request->boolean('aktif');
 
-            'type' => $request->type,
-            'value' => $request->value,
-            'base_amount' => $request->base_amount,
+        // 🔥 hanya simpan tunjangan jika base = tunjangan
+        if ($data['base_source'] !== 'tunjangan') {
+            $data['tunjangan_items'] = [];
+        }
 
-            'condition_type' => $request->condition_type,
-            'condition_value' => $request->condition_value ?? 1,
-
-            // 🔥 PENEMPATAN
-            // null = berlaku untuk semua
-            'penempatan' => $request->filled('penempatan')
-                ? array_values($request->penempatan)
-                : null,
-
-            // 🔥 FIX INTEGER NULL
-            'max_occurrence' => $request->filled('max_occurrence')
-                ? (int) $request->max_occurrence
-                : null,
-
-            'max_minutes' => $request->filled('max_minutes')
-                ? (int) $request->max_minutes
-                : null,
-
-            'aktif' => $request->boolean('aktif'),
-        ]);
+        SalaryDeductionRule::create($data);
 
         return redirect()
             ->route('admin.potongan-gaji.index')
@@ -103,104 +107,23 @@ class SalaryDeductionRuleController extends Controller
 
     /**
      * ===============================
-     * FORM EDIT
-     * ===============================
-     */
-    public function edit(SalaryDeductionRule $rule)
-    {
-        $penempatans = User::whereNotNull('penempatan')
-            ->distinct()
-            ->orderBy('penempatan')
-            ->pluck('penempatan');
-
-        return view('admin.potongan-gaji.edit', compact('rule', 'penempatans'));
-    }
-
-    /**
-     * ===============================
-     * UPDATE DATA
-     * ===============================
-     */
-    public function update(Request $request, SalaryDeductionRule $rule)
-    {
-        $request->validate([
-            'nama' => 'required|string|max:255',
-            'keterangan' => 'nullable|string',
-
-            'type' => 'required|in:fixed,percentage',
-            'value' => 'required|numeric|min:0',
-            'base_amount' => 'required|in:gaji_pokok,salary_kotor,total_gaji',
-
-            'condition_type' => 'required|in:pelanggaran,off_day,terlambat',
-            'condition_value' => 'nullable|integer|min:0',
-
-            'max_occurrence' => 'nullable|integer|min:1',
-            'max_minutes'    => 'nullable|integer|min:1',
-
-            'penempatan'     => 'nullable|array',
-
-            'aktif' => 'nullable|boolean',
-        ]);
-
-        $rule->update([
-            'nama' => $request->nama,
-            'keterangan' => $request->keterangan,
-
-            'type' => $request->type,
-            'value' => $request->value,
-            'base_amount' => $request->base_amount,
-
-            'condition_type' => $request->condition_type,
-            'condition_value' => $request->condition_value ?? 1,
-
-            // 🔥 WAJIB SAMA DENGAN STORE
-            'penempatan' => $request->filled('penempatan')
-                ? array_values($request->penempatan)
-                : null,
-
-            'max_occurrence' => $request->filled('max_occurrence')
-                ? (int) $request->max_occurrence
-                : null,
-
-            'max_minutes' => $request->filled('max_minutes')
-                ? (int) $request->max_minutes
-                : null,
-
-            'aktif' => $request->boolean('aktif'),
-        ]);
-
-        return redirect()
-            ->route('admin.potongan-gaji.index')
-            ->with('success', 'Aturan potongan gaji berhasil diperbarui');
-    }
-
-    /**
-     * ===============================
-     * HAPUS DATA
+     * DELETE
      * ===============================
      */
     public function destroy(SalaryDeductionRule $rule)
     {
         $rule->delete();
-
-        return redirect()
-            ->route('admin.potongan-gaji.index')
-            ->with('success', 'Aturan potongan gaji berhasil dihapus');
+        return back()->with('success', 'Aturan berhasil dihapus');
     }
 
     /**
      * ===============================
-     * AKTIF / NONAKTIF
+     * TOGGLE AKTIF
      * ===============================
      */
     public function toggle(SalaryDeductionRule $rule)
     {
-        $rule->update([
-            'aktif' => !$rule->aktif
-        ]);
-
-        return redirect()
-            ->route('admin.potongan-gaji.index')
-            ->with('success', 'Status aturan berhasil diubah');
+        $rule->update(['aktif' => !$rule->aktif]);
+        return back()->with('success', 'Status aturan diubah');
     }
 }

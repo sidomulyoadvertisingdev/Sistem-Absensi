@@ -8,6 +8,8 @@ use App\Models\Absensi;
 use App\Models\User;
 use App\Models\WorkSchedule;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AbsensiController extends Controller
 {
@@ -27,6 +29,11 @@ class AbsensiController extends Controller
         return view('admin.absensi.create', compact('users'));
     }
 
+    /**
+     * =================================================
+     * INPUT ABSENSI MANUAL (TIDAK DIUBAH)
+     * =================================================
+     */
     public function store(Request $request)
     {
         $request->validate([
@@ -37,11 +44,6 @@ class AbsensiController extends Controller
             'foto'    => 'nullable|image|max:2048',
         ]);
 
-        /**
-         * ===============================
-         * ABSENSI HARIAN
-         * ===============================
-         */
         $absensi = Absensi::firstOrCreate(
             [
                 'user_id' => $request->user_id,
@@ -54,19 +56,11 @@ class AbsensiController extends Controller
         );
 
         if ($request->hasFile('foto')) {
-            $absensi->foto = $request->file('foto')
-                ->store('absensi', 'public');
+            $absensi->foto = $request->file('foto')->store('absensi', 'public');
         }
 
-        /**
-         * ===============================
-         * JADWAL KERJA
-         * ===============================
-         */
         $hari = strtolower(
-            Carbon::parse($request->tanggal)
-                ->locale('id')
-                ->isoFormat('dddd')
+            Carbon::parse($request->tanggal)->locale('id')->isoFormat('dddd')
         );
 
         $jadwal = WorkSchedule::where('user_id', $request->user_id)
@@ -74,37 +68,24 @@ class AbsensiController extends Controller
             ->where('aktif', true)
             ->first();
 
-        /**
-         * ===============================
-         * MASUK (TELAT MASUK)
-         * ===============================
-         */
         if ($request->aksi === 'masuk') {
-
-            $jamMasuk = Carbon::parse($request->tanggal . ' ' . $request->jam);
-            $telatMasuk = 0;
+            $jamMasuk = Carbon::parse($request->tanggal.' '.$request->jam);
+            $telat = 0;
 
             if ($jadwal && $jadwal->jam_masuk) {
-
-                $batasMasuk = Carbon::parse(
-                    $request->tanggal . ' ' . $jadwal->jam_masuk
+                $batas = Carbon::parse(
+                    $request->tanggal.' '.$jadwal->jam_masuk
                 )->addMinutes($jadwal->toleransi_masuk ?? 0);
 
-                // 🔥 hanya jika lebih lambat
-                if ($jamMasuk->gt($batasMasuk)) {
-                    $telatMasuk = $batasMasuk->diffInMinutes($jamMasuk);
+                if ($jamMasuk->gt($batas)) {
+                    $telat = $batas->diffInMinutes($jamMasuk);
                 }
             }
 
             $absensi->jam_masuk = $request->jam;
-            $absensi->menit_terlambat += $telatMasuk;
+            $absensi->menit_terlambat += $telat;
         }
 
-        /**
-         * ===============================
-         * ISTIRAHAT
-         * ===============================
-         */
         if ($request->aksi === 'istirahat_mulai') {
             $absensi->istirahat_mulai = $request->jam;
         }
@@ -113,37 +94,24 @@ class AbsensiController extends Controller
             $absensi->istirahat_selesai = $request->jam;
         }
 
-        /**
-         * ===============================
-         * PULANG (PULANG CEPAT)
-         * ===============================
-         */
         if ($request->aksi === 'pulang') {
-
-            $jamPulang = Carbon::parse($request->tanggal . ' ' . $request->jam);
-            $pulangCepat = 0;
+            $jamPulang = Carbon::parse($request->tanggal.' '.$request->jam);
+            $cepat = 0;
 
             if ($jadwal && $jadwal->jam_pulang) {
-
-                $batasPulang = Carbon::parse(
-                    $request->tanggal . ' ' . $jadwal->jam_pulang
+                $batas = Carbon::parse(
+                    $request->tanggal.' '.$jadwal->jam_pulang
                 );
 
-                // 🔥 hanya jika pulang lebih cepat
-                if ($jamPulang->lt($batasPulang)) {
-                    $pulangCepat = $jamPulang->diffInMinutes($batasPulang);
+                if ($jamPulang->lt($batas)) {
+                    $cepat = $jamPulang->diffInMinutes($batas);
                 }
             }
 
             $absensi->jam_pulang = $request->jam;
-            $absensi->menit_terlambat += $pulangCepat;
+            $absensi->menit_terlambat += $cepat;
         }
 
-        /**
-         * ===============================
-         * STATUS FINAL (SATU SUMBER KEBENARAN)
-         * ===============================
-         */
         $absensi->status = $absensi->menit_terlambat > 0
             ? 'terlambat'
             : 'hadir';
@@ -153,5 +121,170 @@ class AbsensiController extends Controller
         return redirect()
             ->route('admin.absensi')
             ->with('success', 'Absensi berhasil diperbarui');
+    }
+
+    /**
+     * =================================================
+     * 🔥 IMPORT ABSENSI CSV (FINAL, TIDAK SILENT FAIL)
+     * =================================================
+     */
+    public function importCsv(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:csv,txt',
+        ]);
+
+        $file = fopen($request->file('file')->getRealPath(), 'r');
+        fgetcsv($file); // skip header
+
+        DB::beginTransaction();
+
+        $berhasil = 0;
+        $gagal    = 0;
+
+        try {
+            while (($row = fgetcsv($file)) !== false) {
+
+                if (count($row) < 2) {
+                    $gagal++;
+                    continue;
+                }
+
+                try {
+                    $tanggal = Carbon::parse(trim($row[0]))->format('Y-m-d');
+                } catch (\Exception $e) {
+                    $gagal++;
+                    continue;
+                }
+
+                // 🔥 NORMALISASI NAMA
+                $nama = trim(preg_replace('/\s+/', ' ', $row[1]));
+
+                $jamMasuk         = $row[2] ?? null;
+                $istirahatMulai   = $row[3] ?? null;
+                $istirahatSelesai = $row[4] ?? null;
+                $jamPulang        = $row[5] ?? null;
+
+                // 🔥 CARI USER LEBIH TOLERAN
+                $user = User::where('role', User::ROLE_KARYAWAN)
+                    ->where('name', 'LIKE', $nama)
+                    ->first();
+
+                if (!$user) {
+                    $gagal++;
+                    continue;
+                }
+
+                $hari = strtolower(
+                    Carbon::parse($tanggal)->locale('id')->isoFormat('dddd')
+                );
+
+                $jadwal = WorkSchedule::where('user_id', $user->id)
+                    ->where('hari', $hari)
+                    ->where('aktif', true)
+                    ->first();
+
+                $menitTerlambat = 0;
+
+                if ($jadwal) {
+                    if ($jamMasuk && $jadwal->jam_masuk) {
+                        $masuk = Carbon::parse("$tanggal $jamMasuk");
+                        $batas = Carbon::parse("$tanggal {$jadwal->jam_masuk}")
+                            ->addMinutes($jadwal->toleransi_masuk ?? 0);
+
+                        if ($masuk->gt($batas)) {
+                            $menitTerlambat += $batas->diffInMinutes($masuk);
+                        }
+                    }
+
+                    if ($jamPulang && $jadwal->jam_pulang) {
+                        $pulang = Carbon::parse("$tanggal $jamPulang");
+                        $batas  = Carbon::parse("$tanggal {$jadwal->jam_pulang}");
+
+                        if ($pulang->lt($batas)) {
+                            $menitTerlambat += $pulang->diffInMinutes($batas);
+                        }
+                    }
+                }
+
+                Absensi::updateOrCreate(
+                    [
+                        'user_id' => $user->id,
+                        'tanggal' => $tanggal,
+                    ],
+                    [
+                        'jam_masuk'         => $jamMasuk,
+                        'istirahat_mulai'   => $istirahatMulai,
+                        'istirahat_selesai' => $istirahatSelesai,
+                        'jam_pulang'        => $jamPulang,
+                        'menit_terlambat'   => $menitTerlambat,
+                        'status'            => $menitTerlambat > 0 ? 'terlambat' : 'hadir',
+                        'locked'            => false,
+                    ]
+                );
+
+                $berhasil++;
+            }
+
+            fclose($file);
+
+            if ($berhasil === 0) {
+                DB::rollBack();
+                return back()->with(
+                    'error',
+                    'Import gagal: tidak ada data yang cocok dengan nama karyawan.'
+                );
+            }
+
+            DB::commit();
+
+            return redirect()
+                ->route('admin.absensi')
+                ->with(
+                    'success',
+                    "Import absensi berhasil. Masuk: {$berhasil}, Dilewati: {$gagal}"
+                );
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return back()->with('error', 'Import absensi gagal: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * =================================================
+     * 🔥 DOWNLOAD TEMPLATE CSV
+     * =================================================
+     */
+    public function exportTemplateCsv(): StreamedResponse
+    {
+        $filename = 'template-absensi.csv';
+
+        return response()->stream(function () {
+            $handle = fopen('php://output', 'w');
+
+            fputcsv($handle, [
+                'tanggal',
+                'nama',
+                'jam_masuk',
+                'istirahat_mulai',
+                'istirahat_selesai',
+                'jam_pulang',
+            ]);
+
+            fputcsv($handle, [
+                '2026-01-27',
+                'Albiatun',
+                '08:10',
+                '12:00',
+                '13:00',
+                '17:00',
+            ]);
+
+            fclose($handle);
+        }, 200, [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename={$filename}",
+        ]);
     }
 }

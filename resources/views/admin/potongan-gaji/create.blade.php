@@ -20,13 +20,9 @@
                     <label>Kode Aturan</label>
                     <input type="text"
                            name="kode"
-                           class="form-control @error('kode') is-invalid @enderror"
-                           value="{{ old('kode') }}"
-                           placeholder="Contoh: TELAT_3X"
+                           class="form-control"
+                           placeholder="Contoh: POT_TUNJANGAN"
                            required>
-                    @error('kode')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
                 </div>
 
                 {{-- ================= NAMA ================= --}}
@@ -34,13 +30,9 @@
                     <label>Nama Aturan</label>
                     <input type="text"
                            name="nama"
-                           class="form-control @error('nama') is-invalid @enderror"
-                           value="{{ old('nama') }}"
-                           placeholder="Contoh: Terlambat Maksimal 3 Kali"
+                           class="form-control"
+                           placeholder="Contoh: Potongan Tunjangan Transport"
                            required>
-                    @error('nama')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
                 </div>
 
                 {{-- ================= KETERANGAN ================= --}}
@@ -48,8 +40,7 @@
                     <label>Keterangan</label>
                     <textarea name="keterangan"
                               class="form-control"
-                              rows="2"
-                              placeholder="Opsional">{{ old('keterangan') }}</textarea>
+                              rows="2"></textarea>
                 </div>
 
                 <hr>
@@ -57,60 +48,63 @@
                 {{-- ================= JENIS POTONGAN ================= --}}
                 <div class="form-group">
                     <label>Jenis Potongan</label>
-                    <select name="type"
-                            class="form-control @error('type') is-invalid @enderror"
-                            required>
+                    <select name="type" class="form-control" required>
                         <option value="">-- Pilih --</option>
-                        <option value="fixed" {{ old('type') === 'fixed' ? 'selected' : '' }}>
-                            Nominal (Rp)
-                        </option>
-                        <option value="percentage" {{ old('type') === 'percentage' ? 'selected' : '' }}>
-                            Persentase (%)
-                        </option>
+                        <option value="fixed">Nominal (Rp)</option>
+                        <option value="percentage">Persentase (%)</option>
                     </select>
-                    @error('type')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
                 </div>
 
-                {{-- ================= NILAI POTONGAN ================= --}}
                 <div class="form-group">
                     <label>Nilai Potongan</label>
                     <input type="number"
                            step="0.01"
                            name="value"
-                           class="form-control @error('value') is-invalid @enderror"
-                           value="{{ old('value') }}"
+                           class="form-control"
                            required>
-                    @error('value')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
                 </div>
 
-                {{-- ================= DASAR PERHITUNGAN ================= --}}
+                <hr>
+
+                {{-- ================= DASAR POTONGAN ================= --}}
                 <div class="form-group">
-                    <label>Dihitung Dari</label>
-                    <select name="base_amount"
-                            id="base_amount"
-                            class="form-control @error('base_amount') is-invalid @enderror"
+                    <label>Potongan Dihitung Dari</label>
+                    <select name="base_source"
+                            id="base_source"
+                            class="form-control"
                             required>
                         <option value="">-- Pilih --</option>
-                        <option value="gaji_pokok" {{ old('base_amount') === 'gaji_pokok' ? 'selected' : '' }}>
-                            Gaji Pokok
-                        </option>
-                        <option value="salary_kotor" {{ old('base_amount') === 'salary_kotor' ? 'selected' : '' }}>
-                            Salary Kotor
-                        </option>
-                        <option value="total_gaji" {{ old('base_amount') === 'total_gaji' ? 'selected' : '' }}>
-                            Total Gaji
-                        </option>
+                        <option value="gaji_pokok">Gaji Pokok</option>
+                        <option value="tunjangan">Tunjangan</option>
+                        <option value="total_gaji">Total Gaji</option>
                     </select>
-                    @error('base_amount')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
+                </div>
+
+                {{-- ================= PILIH TUNJANGAN ================= --}}
+                <div class="form-group d-none" id="tunjangan-box">
+                    <label>Jenis Tunjangan yang Dipotong</label>
+
+                    <div class="border rounded p-3">
+                        @forelse($tunjangans as $key => $label)
+                            <div class="form-check">
+                                <input type="checkbox"
+                                       name="tunjangan_items[]"
+                                       value="{{ $key }}"
+                                       class="form-check-input"
+                                       id="tj_{{ $key }}">
+                                <label for="tj_{{ $key }}" class="form-check-label">
+                                    {{ $label }}
+                                </label>
+                            </div>
+                        @empty
+                            <div class="text-muted">
+                                Belum ada tunjangan di struktur gaji
+                            </div>
+                        @endforelse
+                    </div>
 
                     <small class="text-muted">
-                        ⚠️ Untuk <strong>TERLAMBAT</strong>, sistem akan tetap memakai <strong>GAJI POKOK</strong>
+                        Tunjangan diambil dari struktur gaji karyawan
                     </small>
                 </div>
 
@@ -119,58 +113,21 @@
                 {{-- ================= KONDISI ================= --}}
                 <div class="form-group">
                     <label>Jenis Kondisi</label>
-                    <select name="condition_type"
-                            id="condition_type"
-                            class="form-control @error('condition_type') is-invalid @enderror"
-                            required>
+                    <select name="condition_type" class="form-control" required>
                         <option value="">-- Pilih --</option>
-                        <option value="terlambat" {{ old('condition_type') === 'terlambat' ? 'selected' : '' }}>
-                            Terlambat
-                        </option>
-                        <option value="off_day" {{ old('condition_type') === 'off_day' ? 'selected' : '' }}>
-                            Off / Tidak Masuk
-                        </option>
-                        <option value="pelanggaran" {{ old('condition_type') === 'pelanggaran' ? 'selected' : '' }}>
-                            Pelanggaran
-                        </option>
+                        <option value="terlambat">Terlambat</option>
+                        <option value="off_day">Tidak Masuk</option>
+                        <option value="pelanggaran">Pelanggaran</option>
                     </select>
-                    @error('condition_type')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
                 </div>
 
-                {{-- ================= TRIGGER ================= --}}
                 <div class="form-group">
-                    <label>Minimal Terjadi (Trigger)</label>
+                    <label>Trigger Minimal Kejadian</label>
                     <input type="number"
                            name="condition_value"
                            class="form-control"
-                           value="{{ old('condition_value', 1) }}"
-                           min="0">
-                    <small class="text-muted">
-                        Contoh: 1 = mulai dipotong sejak kejadian pertama
-                    </small>
-                </div>
-
-                {{-- ================= BATASAN TERLAMBAT ================= --}}
-                <div class="form-group">
-                    <label>Maksimal Jumlah Kejadian (Opsional)</label>
-                    <input type="number"
-                           name="max_occurrence"
-                           class="form-control"
-                           value="{{ old('max_occurrence') }}"
-                           min="1"
-                           placeholder="Contoh: 3">
-                </div>
-
-                <div class="form-group">
-                    <label>Maksimal Menit per Kejadian (Opsional)</label>
-                    <input type="number"
-                           name="max_minutes"
-                           class="form-control"
-                           value="{{ old('max_minutes') }}"
-                           min="1"
-                           placeholder="Contoh: 120">
+                           value="1"
+                           min="1">
                 </div>
 
                 <hr>
@@ -180,41 +137,35 @@
                     <label class="font-weight-bold">Berlaku Untuk Penempatan</label>
 
                     <div class="border rounded p-3">
-
-                        <div class="form-check mb-2">
-                            <input type="checkbox" id="checkAll" class="form-check-input">
-                            <label for="checkAll" class="form-check-label">
-                                <strong>Semua Penempatan</strong>
-                            </label>
-                        </div>
-
-                        <hr>
-
                         <div class="row">
-                            @forelse($penempatans as $p)
+                            @foreach($penempatans as $p)
                                 <div class="col-md-4">
                                     <div class="form-check">
+                                        {{-- ❌ TIDAK PAKAI required --}}
                                         <input type="checkbox"
                                                name="penempatan[]"
                                                value="{{ $p }}"
-                                               class="form-check-input penempatan-item"
-                                               id="p_{{ $loop->index }}"
-                                               {{ in_array($p, old('penempatan', [])) ? 'checked' : '' }}>
-                                        <label for="p_{{ $loop->index }}" class="form-check-label">
+                                               class="form-check-input"
+                                               id="p_{{ $loop->index }}">
+                                        <label for="p_{{ $loop->index }}"
+                                               class="form-check-label">
                                             {{ $p }}
                                         </label>
                                     </div>
                                 </div>
-                            @empty
-                                <div class="col-12 text-muted">
-                                    Belum ada penempatan karyawan
-                                </div>
-                            @endforelse
+                            @endforeach
                         </div>
 
                         <small class="text-muted d-block mt-2">
-                            Jika tidak dipilih → aturan berlaku untuk semua penempatan
+                            Pilih minimal satu penempatan (validasi di server)
                         </small>
+
+                        {{-- ERROR MESSAGE --}}
+                        @error('penempatan')
+                            <div class="text-danger mt-2">
+                                {{ $message }}
+                            </div>
+                        @enderror
                     </div>
                 </div>
 
@@ -222,11 +173,10 @@
                 <div class="form-group form-check">
                     <input type="checkbox"
                            name="aktif"
-                           class="form-check-input"
-                           id="aktif"
                            value="1"
-                           {{ old('aktif', true) ? 'checked' : '' }}>
-                    <label class="form-check-label" for="aktif">
+                           class="form-check-input"
+                           checked>
+                    <label class="form-check-label">
                         Aktif
                     </label>
                 </div>
@@ -234,10 +184,12 @@
             </div>
 
             <div class="card-footer text-right">
-                <a href="{{ route('admin.potongan-gaji.index') }}" class="btn btn-secondary">
+                <a href="{{ route('admin.potongan-gaji.index') }}"
+                   class="btn btn-secondary">
                     Batal
                 </a>
-                <button type="submit" class="btn btn-primary">
+                <button type="submit"
+                        class="btn btn-primary">
                     Simpan Aturan
                 </button>
             </div>
@@ -250,10 +202,17 @@
 
 @push('scripts')
 <script>
-document.getElementById('checkAll')?.addEventListener('change', function () {
-    document.querySelectorAll('.penempatan-item').forEach(cb => {
-        cb.checked = this.checked;
-    });
-});
+const baseSelect   = document.getElementById('base_source');
+const tunjanganBox = document.getElementById('tunjangan-box');
+
+function toggleTunjangan() {
+    tunjanganBox.classList.toggle(
+        'd-none',
+        baseSelect.value !== 'tunjangan'
+    );
+}
+
+baseSelect.addEventListener('change', toggleTunjangan);
+toggleTunjangan();
 </script>
 @endpush

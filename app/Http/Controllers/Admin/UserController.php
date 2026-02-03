@@ -11,9 +11,9 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class UserController extends Controller
 {
     /*
-    |--------------------------------------------------------------------------
+    |----------------------------------------------------------------------
     | KARYAWAN CRUD
-    |--------------------------------------------------------------------------
+    |----------------------------------------------------------------------
     */
 
     public function index(Request $request)
@@ -114,9 +114,9 @@ class UserController extends Controller
     }
 
     /*
-    |--------------------------------------------------------------------------
-    | 🔥 EXPORT CSV (LARAVEL 12 – NATIVE)
-    |--------------------------------------------------------------------------
+    |----------------------------------------------------------------------
+    | EXPORT CSV
+    |----------------------------------------------------------------------
     */
 
     public function exportCsv(): StreamedResponse
@@ -126,7 +126,6 @@ class UserController extends Controller
         return response()->stream(function () {
             $handle = fopen('php://output', 'w');
 
-            // HEADER CSV (sesuai Blade & import)
             fputcsv($handle, [
                 'Nama',
                 'NIK',
@@ -135,7 +134,6 @@ class UserController extends Controller
                 'Alamat',
                 'Jabatan',
                 'Penempatan',
-                'Tanggal Daftar',
             ]);
 
             User::where('role', User::ROLE_KARYAWAN)
@@ -150,7 +148,6 @@ class UserController extends Controller
                             $user->address,
                             $user->jabatan,
                             $user->penempatan,
-                            optional($user->created_at)->format('d-m-Y'),
                         ]);
                     }
                 });
@@ -163,9 +160,9 @@ class UserController extends Controller
     }
 
     /*
-    |--------------------------------------------------------------------------
-    | 🔥 IMPORT CSV (LARAVEL 12 – NATIVE)
-    |--------------------------------------------------------------------------
+    |----------------------------------------------------------------------
+    | 🔥 IMPORT CSV (FIX EXCEL SCIENTIFIC NOTATION)
+    |----------------------------------------------------------------------
     */
 
     public function importCsv(Request $request)
@@ -174,35 +171,38 @@ class UserController extends Controller
             'file' => 'required|file|mimes:csv,txt',
         ]);
 
-        $path = $request->file('file')->getRealPath();
-        $file = fopen($path, 'r');
+        $file = fopen($request->file('file')->getRealPath(), 'r');
 
-        // Skip header
+        // skip header
         fgetcsv($file);
 
         while (($row = fgetcsv($file)) !== false) {
 
-            // Wajib minimal 7 kolom
             if (count($row) < 7) {
                 continue;
             }
 
-            // Email wajib
-            if (empty($row[2])) {
+            $email = trim($row[2]);
+            if (!$email) {
                 continue;
             }
 
+            // 🔥 FIX NIK DARI EXCEL (3.32202E+15 → 3322020000000000)
+            $nikRaw = trim($row[1]);
+            $nik = is_numeric($nikRaw)
+                ? number_format($nikRaw, 0, '', '')
+                : $nikRaw;
+
             User::updateOrCreate(
-                ['email' => trim($row[2])],
+                ['email' => $email],
                 [
                     'name'       => trim($row[0]),
-                    'nik'        => trim($row[1]),
+                    'nik'        => $nik,
                     'phone'      => trim($row[3]),
                     'address'    => trim($row[4]),
                     'jabatan'    => trim($row[5]),
                     'penempatan' => trim($row[6]),
                     'role'       => User::ROLE_KARYAWAN,
-                    // default password (bisa diganti nanti)
                     'password'   => Hash::make('password123'),
                 ]
             );
@@ -216,9 +216,9 @@ class UserController extends Controller
     }
 
     /*
-    |--------------------------------------------------------------------------
-    | USER ROLE MANAGEMENT (PROMOTE / DEMOTE)
-    |--------------------------------------------------------------------------
+    |----------------------------------------------------------------------
+    | ROLE MANAGEMENT
+    |----------------------------------------------------------------------
     */
 
     public function allUsers()
@@ -237,9 +237,7 @@ class UserController extends Controller
             return back()->with('warning', 'User sudah menjadi karyawan');
         }
 
-        $user->update([
-            'role' => User::ROLE_KARYAWAN,
-        ]);
+        $user->update(['role' => User::ROLE_KARYAWAN]);
 
         return back()->with('success', 'User berhasil dipromosikan menjadi Karyawan');
     }
@@ -251,7 +249,7 @@ class UserController extends Controller
         }
 
         if ($user->isUser()) {
-            return back()->with('warning', 'User sudah berstatus user biasa');
+            return back()->with('warning', 'User sudah user biasa');
         }
 
         $user->update([

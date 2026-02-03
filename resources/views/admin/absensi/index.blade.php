@@ -15,6 +15,20 @@
                 <i class="fas fa-plus"></i> Input Absensi
             </a>
 
+            {{-- 🔥 DOWNLOAD TEMPLATE CSV --}}
+            <a href="{{ route('admin.absensi.template.csv') }}"
+               class="btn btn-success">
+                <i class="fas fa-file-csv"></i> Template CSV
+            </a>
+
+            {{-- 🔥 IMPORT ABSENSI CSV --}}
+            <button type="button"
+                    class="btn btn-info"
+                    data-bs-toggle="modal"
+                    data-bs-target="#importAbsensiModal">
+                <i class="fas fa-file-upload"></i> Import CSV
+            </button>
+
             {{-- INPUT LEMBUR --}}
             <a href="{{ route('admin.lembur.create') }}" class="btn btn-warning">
                 <i class="fas fa-clock"></i> Input Lembur
@@ -53,9 +67,7 @@
                         <td>{{ $absen->user?->name ?? '-' }}</td>
 
                         {{-- TANGGAL --}}
-                        <td>
-                            {{ \Carbon\Carbon::parse($absen->tanggal)->format('d-m-Y') }}
-                        </td>
+                        <td>{{ \Carbon\Carbon::parse($absen->tanggal)->format('d-m-Y') }}</td>
 
                         {{-- JAM MASUK --}}
                         <td>
@@ -101,12 +113,9 @@
                         <td class="text-center">
                             @if($absen->foto)
                                 <a href="{{ asset('storage/'.$absen->foto) }}" target="_blank">
-                                    <img
-                                        src="{{ asset('storage/'.$absen->foto) }}"
-                                        alt="Foto Absen"
-                                        width="60"
-                                        class="img-thumbnail"
-                                    >
+                                    <img src="{{ asset('storage/'.$absen->foto) }}"
+                                         width="60"
+                                         class="img-thumbnail">
                                 </a>
                             @else
                                 <span class="text-muted">-</span>
@@ -147,5 +156,47 @@
         </div>
     </div>
 
+</div>
+
+{{-- ================= MODAL IMPORT CSV ================= --}}
+<div class="modal fade" id="importAbsensiModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <form method="POST"
+              action="{{ route('admin.absensi.import.csv') }}"
+              enctype="multipart/form-data"
+              class="modal-content">
+            @csrf
+
+            <div class="modal-header">
+                <h5 class="modal-title">Import Absensi (CSV)</h5>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <input type="file"
+                       name="file"
+                       class="form-control"
+                       accept=".csv"
+                       required>
+
+                <div class="alert alert-info mt-3">
+                    <strong>Format CSV:</strong><br>
+                    <code>tanggal,nama,jam_masuk,istirahat_mulai,istirahat_selesai,jam_pulang</code>
+                    <br><br>
+                    <strong>Contoh:</strong><br>
+                    <code>2026-01-27,Albiatun,08:10,12:00,13:00,17:00</code>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button class="btn btn-primary">
+                    <i class="fas fa-upload"></i> Import
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 @endsection

@@ -21,8 +21,8 @@
                 <i class="fas fa-file-pdf"></i> Export Slip
             </a>
 
-            {{-- TOMBOL BAYAR / STATUS --}}
-            @if(!$salary->is_paid)
+            {{-- STATUS BAYAR (FIX PER BULAN) --}}
+            @if(!$isPaid)
                 <form method="POST"
                       action="{{ route('admin.gaji.pay', [$user->id, 'bulan' => $bulan]) }}"
                       onsubmit="return confirm('Bayar gaji dan kunci absensi?')">
@@ -41,7 +41,7 @@
     </div>
 
     {{-- INFO PEMBAYARAN --}}
-    @if($salary->is_paid)
+    @if($isPaid)
         <div class="alert alert-success">
             <strong>Informasi Pembayaran</strong>
             <ul class="mb-0">
@@ -60,8 +60,8 @@
     {{-- RINGKASAN --}}
     <div class="row mb-4">
         <div class="col-md-3">
-            <div class="card border-primary">
-                <div class="card-body text-center">
+            <div class="card border-primary text-center">
+                <div class="card-body">
                     <small>Hari Hadir</small>
                     <h4 class="mb-0">{{ $hariHadir }}</h4>
                 </div>
@@ -69,8 +69,8 @@
         </div>
 
         <div class="col-md-3">
-            <div class="card border-warning">
-                <div class="card-body text-center">
+            <div class="card border-warning text-center">
+                <div class="card-body">
                     <small>Hari Terlambat</small>
                     <h4 class="mb-0">{{ $hariTelat }}</h4>
                 </div>
@@ -78,8 +78,8 @@
         </div>
 
         <div class="col-md-3">
-            <div class="card border-danger">
-                <div class="card-body text-center">
+            <div class="card border-danger text-center">
+                <div class="card-body">
                     <small>Menit Terlambat</small>
                     <h4 class="mb-0">{{ $menitTerlambat }} menit</h4>
                 </div>
@@ -87,10 +87,10 @@
         </div>
 
         <div class="col-md-3">
-            <div class="card border-success">
-                <div class="card-body text-center">
+            <div class="card border-success text-center">
+                <div class="card-body">
                     <small>Total Diterima</small>
-                    <h4 class="mb-0">
+                    <h4 class="mb-0 text-success">
                         Rp {{ number_format($totalGaji, 0, ',', '.') }}
                     </h4>
                 </div>
@@ -98,21 +98,19 @@
         </div>
     </div>
 
-    {{-- ABSENSI --}}
+    {{-- DETAIL ABSENSI --}}
     <div class="card mb-4">
-        <div class="card-header">
-            <strong>Detail Absensi</strong>
-        </div>
+        <div class="card-header"><strong>Detail Absensi</strong></div>
         <div class="card-body table-responsive p-0">
             <table class="table table-bordered table-sm mb-0">
                 <thead>
-                    <tr>
-                        <th>Tanggal</th>
-                        <th>Masuk</th>
-                        <th>Pulang</th>
-                        <th>Status</th>
-                        <th>Menit Terlambat</th>
-                    </tr>
+                <tr>
+                    <th>Tanggal</th>
+                    <th>Masuk</th>
+                    <th>Pulang</th>
+                    <th>Status</th>
+                    <th>Menit Terlambat</th>
+                </tr>
                 </thead>
                 <tbody>
                 @forelse($absensis as $a)
@@ -141,24 +139,20 @@
 
     {{-- BONUS JOB --}}
     <div class="card mb-4">
-        <div class="card-header">
-            <strong>Bonus Job</strong>
-        </div>
+        <div class="card-header"><strong>Bonus Job</strong></div>
         <div class="card-body table-responsive p-0">
             <table class="table table-bordered table-sm mb-0">
                 <thead>
-                    <tr>
-                        <th>Job</th>
-                        <th>Bonus</th>
-                    </tr>
+                <tr>
+                    <th>Job</th>
+                    <th>Bonus</th>
+                </tr>
                 </thead>
                 <tbody>
                 @forelse($jobBonus as $job)
                     <tr>
                         <td>{{ $job->title }}</td>
-                        <td>
-                            Rp {{ number_format($job->bonus, 0, ',', '.') }}
-                        </td>
+                        <td>Rp {{ number_format($job->bonus, 0, ',', '.') }}</td>
                     </tr>
                 @empty
                     <tr>
@@ -174,16 +168,12 @@
 
     {{-- RINGKASAN GAJI --}}
     <div class="card">
-        <div class="card-header">
-            <strong>Ringkasan Gaji</strong>
-        </div>
+        <div class="card-header"><strong>Ringkasan Gaji</strong></div>
         <div class="card-body p-0">
             <table class="table table-bordered mb-0">
                 <tr>
                     <th>Gaji Kotor</th>
-                    <td>
-                        Rp {{ number_format($salaryKotor, 0, ',', '.') }}
-                    </td>
+                    <td>Rp {{ number_format($salaryKotor, 0, ',', '.') }}</td>
                 </tr>
                 <tr>
                     <th>Total Potongan</th>
@@ -191,9 +181,9 @@
                         Rp {{ number_format($totalPotongan, 0, ',', '.') }}
                     </td>
                 </tr>
-                <tr>
+                <tr class="table-success">
                     <th>Total Diterima</th>
-                    <td class="font-weight-bold text-success">
+                    <td class="font-weight-bold">
                         Rp {{ number_format($totalGaji, 0, ',', '.') }}
                     </td>
                 </tr>

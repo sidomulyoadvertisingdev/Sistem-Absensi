@@ -76,10 +76,25 @@ Route::middleware(['web', 'auth', 'is_admin'])
             Route::post('/{user}/demote', [UserController::class, 'demoteToUser'])->name('demote');
         });
 
-        /* ================= ABSENSI ================= */
-        Route::get('/absensi', [AbsensiController::class, 'index'])->name('absensi');
-        Route::get('/absensi/create', [AbsensiController::class, 'create'])->name('absensi.create');
-        Route::post('/absensi', [AbsensiController::class, 'store'])->name('absensi.store');
+       /* ================= ABSENSI ================= */
+Route::get('/absensi', [AbsensiController::class, 'index'])
+    ->name('absensi');
+
+Route::get('/absensi/create', [AbsensiController::class, 'create'])
+    ->name('absensi.create');
+
+Route::post('/absensi', [AbsensiController::class, 'store'])
+    ->name('absensi.store');
+
+/* 🔥 IMPORT ABSENSI CSV */
+Route::post('/absensi/import/csv', [AbsensiController::class, 'importCsv'])
+    ->name('absensi.import.csv');
+
+/* 🔥 EXPORT TEMPLATE ABSENSI CSV */
+Route::get('/absensi/template/csv', [AbsensiController::class, 'exportTemplateCsv'])
+    ->name('absensi.template.csv');
+
+
 
         /* ================= LEMBUR ================= */
         Route::get('/lembur', [LemburController::class, 'index'])->name('lembur');
@@ -135,17 +150,35 @@ Route::middleware(['web', 'auth', 'is_admin'])
         Route::get('/jadwal-kerja/{user}/edit', [WorkScheduleController::class, 'edit'])->name('jadwal.edit');
         Route::post('/jadwal-kerja/{user}', [WorkScheduleController::class, 'update'])->name('jadwal.update');
 
-        /* ================= KARYAWAN ================= */
-        Route::prefix('karyawan')->name('karyawan.')->group(function () {
-            Route::get('/', [UserController::class, 'index'])->name('index');
-            Route::get('/create', [UserController::class, 'create'])->name('create');
-            Route::post('/', [UserController::class, 'store'])->name('store');
-            Route::get('/{id}/edit', [UserController::class, 'edit'])->name('edit');
-            Route::put('/{id}', [UserController::class, 'update'])->name('update');
-            Route::delete('/{id}', [UserController::class, 'destroy'])->name('destroy');
-            Route::get('/export/csv', [UserController::class, 'exportCsv'])->name('export.csv');
-            Route::post('/import/csv', [UserController::class, 'importCsv'])->name('import.csv');
-        });
+  /* ================= KARYAWAN ================= */
+Route::prefix('karyawan')->name('karyawan.')->group(function () {
+
+    // 🔥 CSV WAJIB DI ATAS (ANTI CONFLICT)
+    Route::get('/export/csv', [UserController::class, 'exportCsv'])
+        ->name('export.csv');
+
+    Route::post('/import/csv', [UserController::class, 'importCsv'])
+        ->name('import.csv');
+
+    // ================= CRUD =================
+    Route::get('/', [UserController::class, 'index'])
+        ->name('index');
+
+    Route::get('/create', [UserController::class, 'create'])
+        ->name('create');
+
+    Route::post('/', [UserController::class, 'store'])
+        ->name('store');
+
+    Route::get('/{id}/edit', [UserController::class, 'edit'])
+        ->name('edit');
+
+    Route::put('/{id}', [UserController::class, 'update'])
+        ->name('update');
+
+    Route::delete('/{id}', [UserController::class, 'destroy'])
+        ->name('destroy');
+});
 
         /* ================= JOBS ================= */
         Route::prefix('jobs')->name('jobs.')->group(function () {

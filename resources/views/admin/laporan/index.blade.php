@@ -69,20 +69,27 @@
                         <th>No</th>
                         <th>Toko</th>
                         <th>Karyawan</th>
+
                         <th>Hadir</th>
-                        <th>Off Day</th>
-                        <th>Telat (Hari)</th>
-                        <th>Menit Telat</th>
+                        <th>Off</th>
+                        <th>Telat</th>
+                        <th>Menit</th>
+
                         <th>Gaji Pokok</th>
-                        <th>Tunj. Umum</th>
-                        <th>Tunj. Transport</th>
+                        <th>Umum</th>
+                        <th>Transport</th>
                         <th>THR</th>
                         <th>Kesehatan</th>
-                        <th>Per Hari</th>
+
+                        <th>/Hari</th>
                         <th>Lembur</th>
+
+                        {{-- 🔥 BARU --}}
+                        <th>Bonus Job</th>
+
                         <th>Pot. Telat</th>
                         <th>Salary Kotor</th>
-                        <th>Total Gaji</th>
+                        <th>Gaji Diterima</th>
                     </tr>
                 </thead>
 
@@ -92,28 +99,24 @@
                         <td>{{ $row['no'] }}</td>
                         <td>{{ $row['toko'] }}</td>
 
-                        <td class="text-left col-nama" title="{{ $row['nama'] }}">
+                        <td class="text-left col-nama">
                             {{ $row['nama'] }}
                         </td>
 
                         <td>{{ $row['hari_hadir'] }}</td>
                         <td>{{ $row['off_day'] }}</td>
 
-                        {{-- TELAT HARI --}}
                         <td>
-                            @if(($row['hari_telat'] ?? 0) > 0)
+                            @if($row['hari_telat'] > 0)
                                 <span class="badge badge-danger">
-                                    {{ $row['hari_telat'] }} Hari
+                                    {{ $row['hari_telat'] }}
                                 </span>
                             @else
                                 0
                             @endif
                         </td>
 
-                        {{-- MENIT TELAT (INFO SAJA) --}}
-                        <td>
-                            {{ ($row['menit_telat'] ?? 0) > 0 ? $row['menit_telat'] : 0 }}
-                        </td>
+                        <td>{{ $row['menit_telat'] }}</td>
 
                         <td class="text-right">
                             {{ number_format($row['gaji_pokok'],0,',','.') }}
@@ -143,6 +146,11 @@
                             {{ number_format($row['lembur'],0,',','.') }}
                         </td>
 
+                        {{-- ✅ BONUS JOB --}}
+                        <td class="text-right text-primary">
+                            {{ number_format($row['bonus_job'] ?? 0,0,',','.') }}
+                        </td>
+
                         <td class="text-right text-danger">
                             {{ number_format($row['potongan_telat'],0,',','.') }}
                         </td>
@@ -152,12 +160,12 @@
                         </td>
 
                         <td class="text-right font-weight-bold text-success">
-                            {{ number_format($row['total_gaji'],0,',','.') }}
+                            {{ number_format($row['gaji_diterima'],0,',','.') }}
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="17" class="text-center text-muted">
+                        <td colspan="18" class="text-center text-muted">
                             Tidak ada data laporan
                         </td>
                     </tr>
