@@ -30,8 +30,8 @@ class LaporanController extends Controller
 
     /*
     =================================================
-    FINAL PAYROLL ENGINE — RULE SYNC VERSION
-    (SAFE — + MENIT TERLAMBAT DETAIL)
+    FINAL PAYROLL ENGINE — SAFE VERSION
+    + FILTER PENEMPATAN
     =================================================
     */
 
@@ -41,10 +41,24 @@ class LaporanController extends Controller
         $tahun = (int) ($request->tahun ?? date('Y'));
         $hariKerjaStandar = 26;
 
-        $users = User::with('salary')
-            ->where('role', User::ROLE_KARYAWAN)
+        // 🔥 FILTER TEMPAT
+        $penempatanFilter = $request->penempatan;
+
+        $usersQuery = User::with('salary')
+            ->where('role', User::ROLE_KARYAWAN);
+
+        if (!empty($penempatanFilter)) {
+            $usersQuery->where('penempatan', $penempatanFilter);
+        }
+
+        $users = $usersQuery
             ->orderBy('name')
             ->get();
+
+        // daftar tempat untuk dropdown filter
+        $penempatanList = User::whereNotNull('penempatan')
+            ->distinct()
+            ->pluck('penempatan');
 
         $rules = SalaryDeductionRule::where('aktif', true)->get();
 
@@ -74,7 +88,6 @@ class LaporanController extends Controller
             $hariTambahan   = max($presensi - $hariKerjaStandar, 0);
             $hariTidakMasuk = max($hariKerjaStandar - $hariNormal, 0);
 
-            // 🔥 TOTAL MENIT TERLAMBAT
             $menitTerlambat = (int) $absensis
                 ->where('status', 'terlambat')
                 ->sum(fn($a) => (int) ($a->menit_terlambat ?? 0));
@@ -175,10 +188,6 @@ class LaporanController extends Controller
 
                 if ($base <= 0) continue;
 
-                /*
-                ===== TERLAMBAT (TRIGGER RULE)
-                */
-
                 if ($rule->condition_type === 'terlambat') {
 
                     $trigger = $rule->condition_value ?? 1;
@@ -193,10 +202,6 @@ class LaporanController extends Controller
                     $potonganTelat += $nilai;
                     $totalPotongan += $nilai;
                 }
-
-                /*
-                ===== OFF DAY
-                */
 
                 if ($rule->condition_type === 'off_day') {
 
@@ -254,6 +259,12 @@ class LaporanController extends Controller
             ];
         }
 
-        return compact('laporan', 'bulan', 'tahun');
+        return compact(
+            'laporan',
+            'bulan',
+            'tahun',
+            'penempatanFilter',
+            'penempatanList'
+        );
     }
 }

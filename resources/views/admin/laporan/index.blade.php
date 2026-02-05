@@ -23,7 +23,17 @@ LAPORAN GAJI KARYAWAN BULAN
 {{ \Carbon\Carbon::create($tahun, $bulan)->translatedFormat('F Y') }}
 </h4>
 
-{{-- FILTER --}}
+{{-- ================= TOTAL PERIODE ================= --}}
+@php
+$totalGajiPeriode = collect($laporan ?? [])->sum('gaji_diterima');
+@endphp
+
+<div class="alert alert-success font-weight-bold text-center">
+TOTAL GAJI KELUAR PERIODE:
+Rp {{ number_format($totalGajiPeriode,0,',','.') }}
+</div>
+
+{{-- ================= FILTER ================= --}}
 <form method="GET" class="row mb-3 align-items-end">
 
 <div class="col-md-3">
@@ -48,12 +58,32 @@ LAPORAN GAJI KARYAWAN BULAN
 </select>
 </div>
 
-<div class="col-md-6 text-right">
+{{-- FILTER TEMPAT --}}
+<div class="col-md-3">
+<label>Tempat</label>
+<select name="penempatan" class="form-control">
+<option value="">Semua</option>
+
+@foreach(($penempatanList ?? []) as $tempat)
+<option value="{{ $tempat }}"
+{{ ($penempatanFilter ?? '') === $tempat ? 'selected' : '' }}>
+{{ $tempat }}
+</option>
+@endforeach
+
+</select>
+</div>
+
+<div class="col-md-3 text-right">
 <button class="btn btn-primary mr-2">
 <i class="fas fa-search"></i> Tampilkan
 </button>
 
-<a href="{{ route('admin.laporan.gaji.pdf',['bulan'=>$bulan,'tahun'=>$tahun]) }}"
+<a href="{{ route('admin.laporan.gaji.pdf',[
+    'bulan'=>$bulan,
+    'tahun'=>$tahun,
+    'penempatan'=>$penempatanFilter ?? null
+]) }}"
 target="_blank"
 class="btn btn-danger">
 <i class="fas fa-file-pdf"></i> Export PDF
@@ -62,7 +92,7 @@ class="btn btn-danger">
 
 </form>
 
-{{-- TABLE --}}
+{{-- ================= TABLE ================= --}}
 <div class="card">
 <div class="card-body table-responsive p-0">
 
@@ -208,6 +238,19 @@ Tidak ada data laporan
 @endforelse
 
 </tbody>
+
+<tfoot class="bg-light font-weight-bold">
+<tr>
+<td colspan="20" class="text-right">
+TOTAL GAJI KELUAR PERIODE:
+</td>
+
+<td class="text-right text-success">
+Rp {{ number_format($totalGajiPeriode,0,',','.') }}
+</td>
+</tr>
+</tfoot>
+
 </table>
 
 </div>
