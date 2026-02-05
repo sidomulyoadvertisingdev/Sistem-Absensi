@@ -3,156 +3,209 @@
 @section('title', 'Atur Gaji Karyawan')
 
 @section('content')
+
 <div class="container-fluid">
 
-    <div class="mb-4">
-        <h4 class="mb-0 font-weight-bold">Atur Gaji Karyawan</h4>
-        <small class="text-muted">
-            Nama Karyawan: <strong>{{ $user->name }}</strong><br>
-            Jabatan: {{ $user->jabatan ?? '-' }} |
-            Penempatan: {{ $user->penempatan ?? '-' }}
-        </small>
-    </div>
+<div class="mb-4">
+    <h4 class="mb-0 font-weight-bold">Atur Gaji Karyawan</h4>
+    <small class="text-muted">
+        Nama Karyawan: <strong>{{ $user->name }}</strong><br>
+        Jabatan: {{ $user->jabatan ?? '-' }} |
+        Penempatan: {{ $user->penempatan ?? '-' }}
+    </small>
+</div>
 
-    {{-- ALERT SUCCESS --}}
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show">
-            {{ session('success') }}
-            <button type="button" class="close" data-dismiss="alert">&times;</button>
-        </div>
-    @endif
+@if(session('success'))
+<div class="alert alert-success alert-dismissible fade show">
+    {{ session('success') }}
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+</div>
+@endif
 
-    {{-- VALIDATION ERROR --}}
-    @if ($errors->any())
-        <div class="alert alert-danger">
-            <ul class="mb-0">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
+@if ($errors->any())
+<div class="alert alert-danger">
+    <ul class="mb-0">
+        @foreach ($errors->all() as $error)
+        <li>{{ $error }}</li>
+        @endforeach
+    </ul>
+</div>
+@endif
 
-    {{-- INFO SISTEM --}}
-    <div class="alert alert-info">
-        <strong>ℹ️ Informasi Sistem Gaji</strong>
-        <ul class="mb-0 mt-2">
-            <li>Gaji Pokok bersifat <strong>bulanan</strong></li>
-            <li>Perhitungan harian = <strong>Gaji Pokok / 26 hari</strong></li>
-            <li>Gaji dibayar sesuai <strong>hari hadir (hadir + terlambat)</strong></li>
-            <li>Potongan mengikuti <strong>Aturan Potongan Gaji</strong> yang aktif</li>
-            <li>Aturan potongan dapat berupa <strong>nominal</strong> atau <strong>persentase (%)</strong></li>
-        </ul>
-    </div>
+<div class="alert alert-info">
+<strong>ℹ️ Informasi Sistem Gaji</strong>
+<ul class="mb-0 mt-2">
+<li>Gaji pokok → dasar aturan potongan</li>
+<li>Gaji harian bisa otomatis dihitung</li>
+<li>Tunjangan opsional masuk payroll</li>
+<li>Lembur & bonus otomatis</li>
+<li>Potongan mengikuti rule aktif</li>
+</ul>
+</div>
 
-    @php
-        $salary = $user->salary;
-    @endphp
+@php
+$salary = $user->salary;
+@endphp
 
-    <div class="card">
-        <div class="card-body">
+<div class="card shadow-sm">
+<div class="card-body">
 
-            <form method="POST" action="{{ route('admin.gaji.update', $user->id) }}">
-                @csrf
+<form method="POST" action="{{ route('admin.gaji.update', $user->id) }}">
+@csrf
 
-                <div class="row">
+<div class="row">
 
-                    {{-- GAJI POKOK --}}
-                    <div class="col-md-6 mb-3">
-                        <label>Gaji Pokok (Bulanan)</label>
-                        <input type="number"
-                               name="gaji_pokok"
-                               class="form-control"
-                               value="{{ old('gaji_pokok', $salary->gaji_pokok ?? 0) }}"
-                               min="0"
-                               required>
-                        <small class="text-muted">
-                            Akan dibagi otomatis per hari (<strong>26 hari kerja</strong>)
-                        </small>
-                    </div>
+{{-- GAJI POKOK --}}
+<div class="col-md-6 mb-3">
+<label>Gaji Pokok (Bulanan)</label>
+<input type="number" id="gaji_pokok"
+name="gaji_pokok"
+class="form-control"
+value="{{ old('gaji_pokok', $salary->gaji_pokok ?? 0) }}"
+min="0" required>
+</div>
 
-                    {{-- TUNJANGAN UMUM --}}
-                    <div class="col-md-6 mb-3">
-                        <label>Tunjangan Umum</label>
-                        <input type="number"
-                               name="tunjangan_umum"
-                               class="form-control"
-                               value="{{ old('tunjangan_umum', $salary->tunjangan_umum ?? 0) }}"
-                               min="0">
-                    </div>
+{{-- MODE GAJI HARIAN --}}
+<div class="col-md-6 mb-3">
+<label>Mode Hitung Gaji Harian</label>
+<select name="gaji_harian_mode"
+id="mode"
+class="form-control">
+<option value="manual">Manual</option>
+<option value="pokok">Dari Gaji Pokok</option>
+<option value="pokok_plus_tunjangan">Pokok + Tunjangan</option>
+</select>
+</div>
 
-                    {{-- TUNJANGAN TRANSPORT --}}
-                    <div class="col-md-6 mb-3">
-                        <label>Tunjangan Transport</label>
-                        <input type="number"
-                               name="tunjangan_transport"
-                               class="form-control"
-                               value="{{ old('tunjangan_transport', $salary->tunjangan_transport ?? 0) }}"
-                               min="0">
-                    </div>
+{{-- GAJI HARIAN --}}
+<div class="col-md-6 mb-3">
+<label>Gaji Harian</label>
+<input type="number"
+id="gaji_harian"
+name="gaji_harian"
+class="form-control"
+value="{{ old('gaji_harian', $salary->gaji_harian ?? 0) }}"
+min="0">
+<small class="text-muted">
+Akan otomatis dihitung jika mode ≠ manual
+</small>
+</div>
 
-                    {{-- TUNJANGAN THR --}}
-                    <div class="col-md-6 mb-3">
-                        <label>Tunjangan Hari Raya (THR)</label>
-                        <input type="number"
-                               name="tunjangan_thr"
-                               class="form-control"
-                               value="{{ old('tunjangan_thr', $salary->tunjangan_thr ?? 0) }}"
-                               min="0">
-                    </div>
-
-                    {{-- TUNJANGAN KESEHATAN --}}
-                    <div class="col-md-6 mb-3">
-                        <label>Tunjangan Kesehatan</label>
-                        <input type="number"
-                               name="tunjangan_kesehatan"
-                               class="form-control"
-                               value="{{ old('tunjangan_kesehatan', $salary->tunjangan_kesehatan ?? 0) }}"
-                               min="0">
-                    </div>
-
-                    {{-- LEMBUR --}}
-                    <div class="col-md-6 mb-3">
-                        <label>Lembur per Jam</label>
-                        <input type="number"
-                               name="lembur_per_jam"
-                               class="form-control"
-                               value="{{ old('lembur_per_jam', $salary->lembur_per_jam ?? 0) }}"
-                               min="0">
-                        <small class="text-muted">
-                            Dikalikan total jam lembur yang disetujui
-                        </small>
-                    </div>
-
-                </div>
-
-                {{-- STATUS AKTIF --}}
-                <div class="form-check mb-4">
-                    <input type="checkbox"
-                           name="aktif"
-                           id="aktif"
-                           class="form-check-input"
-                           value="1"
-                           {{ old('aktif', $salary->aktif ?? true) ? 'checked' : '' }}>
-                    <label for="aktif" class="form-check-label">
-                        Aktifkan gaji karyawan ini
-                    </label>
-                </div>
-
-                <div class="d-flex justify-content-between">
-                    <a href="{{ route('admin.gaji') }}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i> Kembali
-                    </a>
-
-                    <button class="btn btn-primary">
-                        <i class="fas fa-save"></i> Simpan Gaji
-                    </button>
-                </div>
-
-            </form>
-
-        </div>
-    </div>
+{{-- LEMBUR --}}
+<div class="col-md-6 mb-3">
+<label>Lembur per Jam</label>
+<input type="number"
+name="lembur_per_jam"
+class="form-control"
+value="{{ old('lembur_per_jam', $salary->lembur_per_jam ?? 0) }}">
+</div>
 
 </div>
+
+<hr>
+
+<h5>Tunjangan</h5>
+
+<div class="row">
+
+@foreach([
+'tunjangan_umum' => 'Tunjangan Umum',
+'tunjangan_transport' => 'Tunjangan Transport',
+'tunjangan_thr' => 'Tunjangan THR',
+'tunjangan_kesehatan' => 'Tunjangan Kesehatan'
+] as $field => $label)
+
+<div class="col-md-6 mb-3">
+<label>{{ $label }}</label>
+<input type="number"
+class="form-control tunjangan"
+name="{{ $field }}"
+value="{{ old($field, $salary->$field ?? 0) }}">
+</div>
+
+@endforeach
+
+</div>
+
+<hr>
+
+<div class="form-check mb-2">
+<input type="checkbox"
+name="include_tunjangan"
+class="form-check-input"
+value="1"
+{{ old('include_tunjangan', $salary->include_tunjangan ?? true) ? 'checked' : '' }}>
+<label class="form-check-label">
+Masukkan tunjangan ke payroll
+</label>
+</div>
+
+<div class="form-check mb-4">
+<input type="checkbox"
+name="aktif"
+class="form-check-input"
+value="1"
+{{ old('aktif', $salary->aktif ?? true) ? 'checked' : '' }}>
+<label class="form-check-label">
+Aktifkan payroll
+</label>
+</div>
+
+<div class="d-flex justify-content-between">
+
+<a href="{{ route('admin.gaji') }}" class="btn btn-secondary">
+← Kembali
+</a>
+
+<button class="btn btn-primary">
+💾 Simpan Gaji
+</button>
+
+</div>
+
+</form>
+
+</div>
+</div>
+
+</div>
+
+{{-- AUTO CALC SCRIPT --}}
+<script>
+
+const hariKerja = 26;
+
+function hitungHarian() {
+
+let mode = document.getElementById("mode").value;
+
+let pokok = parseFloat(document.getElementById("gaji_pokok").value || 0);
+
+let tunjangan = 0;
+
+document.querySelectorAll(".tunjangan").forEach(el => {
+tunjangan += parseFloat(el.value || 0);
+});
+
+let hasil = 0;
+
+if(mode === "pokok") {
+hasil = pokok / hariKerja;
+}
+
+if(mode === "pokok_plus_tunjangan") {
+hasil = (pokok + tunjangan) / hariKerja;
+}
+
+if(mode !== "manual") {
+document.getElementById("gaji_harian").value = Math.round(hasil);
+}
+
+}
+
+document.querySelectorAll("#mode, #gaji_pokok, .tunjangan")
+.forEach(el => el.addEventListener("input", hitungHarian));
+
+</script>
+
 @endsection

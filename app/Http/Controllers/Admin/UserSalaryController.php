@@ -15,11 +15,6 @@ use Carbon\Carbon;
 
 class UserSalaryController extends Controller
 {
-    /**
-     * =================================================
-     * INDEX GAJI KARYAWAN
-     * =================================================
-     */
     public function index(Request $request)
     {
         $bulan = $request->bulan ?? now()->format('Y-m');
@@ -32,11 +27,6 @@ class UserSalaryController extends Controller
         return view('admin.gaji.index', compact('users', 'bulan'));
     }
 
-    /**
-     * =================================================
-     * FORM EDIT GAJI
-     * =================================================
-     */
     public function edit(User $user)
     {
         abort_if(!$user->isKaryawan(), 403);
@@ -44,48 +34,86 @@ class UserSalaryController extends Controller
         return view('admin.gaji.edit', compact('user'));
     }
 
-    /**
-     * =================================================
-     * SIMPAN / UPDATE MASTER GAJI
-     * =================================================
-     */
+    /*
+    ===============================================
+    UPDATE MASTER GAJI USER (TIDAK DIUBAH)
+    ===============================================
+    */
     public function update(Request $request, User $user)
     {
         abort_if(!$user->isKaryawan(), 403);
 
         $request->validate([
             'gaji_pokok'          => 'required|numeric|min:0',
+            'gaji_harian'         => 'nullable|numeric|min:0',
+
             'tunjangan_umum'      => 'nullable|numeric|min:0',
             'tunjangan_transport' => 'nullable|numeric|min:0',
             'tunjangan_thr'       => 'nullable|numeric|min:0',
             'tunjangan_kesehatan' => 'nullable|numeric|min:0',
+
             'lembur_per_jam'      => 'nullable|numeric|min:0',
+
+            'gaji_harian_mode'    => 'nullable|in:manual,pokok,pokok_plus_tunjangan',
         ]);
+
+        $hariKerjaStandar = 26;
+
+        $gajiPokok = (float) $request->gaji_pokok;
+
+        $tunjanganTotal =
+            (float) ($request->tunjangan_umum ?? 0) +
+            (float) ($request->tunjangan_transport ?? 0) +
+            (float) ($request->tunjangan_thr ?? 0) +
+            (float) ($request->tunjangan_kesehatan ?? 0);
+
+        $mode = $request->gaji_harian_mode ?? 'manual';
+
+        if ($mode === 'pokok') {
+
+            $gajiHarian = $gajiPokok / $hariKerjaStandar;
+
+        } elseif ($mode === 'pokok_plus_tunjangan') {
+
+            $gajiHarian = ($gajiPokok + $tunjanganTotal) / $hariKerjaStandar;
+
+        } else {
+
+            $gajiHarian = (float) ($request->gaji_harian ?? 0);
+        }
 
         UserSalary::updateOrCreate(
             ['user_id' => $user->id],
             [
-                'gaji_pokok'          => $request->gaji_pokok,
-                'tunjangan_umum'      => $request->tunjangan_umum ?? 0,
-                'tunjangan_transport' => $request->tunjangan_transport ?? 0,
-                'tunjangan_thr'       => $request->tunjangan_thr ?? 0,
-                'tunjangan_kesehatan' => $request->tunjangan_kesehatan ?? 0,
-                'lembur_per_jam'      => $request->lembur_per_jam ?? 0,
-                'aktif'               => $request->boolean('aktif'),
+
+                'gaji_pokok'  => $gajiPokok,
+                'gaji_harian' => round($gajiHarian),
+
+                'gaji_harian_mode'     => $mode,
+                'auto_generate_harian' => $mode !== 'manual',
+
+                'tunjangan_umum'      => (float) ($request->tunjangan_umum ?? 0),
+                'tunjangan_transport' => (float) ($request->tunjangan_transport ?? 0),
+                'tunjangan_thr'       => (float) ($request->tunjangan_thr ?? 0),
+                'tunjangan_kesehatan' => (float) ($request->tunjangan_kesehatan ?? 0),
+
+                'lembur_per_jam' => (float) ($request->lembur_per_jam ?? 0),
+
+                'include_tunjangan' => $request->boolean('include_tunjangan'),
+                'aktif'             => $request->boolean('aktif'),
             ]
         );
 
         return redirect()
             ->route('admin.gaji')
-            ->with('success', 'Data gaji berhasil disimpan.');
+            ->with('success', 'Master gaji berhasil disimpan.');
     }
 
-    /**
-     * =================================================
-     * SLIP GAJI PDF
-     * (DIPAKAI OLEH INDEX & DETAIL)
-     * =================================================
-     */
+    /*
+    ===============================================
+    SLIP GAJI — SYNC DENGAN LAPORAN
+    ===============================================
+    */
     public function slipPdf(Request $request, User $user)
     {
         abort_if(!$user->isKaryawan(), 403);
@@ -94,32 +122,60 @@ class UserSalaryController extends Controller
         abort_if(!$salary || !$salary->aktif, 404);
 
         $bulanYm = $request->bulan ?? now()->format('Y-m');
-        $date    = Carbon::createFromFormat('Y-m', $bulanYm);
-        $bulan   = $date->month;
-        $tahun   = $date->year;
+        $date = Carbon::createFromFormat('Y-m', $bulanYm);
+
+        $bulan = $date->month;
+        $tahun = $date->year;
         $periode = $date->translatedFormat('F Y');
 
         $hariKerjaStandar = 26;
 
-        /* ================= ABSENSI ================= */
+        /*
+        ================= ABSENSI
+        */
         $absensis = Absensi::where('user_id', $user->id)
             ->whereMonth('tanggal', $bulan)
             ->whereYear('tanggal', $tahun)
             ->get();
 
-        $hariHadir      = $absensis->where('status', 'hadir')->count();
-        $hariTelat      = $absensis->where('status', 'terlambat')->count();
-        $menitTerlambat = $absensis
-            ->where('status', 'terlambat')
-            ->sum('menit_terlambat');
+        $hariHadir = $absensis->where('status', 'hadir')->count();
+        $hariTelat = $absensis->where('status', 'terlambat')->count();
 
         $presensi = $hariHadir + $hariTelat;
 
-        /* ================= GAJI POKOK ================= */
-        $gajiPerHari  = $salary->gaji_pokok / $hariKerjaStandar;
-        $gajiPokokFix = $gajiPerHari * $presensi;
+        $hariNormal   = min($presensi, $hariKerjaStandar);
+        $hariTambahan = max($presensi - $hariKerjaStandar, 0);
 
-        /* ================= LEMBUR ================= */
+        $menitTerlambat = (int)
+            $absensis->where('status', 'terlambat')
+                ->sum('menit_terlambat');
+
+        /*
+        ================= GAJI (SAMA LAPORAN)
+        */
+        $gajiPerHari = (float) $salary->gaji_harian;
+
+        $tunjangan = [
+            $salary->tunjangan_umum,
+            $salary->tunjangan_transport,
+            $salary->tunjangan_thr,
+            $salary->tunjangan_kesehatan,
+        ];
+
+        $totalTunjangan = array_sum($tunjangan);
+
+        $nilaiHariTambahan = $gajiPerHari;
+
+        if ($salary->include_tunjangan) {
+            $nilaiHariTambahan += ($totalTunjangan / $hariKerjaStandar);
+        }
+
+        $gajiNormal   = $gajiPerHari * $hariNormal;
+        $gajiTambahan = $nilaiHariTambahan * $hariTambahan;
+
+        /*
+        ================= LEMBUR
+        */
         $totalJamLembur = Lembur::where('user_id', $user->id)
             ->whereMonth('tanggal', $bulan)
             ->whereYear('tanggal', $tahun)
@@ -130,9 +186,11 @@ class UserSalaryController extends Controller
                     ->diffInMinutes(Carbon::parse($l->jam_selesai)) / 60
             );
 
-        $totalLembur = $totalJamLembur * ($salary->lembur_per_jam ?? 0);
+        $totalLembur = $totalJamLembur * (float) $salary->lembur_per_jam;
 
-        /* ================= BONUS JOB ================= */
+        /*
+        ================= BONUS JOB
+        */
         $jobBonus = DB::table('job_todo_user')
             ->join('job_todos', 'job_todos.id', '=', 'job_todo_user.job_todo_id')
             ->where('job_todo_user.user_id', $user->id)
@@ -144,65 +202,82 @@ class UserSalaryController extends Controller
 
         $totalBonusJob = $jobBonus->sum('bonus');
 
-        /* ================= GAJI KOTOR ================= */
+        /*
+        ================= SALARY KOTOR
+        */
         $salaryKotor =
-            $gajiPokokFix +
-            $salary->tunjangan_umum +
-            $salary->tunjangan_transport +
-            $salary->tunjangan_thr +
-            $salary->tunjangan_kesehatan +
+            $gajiNormal +
+            $gajiTambahan +
             $totalLembur +
             $totalBonusJob;
 
-        /* ================= POTONGAN ================= */
+        if ($salary->include_tunjangan) {
+            $salaryKotor += $totalTunjangan;
+        }
+
+        /*
+        ================= POTONGAN RULE
+        */
         $rules = SalaryDeductionRule::where('aktif', true)->get();
 
-        $totalPotongan        = 0;
+        $totalPotongan = 0;
         $potonganTelatNominal = 0;
 
         foreach ($rules as $rule) {
 
-            if (!$rule->isApplicableForPenempatan($user->penempatan)) {
-                continue;
-            }
+            if (!$rule->isApplicableForPenempatan($user->penempatan)) continue;
 
-            $kena = match ($rule->condition_type) {
-                'terlambat' => $hariTelat >= $rule->condition_value,
-                default     => true,
+            $base = match ($rule->base_source) {
+                'gaji_pokok' => (float) $salary->gaji_pokok,
+                'tunjangan'  => $totalTunjangan,
+                default      => $salaryKotor,
             };
 
-            if (!$kena) continue;
-
-            $basis = $rule->condition_type === 'terlambat'
-                ? $salary->gaji_pokok
-                : $salaryKotor;
-
-            $nilai = $rule->calculate($basis);
+            if ($base <= 0) continue;
 
             if ($rule->condition_type === 'terlambat') {
-                $potonganTelatNominal += $nilai;
-            }
 
-            $totalPotongan += $nilai;
+                if ($hariTelat < ($rule->condition_value ?? 1)) continue;
+
+                if ($rule->max_minutes &&
+                    $menitTerlambat < $rule->max_minutes) continue;
+
+                $nilai = $rule->calculate($base);
+
+                $potonganTelatNominal += $nilai;
+                $totalPotongan += $nilai;
+            }
         }
 
+        /*
+        ================= FINAL
+        */
         $totalGaji = max($salaryKotor - $totalPotongan, 0);
 
         return Pdf::loadView('admin.gaji.slip-pdf', compact(
             'user',
             'salary',
             'periode',
-            'gajiPerHari',
-            'gajiPokokFix',
+
             'hariHadir',
             'hariTelat',
             'menitTerlambat',
+
+            'gajiPerHari',
+            'gajiNormal',
+            'gajiTambahan',
+
             'totalJamLembur',
             'totalLembur',
+
             'jobBonus',
             'totalBonusJob',
+
+            'totalTunjangan',
+
             'potonganTelatNominal',
             'totalPotongan',
+
             'salaryKotor',
             'totalGaji'
         ))->stream(

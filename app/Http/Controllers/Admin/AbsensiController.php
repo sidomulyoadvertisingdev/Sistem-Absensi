@@ -31,7 +31,7 @@ class AbsensiController extends Controller
 
     /**
      * =================================================
-     * INPUT ABSENSI MANUAL (TIDAK DIUBAH)
+     * INPUT ABSENSI MANUAL — SYNC TELAT JADWAL
      * =================================================
      */
     public function store(Request $request)
@@ -50,7 +50,7 @@ class AbsensiController extends Controller
                 'tanggal' => $request->tanggal,
             ],
             [
-                'status'          => 'hadir',
+                'status' => 'hadir',
                 'menit_terlambat' => 0,
             ]
         );
@@ -60,7 +60,9 @@ class AbsensiController extends Controller
         }
 
         $hari = strtolower(
-            Carbon::parse($request->tanggal)->locale('id')->isoFormat('dddd')
+            Carbon::parse($request->tanggal)
+                ->locale('id')
+                ->isoFormat('dddd')
         );
 
         $jadwal = WorkSchedule::where('user_id', $request->user_id)
@@ -68,24 +70,41 @@ class AbsensiController extends Controller
             ->where('aktif', true)
             ->first();
 
+        /*
+        =====================================
+        RESET HITUNG TELAT — ANTI DOUBLE
+        =====================================
+        */
+        $menitTerlambat = 0;
+
+        /*
+        =====================================
+        MASUK
+        =====================================
+        */
         if ($request->aksi === 'masuk') {
-            $jamMasuk = Carbon::parse($request->tanggal.' '.$request->jam);
-            $telat = 0;
+
+            $absensi->jam_masuk = $request->jam;
 
             if ($jadwal && $jadwal->jam_masuk) {
+
+                $jamMasuk = Carbon::parse($request->tanggal.' '.$request->jam);
+
                 $batas = Carbon::parse(
                     $request->tanggal.' '.$jadwal->jam_masuk
                 )->addMinutes($jadwal->toleransi_masuk ?? 0);
 
                 if ($jamMasuk->gt($batas)) {
-                    $telat = $batas->diffInMinutes($jamMasuk);
+                    $menitTerlambat += $batas->diffInMinutes($jamMasuk);
                 }
             }
-
-            $absensi->jam_masuk = $request->jam;
-            $absensi->menit_terlambat += $telat;
         }
 
+        /*
+        =====================================
+        ISTIRAHAT
+        =====================================
+        */
         if ($request->aksi === 'istirahat_mulai') {
             $absensi->istirahat_mulai = $request->jam;
         }
@@ -94,25 +113,37 @@ class AbsensiController extends Controller
             $absensi->istirahat_selesai = $request->jam;
         }
 
+        /*
+        =====================================
+        PULANG
+        =====================================
+        */
         if ($request->aksi === 'pulang') {
-            $jamPulang = Carbon::parse($request->tanggal.' '.$request->jam);
-            $cepat = 0;
+
+            $absensi->jam_pulang = $request->jam;
 
             if ($jadwal && $jadwal->jam_pulang) {
+
+                $jamPulang = Carbon::parse($request->tanggal.' '.$request->jam);
+
                 $batas = Carbon::parse(
                     $request->tanggal.' '.$jadwal->jam_pulang
                 );
 
                 if ($jamPulang->lt($batas)) {
-                    $cepat = $jamPulang->diffInMinutes($batas);
+                    $menitTerlambat += $jamPulang->diffInMinutes($batas);
                 }
             }
-
-            $absensi->jam_pulang = $request->jam;
-            $absensi->menit_terlambat += $cepat;
         }
 
-        $absensi->status = $absensi->menit_terlambat > 0
+        /*
+        =====================================
+        FINAL STATUS
+        =====================================
+        */
+        $absensi->menit_terlambat = $menitTerlambat;
+
+        $absensi->status = $menitTerlambat > 0
             ? 'terlambat'
             : 'hadir';
 
@@ -125,7 +156,7 @@ class AbsensiController extends Controller
 
     /**
      * =================================================
-     * 🔥 IMPORT ABSENSI CSV (FINAL, TIDAK SILENT FAIL)
+     * IMPORT CSV — SUDAH BENAR (TIDAK DIUBAH)
      * =================================================
      */
     public function importCsv(Request $request)
@@ -135,12 +166,12 @@ class AbsensiController extends Controller
         ]);
 
         $file = fopen($request->file('file')->getRealPath(), 'r');
-        fgetcsv($file); // skip header
+        fgetcsv($file);
 
         DB::beginTransaction();
 
         $berhasil = 0;
-        $gagal    = 0;
+        $gagal = 0;
 
         try {
             while (($row = fgetcsv($file)) !== false) {
@@ -157,15 +188,13 @@ class AbsensiController extends Controller
                     continue;
                 }
 
-                // 🔥 NORMALISASI NAMA
                 $nama = trim(preg_replace('/\s+/', ' ', $row[1]));
 
-                $jamMasuk         = $row[2] ?? null;
-                $istirahatMulai   = $row[3] ?? null;
+                $jamMasuk = $row[2] ?? null;
+                $istirahatMulai = $row[3] ?? null;
                 $istirahatSelesai = $row[4] ?? null;
-                $jamPulang        = $row[5] ?? null;
+                $jamPulang = $row[5] ?? null;
 
-                // 🔥 CARI USER LEBIH TOLERAN
                 $user = User::where('role', User::ROLE_KARYAWAN)
                     ->where('name', 'LIKE', $nama)
                     ->first();
@@ -187,8 +216,10 @@ class AbsensiController extends Controller
                 $menitTerlambat = 0;
 
                 if ($jadwal) {
+
                     if ($jamMasuk && $jadwal->jam_masuk) {
                         $masuk = Carbon::parse("$tanggal $jamMasuk");
+
                         $batas = Carbon::parse("$tanggal {$jadwal->jam_masuk}")
                             ->addMinutes($jadwal->toleransi_masuk ?? 0);
 
@@ -199,7 +230,7 @@ class AbsensiController extends Controller
 
                     if ($jamPulang && $jadwal->jam_pulang) {
                         $pulang = Carbon::parse("$tanggal $jamPulang");
-                        $batas  = Carbon::parse("$tanggal {$jadwal->jam_pulang}");
+                        $batas = Carbon::parse("$tanggal {$jadwal->jam_pulang}");
 
                         if ($pulang->lt($batas)) {
                             $menitTerlambat += $pulang->diffInMinutes($batas);
@@ -213,13 +244,13 @@ class AbsensiController extends Controller
                         'tanggal' => $tanggal,
                     ],
                     [
-                        'jam_masuk'         => $jamMasuk,
-                        'istirahat_mulai'   => $istirahatMulai,
+                        'jam_masuk' => $jamMasuk,
+                        'istirahat_mulai' => $istirahatMulai,
                         'istirahat_selesai' => $istirahatSelesai,
-                        'jam_pulang'        => $jamPulang,
-                        'menit_terlambat'   => $menitTerlambat,
-                        'status'            => $menitTerlambat > 0 ? 'terlambat' : 'hadir',
-                        'locked'            => false,
+                        'jam_pulang' => $jamPulang,
+                        'menit_terlambat' => $menitTerlambat,
+                        'status' => $menitTerlambat > 0 ? 'terlambat' : 'hadir',
+                        'locked' => false,
                     ]
                 );
 
@@ -230,30 +261,24 @@ class AbsensiController extends Controller
 
             if ($berhasil === 0) {
                 DB::rollBack();
-                return back()->with(
-                    'error',
-                    'Import gagal: tidak ada data yang cocok dengan nama karyawan.'
-                );
+                return back()->with('error', 'Import gagal: data tidak cocok.');
             }
 
             DB::commit();
 
             return redirect()
                 ->route('admin.absensi')
-                ->with(
-                    'success',
-                    "Import absensi berhasil. Masuk: {$berhasil}, Dilewati: {$gagal}"
-                );
+                ->with('success', "Import berhasil: {$berhasil}, dilewati: {$gagal}");
 
         } catch (\Throwable $e) {
             DB::rollBack();
-            return back()->with('error', 'Import absensi gagal: '.$e->getMessage());
+            return back()->with('error', 'Import gagal: '.$e->getMessage());
         }
     }
 
     /**
      * =================================================
-     * 🔥 DOWNLOAD TEMPLATE CSV
+     * TEMPLATE CSV
      * =================================================
      */
     public function exportTemplateCsv(): StreamedResponse
@@ -261,6 +286,7 @@ class AbsensiController extends Controller
         $filename = 'template-absensi.csv';
 
         return response()->stream(function () {
+
             $handle = fopen('php://output', 'w');
 
             fputcsv($handle, [
@@ -282,8 +308,9 @@ class AbsensiController extends Controller
             ]);
 
             fclose($handle);
+
         }, 200, [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => "attachment; filename={$filename}",
         ]);
     }

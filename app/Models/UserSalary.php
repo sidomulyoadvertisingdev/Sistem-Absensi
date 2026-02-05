@@ -9,68 +9,100 @@ class UserSalary extends Model
 {
     protected $table = 'user_salaries';
 
-    /**
-     * Kolom yang boleh diisi mass assignment
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | MASS ASSIGNMENT
+    |--------------------------------------------------------------------------
+    */
+
     protected $fillable = [
         'user_id',
 
-        // Gaji
+        // 🔥 GAJI
         'gaji_pokok',
+        'gaji_harian',
+
+        // 🔥 RULE PAYROLL
+        'include_tunjangan',
+
+        // Tunjangan
         'tunjangan_umum',
         'tunjangan_transport',
         'tunjangan_thr',
         'tunjangan_kesehatan',
+
+        // Lembur
         'lembur_per_jam',
 
         // Status
         'aktif',
 
-        // 🔥 PAYROLL
+        // Payroll tracking
         'is_paid',
         'payroll_period',
         'paid_at',
         'paid_by',
     ];
 
-    /**
-     * Casting tipe data
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | CASTING — payroll safe
+    |--------------------------------------------------------------------------
+    */
+
     protected $casts = [
-        'aktif'     => 'boolean',
-        'is_paid'   => 'boolean',
-        'paid_at'   => 'datetime',
+        'aktif'              => 'boolean',
+        'include_tunjangan'  => 'boolean',
+
+        'is_paid'            => 'boolean',
+        'paid_at'            => 'datetime',
+
+        'gaji_pokok'         => 'float',
+        'gaji_harian'        => 'float',
+
+        'tunjangan_umum'     => 'float',
+        'tunjangan_transport'=> 'float',
+        'tunjangan_thr'      => 'float',
+        'tunjangan_kesehatan'=> 'float',
+
+        'lembur_per_jam'     => 'float',
     ];
 
-    /**
-     * ===============================
-     * RELATION
-     * ===============================
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | RELATION
+    |--------------------------------------------------------------------------
+    */
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * Admin yang membayar gaji
-     */
     public function payer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'paid_by');
     }
 
-    /**
-     * ===============================
-     * HELPER METHOD
-     * ===============================
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | HELPER — PAYROLL ENGINE
+    |--------------------------------------------------------------------------
+    */
 
     /**
-     * Hitung gaji per hari (GAJI POKOK SAJA)
+     * 🔥 Ambil gaji harian final
+     *
+     * Prioritas:
+     * 1️⃣ gaji_harian manual
+     * 2️⃣ fallback dari gaji pokok
      */
-    public function gajiPerHari(int $hariKerja = 26): float
+    public function getGajiHarian(int $hariKerja = 26): float
     {
+        if (!empty($this->gaji_harian)) {
+            return $this->gaji_harian;
+        }
+
         if ($hariKerja <= 0) {
             return 0;
         }
@@ -81,7 +113,7 @@ class UserSalary extends Model
     /**
      * Total tunjangan tetap
      */
-    public function totalTunjangan(): int
+    public function totalTunjangan(): float
     {
         return
             ($this->tunjangan_umum ?? 0) +
@@ -91,10 +123,20 @@ class UserSalary extends Model
     }
 
     /**
-     * Total gaji master (TANPA absensi & lembur)
-     * ⚠️ BUKAN payroll final
+     * 🔥 Hitung tunjangan payroll
+     * mengikuti checkbox include_tunjangan
      */
-    public function totalGajiMaster(): int
+    public function tunjanganUntukPayroll(): float
+    {
+        return $this->include_tunjangan
+            ? $this->totalTunjangan()
+            : 0;
+    }
+
+    /**
+     * Total gaji master (tanpa absensi)
+     */
+    public function totalGajiMaster(): float
     {
         return
             ($this->gaji_pokok ?? 0) +
@@ -102,10 +144,11 @@ class UserSalary extends Model
     }
 
     /**
-     * Apakah gaji sudah dibayar untuk bulan tertentu
+     * Cek payroll bulan tertentu
      */
     public function isPaidFor(string $bulanYm): bool
     {
-        return $this->is_paid === true && $this->payroll_period === $bulanYm;
+        return $this->is_paid === true
+            && $this->payroll_period === $bulanYm;
     }
 }
