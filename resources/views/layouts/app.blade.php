@@ -54,9 +54,9 @@
         {{-- ================= SIDEBAR ================= --}}
         <aside class="main-sidebar sidebar-dark-primary elevation-4">
             <a href="{{ route('admin.dashboard') }}" class="brand-link text-center">
-                <img src="{{ asset('images/logo-sm.svg') }}" alt="Logo SM" style="max-height:50px;">
+                <img src="{{ asset('images/logosm.svg') }}" alt="Logo SM" style="max-height:50px;">
                 <div class="brand-text font-weight-light mt-2">
-                    Sidomulyo Advertising
+                    
                 </div>
                 <div style="font-size:12px;opacity:.7;">
                     v{{ config('app.app_version', '1.0.0') }}
