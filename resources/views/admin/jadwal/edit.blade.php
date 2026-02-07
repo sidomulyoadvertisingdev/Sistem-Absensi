@@ -43,19 +43,20 @@
             <div class="card-body">
 
                 @foreach($hariList as $key => $label)
+
                     @php
-                        $jadwal = $jadwal[$key] ?? null;
+                        $dataJadwal = $jadwal[$key] ?? null;
                     @endphp
 
                     <div class="border rounded p-3 mb-3">
 
-                        {{-- CHECKBOX HARI --}}
+                        {{-- CHECKBOX --}}
                         <div class="form-check mb-3">
                             <input type="checkbox"
                                    class="form-check-input"
                                    name="hari[{{ $key }}]"
                                    id="hari_{{ $key }}"
-                                   {{ ($jadwal && $jadwal->aktif) ? 'checked' : '' }}>
+                                   {{ ($dataJadwal && $dataJadwal->aktif) ? 'checked' : '' }}>
 
                             <label class="form-check-label font-weight-bold"
                                    for="hari_{{ $key }}">
@@ -69,12 +70,13 @@
 
                         {{-- JAM --}}
                         <div class="row">
+
                             <div class="col-md-3 mb-2">
                                 <label>Jam Masuk</label>
                                 <input type="time"
                                        name="jam_masuk[{{ $key }}]"
                                        class="form-control"
-                                       value="{{ $jadwal->jam_masuk ?? '' }}">
+                                       value="{{ old("jam_masuk.$key", $dataJadwal->jam_masuk ?? '') }}">
                             </div>
 
                             <div class="col-md-3 mb-2">
@@ -82,7 +84,7 @@
                                 <input type="time"
                                        name="jam_pulang[{{ $key }}]"
                                        class="form-control"
-                                       value="{{ $jadwal->jam_pulang ?? '' }}">
+                                       value="{{ old("jam_pulang.$key", $dataJadwal->jam_pulang ?? '') }}">
                             </div>
 
                             <div class="col-md-3 mb-2">
@@ -90,7 +92,7 @@
                                 <input type="time"
                                        name="istirahat_mulai[{{ $key }}]"
                                        class="form-control"
-                                       value="{{ $jadwal->istirahat_mulai ?? '' }}">
+                                       value="{{ old("istirahat_mulai.$key", $dataJadwal->istirahat_mulai ?? '') }}">
                             </div>
 
                             <div class="col-md-3 mb-2">
@@ -98,15 +100,18 @@
                                 <input type="time"
                                        name="istirahat_selesai[{{ $key }}]"
                                        class="form-control"
-                                       value="{{ $jadwal->istirahat_selesai ?? '' }}">
+                                       value="{{ old("istirahat_selesai.$key", $dataJadwal->istirahat_selesai ?? '') }}">
                             </div>
+
                         </div>
 
                     </div>
+
                 @endforeach
 
                 {{-- BUTTON --}}
                 <div class="d-flex justify-content-between mt-4">
+
                     <a href="{{ route('admin.jadwal') }}" class="btn btn-secondary">
                         <i class="fas fa-arrow-left"></i> Kembali
                     </a>
@@ -114,6 +119,7 @@
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save"></i> Simpan Jadwal
                     </button>
+
                 </div>
 
             </div>

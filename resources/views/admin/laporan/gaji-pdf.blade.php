@@ -5,65 +5,94 @@
 <title>Laporan Gaji Bulanan</title>
 
 <style>
-@page { size: A4 landscape; margin: 10mm; }
+@page { size:A4 landscape; margin:10mm; }
 
-body {
-    font-family: DejaVu Sans, sans-serif;
-    font-size: 8px;
-    color: #000;
+body{
+font-family:DejaVu Sans,sans-serif;
+font-size:8px;
+color:#000;
 }
 
-h2 {
-    text-align: center;
-    margin-bottom: 8px;
-    font-size: 12px;
+/* ================= HEADER ================= */
+
+.header{ margin-bottom:6px; }
+
+.header-table{ width:100%; border:none; }
+.header-table td{ border:none; vertical-align:middle; }
+
+.logo{ width:120px; }
+
+h2{
+margin:0;
+font-size:12px;
+text-align:center;
 }
 
-table {
-    width: 100%;
-    border-collapse: collapse;
-    table-layout: fixed;
+/* ================= TABLE ================= */
+
+table{
+width:100%;
+border-collapse:collapse;
+table-layout:fixed;
 }
 
-th, td {
-    border: 1px solid #333;
-    padding: 3px 4px;
-    white-space: nowrap;
-    vertical-align: middle;
+th,td{
+border:1px solid #333;
+padding:3px;
+vertical-align:middle;
+white-space:nowrap;
+line-height:1.2;
 }
 
-th {
-    background: #eaeaea;
-    font-weight: bold;
-    text-align: center;
+th{
+background:#eaeaea;
+font-weight:bold;
+text-align:center;
 }
 
-td.text-left {
-    text-align: left;
-    overflow: hidden;
-    text-overflow: ellipsis;
+/* kolom toko aman */
+
+td.toko{
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis;
+max-width:80px;
 }
 
-td.text-right {
-    text-align: right;
+/* kolom nama 1 baris */
+
+td.nama{
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis;
+max-width:140px;
 }
 
-tr { page-break-inside: avoid; }
+/* angka kanan */
 
-.footer {
-    margin-top: 10px;
-    font-size: 8px;
-    text-align: right;
+td.text-right{
+text-align:right;
 }
 
-.summary {
-    margin-top: 12px;
-    width: 45%;
-    float: right;
+tr{ page-break-inside:avoid; }
+
+/* ================= SUMMARY ================= */
+
+.summary{
+margin-top:8px;
+width:45%;
+float:right;
 }
 
-.summary td {
-    font-weight: bold;
+.summary td{ font-weight:bold; }
+
+/* ================= FOOTER ================= */
+
+.footer{
+clear:both;
+margin-top:6px;
+font-size:8px;
+text-align:right;
 }
 </style>
 </head>
@@ -71,44 +100,68 @@ tr { page-break-inside: avoid; }
 <body>
 
 @php
-$periode = \Carbon\Carbon::create($tahun, $bulan)->translatedFormat('F Y');
-
-$totalSalaryKotor = 0;
-$totalPotongan = 0;
-$totalDiterima = 0;
+$periode = \Carbon\Carbon::create($tahun,$bulan)->translatedFormat('F Y');
+$totalDiterima = collect($laporan)->sum('gaji_diterima');
+$hariKerja = 26;
+$logo = public_path('logo-perusahaan.png');
 @endphp
 
+{{-- ================= HEADER ================= --}}
+
+<div class="header">
+<table class="header-table">
+<tr>
+
+<td width="140">
+@if(file_exists($logo))
+<img src="{{ $logo }}" class="logo">
+@endif
+</td>
+
+<td>
 <h2>
 LAPORAN GAJI KARYAWAN<br>
 BULAN {{ $periode }}
 </h2>
+</td>
+
+<td width="140"></td>
+
+</tr>
+</table>
+</div>
+
+{{-- ================= TABLE ================= --}}
 
 <table>
+
 <thead>
 <tr>
+
 <th width="3%">No</th>
 <th width="6%">Toko</th>
-<th width="12%">Karyawan</th>
+<th width="12%">Nama</th>
 
-<th width="4%">HK</th>
-<th width="4%">Hadir</th>
-<th width="4%">Telat</th>
-<th width="6%">Menit</th>
-<th width="4%">Off</th>
+<th>HK</th>
+<th>HDR</th>
+<th>TMB</th>
+<th>TLT</th>
+<th>MNT</th>
+<th>OFF</th>
 
-<th width="6%">Gaji</th>
+<th>/HR</th>
+<th>G.NRM</th>
+<th>B.HR</th>
 
-<th width="5%">Umum</th>
-<th width="5%">Trans</th>
-<th width="5%">THR</th>
-<th width="5%">Kes</th>
+<th>TUNJ</th>
 
-<th width="5%">/Hari</th>
-<th width="6%">Lembur</th>
-<th width="6%">Pot. Telat</th>
+<th>LBR</th>
+<th>B.JOB</th>
 
-<th width="7%">Salary Kotor</th>
-<th width="8%">Gaji Diterima</th>
+<th>POT</th>
+<th>KOTOR</th>
+<th>TERIMA</th>
+
 </tr>
 </thead>
 
@@ -117,52 +170,47 @@ BULAN {{ $periode }}
 @forelse($laporan as $row)
 
 @php
-$salaryKotor = $row['salary_kotor'] ?? 0;
-$potongan = $row['total_potongan'] ?? 0;
-$diterima = $row['gaji_diterima'] ?? 0;
-
-$totalSalaryKotor += $salaryKotor;
-$totalPotongan += $potongan;
-$totalDiterima += $diterima;
+$totalTunjangan =
+($row['tunjangan_umum'] ?? 0) +
+($row['tunjangan_transport'] ?? 0) +
+($row['tunjangan_thr'] ?? 0) +
+($row['tunjangan_kesehatan'] ?? 0);
 @endphp
 
 <tr>
 
-<td>{{ $row['no'] ?? '-' }}</td>
-<td>{{ $row['toko'] ?? '-' }}</td>
+<td>{{ $row['no'] ?? 0 }}</td>
 
-<td class="text-left">
+<td class="toko">
+{{ $row['toko'] ?? '-' }}
+</td>
+
+<td class="nama">
 {{ $row['nama'] ?? '-' }}
 </td>
 
-<td>26</td>
+<td>{{ $hariKerja }}</td>
+
 <td>{{ $row['hari_hadir'] ?? 0 }}</td>
+<td>{{ $row['hari_tambahan'] ?? 0 }}</td>
 <td>{{ $row['hari_telat'] ?? 0 }}</td>
 <td>{{ $row['menit_telat'] ?? 0 }}</td>
 <td>{{ $row['hari_tidak_masuk'] ?? 0 }}</td>
 
 <td class="text-right">
-{{ number_format($row['gaji_pokok'] ?? 0,0,',','.') }}
-</td>
-
-<td class="text-right">
-{{ number_format($row['tunjangan_umum'] ?? 0,0,',','.') }}
-</td>
-
-<td class="text-right">
-{{ number_format($row['tunjangan_transport'] ?? 0,0,',','.') }}
-</td>
-
-<td class="text-right">
-{{ number_format($row['tunjangan_thr'] ?? 0,0,',','.') }}
-</td>
-
-<td class="text-right">
-{{ number_format($row['tunjangan_kesehatan'] ?? 0,0,',','.') }}
-</td>
-
-<td class="text-right">
 {{ number_format($row['gaji_per_hari'] ?? 0,0,',','.') }}
+</td>
+
+<td class="text-right">
+{{ number_format($row['gaji_bruto'] ?? 0,0,',','.') }}
+</td>
+
+<td class="text-right">
+{{ number_format($row['gaji_bonus'] ?? 0,0,',','.') }}
+</td>
+
+<td class="text-right">
+{{ number_format($totalTunjangan,0,',','.') }}
 </td>
 
 <td class="text-right">
@@ -170,16 +218,20 @@ $totalDiterima += $diterima;
 </td>
 
 <td class="text-right">
-{{ number_format($row['potongan_telat'] ?? 0,0,',','.') }}
+{{ number_format($row['bonus_job'] ?? 0,0,',','.') }}
 </td>
 
 <td class="text-right">
-{{ number_format($salaryKotor,0,',','.') }}
+{{ number_format($row['total_potongan'] ?? 0,0,',','.') }}
+</td>
+
+<td class="text-right">
+{{ number_format($row['salary_kotor'] ?? 0,0,',','.') }}
 </td>
 
 <td class="text-right">
 <strong>
-{{ number_format($diterima,0,',','.') }}
+{{ number_format($row['gaji_diterima'] ?? 0,0,',','.') }}
 </strong>
 </td>
 
@@ -194,37 +246,24 @@ Tidak ada data laporan
 @endforelse
 
 </tbody>
+
 </table>
 
+{{-- ================= SUMMARY ================= --}}
+
 <table class="summary">
-
 <tr>
-<td>Total Salary Kotor</td>
-<td class="text-right">
-Rp {{ number_format($totalSalaryKotor,0,',','.') }}
-</td>
-</tr>
-
-<tr>
-<td>Total Potongan</td>
-<td class="text-right">
-Rp {{ number_format($totalPotongan,0,',','.') }}
-</td>
-</tr>
-
-<tr>
-<td>Total Gaji Diterima</td>
+<td>Total Gaji</td>
 <td class="text-right">
 <strong>
 Rp {{ number_format($totalDiterima,0,',','.') }}
 </strong>
 </td>
 </tr>
-
 </table>
 
 <div class="footer">
-Dicetak pada {{ now()->translatedFormat('d F Y H:i') }}
+Dicetak {{ now()->translatedFormat('d F Y H:i') }}
 </div>
 
 </body>

@@ -9,7 +9,7 @@ class WorkSchedule extends Model
 {
     /**
      * ===============================
-     * TABLE NAME
+     * TABLE
      * ===============================
      */
     protected $table = 'work_schedules';
@@ -21,7 +21,7 @@ class WorkSchedule extends Model
      */
     protected $fillable = [
         'user_id',
-        'hari',               // senin - minggu
+        'hari',
         'jam_masuk',
         'jam_pulang',
         'istirahat_mulai',
@@ -40,6 +40,17 @@ class WorkSchedule extends Model
 
     /**
      * ===============================
+     * NORMALISASI HARI
+     * ===============================
+     * 🔥 Mencegah bug edit jadwal
+     */
+    public function setHariAttribute($value)
+    {
+        $this->attributes['hari'] = strtolower(trim($value));
+    }
+
+    /**
+     * ===============================
      * RELATIONSHIP
      * ===============================
      */
@@ -54,17 +65,11 @@ class WorkSchedule extends Model
      * ===============================
      */
 
-    /**
-     * Scope hanya hari kerja
-     */
     public function scopeAktif($query)
     {
         return $query->where('aktif', true);
     }
 
-    /**
-     * Scope hari libur
-     */
     public function scopeLibur($query)
     {
         return $query->where('aktif', false);
@@ -72,51 +77,38 @@ class WorkSchedule extends Model
 
     /**
      * ===============================
-     * HELPERS (AMAN, TIDAK MERUSAK)
+     * HELPERS
      * ===============================
      */
 
-    /**
-     * Apakah hari ini hari kerja
-     */
     public function isActive(): bool
     {
         return (bool) $this->aktif;
     }
 
-    /**
-     * Apakah hari libur
-     */
     public function isHoliday(): bool
     {
         return !$this->aktif;
     }
 
-    /**
-     * Label hari (rapi)
-     */
     public function hariLabel(): string
     {
         return ucfirst($this->hari);
     }
 
     /**
-     * ======================================================
-     * HELPER BARU (INTI UNTUK STATUS HADIR / TERLAMBAT)
-     * ======================================================
-     * TIDAK MENGUBAH SISTEM LAMA
-     * HANYA MEMUDAHKAN ABSENSI
-     */
-
-    /**
-     * Ambil jadwal aktif user untuk hari ini
-     * Return null jika libur / tidak ada jadwal
+     * ===============================
+     * AMBIL JADWAL HARI INI
+     * ===============================
      */
     public static function jadwalHariIni(int $userId): ?self
     {
-        // Hari sekarang (senin - minggu)
-        $hari = strtolower(Carbon::now()->locale('id')->isoFormat('dddd'));
-        // contoh: senin, selasa, rabu, dst
+        // hasil: senin, selasa, dst
+        $hari = strtolower(
+            Carbon::now()
+                ->locale('id')
+                ->isoFormat('dddd')
+        );
 
         return self::where('user_id', $userId)
             ->where('hari', $hari)
@@ -125,10 +117,29 @@ class WorkSchedule extends Model
     }
 
     /**
-     * Ambil jam masuk + toleransi (default 15 menit)
+     * ===============================
+     * BATAS TERLAMBAT
+     * ===============================
      */
-    public function batasTerlambat(int $menit = 15): Carbon
+    public function batasTerlambat(int $menit = 15): ?Carbon
     {
-        return Carbon::parse($this->jam_masuk)->addMinutes($menit);
+        if (!$this->jam_masuk) {
+            return null;
+        }
+
+        return Carbon::parse($this->jam_masuk)
+            ->addMinutes($menit);
+    }
+
+    /**
+     * ===============================
+     * HELPER TAMBAHAN (AMAN)
+     * ===============================
+     * Untuk cek apakah jadwal valid
+     */
+    public function hasWorkingHours(): bool
+    {
+        return !empty($this->jam_masuk)
+            && !empty($this->jam_pulang);
     }
 }

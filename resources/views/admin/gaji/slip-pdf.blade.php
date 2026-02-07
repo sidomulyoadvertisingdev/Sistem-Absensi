@@ -66,7 +66,7 @@ text-align:center;
 <body>
 
 @php
-$logo = public_path('logo-perusahaan.png');
+$logo = public_path('logo-perusahaan.svg');
 
 /* SAFE VARIABLES */
 $periode = $periode ?? now()->translatedFormat('F Y');

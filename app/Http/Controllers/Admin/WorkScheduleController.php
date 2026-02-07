@@ -40,8 +40,33 @@ class WorkScheduleController extends Controller
             'minggu',
         ];
 
-        // Ambil jadwal user dan key berdasarkan hari
-        $jadwal = $user->workSchedules->keyBy('hari');
+        /**
+         * 🔥 PASTIKAN SEMUA HARI ADA RECORD DI DB
+         * Aman — tidak mengubah data lama
+         */
+        foreach ($hariList as $hari) {
+
+            WorkSchedule::firstOrCreate(
+                [
+                    'user_id' => $user->id,
+                    'hari'    => $hari,
+                ],
+                [
+                    'jam_masuk'         => null,
+                    'jam_pulang'        => null,
+                    'istirahat_mulai'   => null,
+                    'istirahat_selesai' => null,
+                    'aktif'             => false,
+                ]
+            );
+        }
+
+        /**
+         * Ambil ulang jadwal setelah dipastikan lengkap
+         */
+        $jadwal = WorkSchedule::where('user_id', $user->id)
+            ->get()
+            ->keyBy('hari');
 
         return view('admin.jadwal.edit', compact(
             'user',
@@ -95,7 +120,7 @@ class WorkScheduleController extends Controller
 
             /**
              * ---------------------------------------
-             * JIKA HARI DICENTANG → VALIDASI JAM
+             * VALIDASI JAM KERJA
              * ---------------------------------------
              */
             $request->validate([
@@ -112,7 +137,7 @@ class WorkScheduleController extends Controller
 
             /**
              * ---------------------------------------
-             * SIMPAN / UPDATE JADWAL HARI KERJA
+             * SIMPAN / UPDATE HARI AKTIF
              * ---------------------------------------
              */
             WorkSchedule::updateOrCreate(
