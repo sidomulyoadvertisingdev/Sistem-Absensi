@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html>
 <head>
 <meta charset="utf-8">
@@ -7,15 +6,58 @@
 
 <style>
 body{font-family:DejaVu Sans;font-size:11px;color:#222}
-.header{background:#1f4fa3;color:#fff;padding:20px;text-align:center}
+
+.header{
+background:#1f4fa3;
+color:#fff;
+padding:12px 16px;
+}
+
+.header-table{
+width:100%;
+}
+
+.logo{
+width:70px;
+}
+
+.header-title{
+text-align:center;
+font-size:16px;
+font-weight:bold;
+}
+
 .container{padding:22px}
+
 table{width:100%;border-collapse:collapse}
+
 .info th,.info td{padding:4px 6px}
-.section-title{background:#1f4fa3;color:#fff;padding:6px;font-weight:bold;margin-top:12px}
-.box td,.box th{padding:6px;border-bottom:1px solid #eee}
+
+.section-title{
+background:#1f4fa3;
+color:#fff;
+padding:6px;
+font-weight:bold;
+margin-top:12px;
+}
+
+.box td,.box th{
+padding:6px;
+border-bottom:1px solid #eee;
+}
+
 .right{text-align:right}
 .center{text-align:center}
-.net{margin-top:16px;padding:12px;border:2px solid #1f4fa3;font-size:14px;font-weight:bold;text-align:center}
+
+.net{
+margin-top:16px;
+padding:12px;
+border:2px solid #1f4fa3;
+font-size:14px;
+font-weight:bold;
+text-align:center;
+}
+
 .note{font-size:9px;color:#666}
 </style>
 
@@ -24,8 +66,9 @@ table{width:100%;border-collapse:collapse}
 <body>
 
 @php
-/* ================= SAFE SYNC VARIABLES ================= */
+$logo = public_path('logo-perusahaan.png');
 
+/* SAFE VARIABLES */
 $periode = $periode ?? now()->translatedFormat('F Y');
 
 $hariHadir = $hariHadir ?? 0;
@@ -54,16 +97,41 @@ $tunjSehat = $salary->tunjangan_kesehatan ?? 0;
 $jobBonus = $jobBonus ?? collect();
 @endphp
 
+
+{{-- ================= HEADER DENGAN LOGO ================= --}}
+
 <div class="header">
-<b>CV. Sidomulyo Advertising</b><br>
+
+<table class="header-table">
+
+<tr>
+
+<td width="80">
+@if(file_exists($logo))
+<img src="{{ $logo }}" class="logo">
+@endif
+</td>
+
+<td class="header-title">
+CV. Sidomulyo Advertising<br>
 SLIP GAJI — {{ $periode }}
+</td>
+
+<td width="80"></td>
+
+</tr>
+
+</table>
+
 </div>
+
 
 <div class="container">
 
 {{-- ================= INFO ================= --}}
 
 <table class="info">
+
 <tr>
 <th>Nama</th>
 <td>: {{ $user->name }}</td>
@@ -79,13 +147,16 @@ SLIP GAJI — {{ $periode }}
 <th>Terlambat</th>
 <td>: {{ $hariTelat }}x ({{ $menitTerlambat }} menit)</td>
 </tr>
+
 </table>
+
 
 {{-- ================= PENERIMAAN ================= --}}
 
 <div class="section-title">PENERIMAAN</div>
 
 <div class="box">
+
 <table>
 
 <tr>
@@ -94,7 +165,7 @@ SLIP GAJI — {{ $periode }}
 </tr>
 
 <tr>
-<td>Gaji Presensi ({{ $hariHadir }} hari)</td>
+<td>Gaji Presensi</td>
 <td class="right">Rp {{ number_format($gajiDasar,0,',','.') }}</td>
 </tr>
 
@@ -119,7 +190,7 @@ SLIP GAJI — {{ $periode }}
 </tr>
 
 <tr>
-<td>Lembur ({{ number_format($totalJamLembur,1) }} jam)</td>
+<td>Lembur</td>
 <td class="right">Rp {{ number_format($totalLembur,0,',','.') }}</td>
 </tr>
 
@@ -136,7 +207,6 @@ SLIP GAJI — {{ $periode }}
 </table>
 
 @if(empty($salary->include_tunjangan))
-
 <div class="note">
 * Tunjangan hanya ditampilkan — tidak dihitung dalam gaji diterima.
 </div>
@@ -144,15 +214,17 @@ SLIP GAJI — {{ $periode }}
 
 </div>
 
+
 {{-- ================= POTONGAN ================= --}}
 
 <div class="section-title">POTONGAN</div>
 
 <div class="box">
+
 <table>
 
 <tr>
-<td>Potongan Keterlambatan</td>
+<td>Potongan Terlambat</td>
 <td class="right">Rp {{ number_format($potonganTelatNominal,0,',','.') }}</td>
 </tr>
 
@@ -162,7 +234,9 @@ SLIP GAJI — {{ $periode }}
 </tr>
 
 </table>
+
 </div>
+
 
 {{-- ================= TOTAL ================= --}}
 
@@ -171,11 +245,13 @@ TOTAL GAJI DITERIMA<br>
 Rp {{ number_format($totalGaji,0,',','.') }}
 </div>
 
+
 {{-- ================= BONUS DETAIL ================= --}}
 
 <div class="section-title">DETAIL BONUS</div>
 
 <div class="box">
+
 <table>
 
 <tr>
@@ -184,7 +260,6 @@ Rp {{ number_format($totalGaji,0,',','.') }}
 </tr>
 
 @forelse($jobBonus as $job)
-
 <tr>
 <td>{{ $job->title }}</td>
 <td class="right">Rp {{ number_format($job->bonus,0,',','.') }}</td>
@@ -196,6 +271,7 @@ Rp {{ number_format($totalGaji,0,',','.') }}
 @endforelse
 
 </table>
+
 </div>
 
 </div>

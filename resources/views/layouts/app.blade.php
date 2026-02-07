@@ -268,13 +268,6 @@
                             </ul>
                         </li>
 
-                        {{-- Portal --}}
-                        <li class="nav-item">
-                            <a href="http://localhost:3000" target="_blank" class="nav-link">
-                                <i class="nav-icon fas fa-external-link-alt"></i>
-                                <p>Portal Karyawan</p>
-                            </a>
-                        </li>
 
                         {{-- Logout --}}
                         <li class="nav-item mt-3">
