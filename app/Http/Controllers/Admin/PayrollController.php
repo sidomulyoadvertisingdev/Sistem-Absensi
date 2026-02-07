@@ -29,7 +29,9 @@ class PayrollController extends Controller
         $tahun = $date->year;
         $hariKerjaStandar = 26;
 
-        /* ================= ABSENSI ================= */
+        /*
+        ================= ABSENSI (SAMA LAPORAN)
+        */
 
         $absensis = Absensi::where('user_id', $user->id)
             ->whereMonth('tanggal', $bulan)
@@ -38,20 +40,58 @@ class PayrollController extends Controller
 
         $hariHadir = $absensis->where('status', 'hadir')->count();
         $hariTelat = $absensis->where('status', 'terlambat')->count();
-        $presensi  = $hariHadir + $hariTelat;
 
-        $offDay = max($hariKerjaStandar - $presensi, 0);
+        $presensi = $hariHadir + $hariTelat;
 
-        $menitTerlambat = $absensis
+        $hariNormal     = min($presensi, $hariKerjaStandar);
+        $hariTambahan   = max($presensi - $hariKerjaStandar, 0);
+        $offDay         = max($hariKerjaStandar - $hariNormal, 0);
+
+        $menitTerlambat = (int) $absensis
             ->where('status', 'terlambat')
             ->sum('menit_terlambat');
 
-        /* ================= GAJI DASAR ================= */
+        /*
+        ================= TUNJANGAN (SAMA LAPORAN)
+        */
 
-        $gajiPerHari = $salary->getGajiHarian();
-        $gajiBruto   = $gajiPerHari * $presensi;
+        $tunjanganArray = [
+            'tunjangan_umum'      => (float) ($salary->tunjangan_umum ?? 0),
+            'tunjangan_transport' => (float) ($salary->tunjangan_transport ?? 0),
+            'tunjangan_thr'       => (float) ($salary->tunjangan_thr ?? 0),
+            'tunjangan_kesehatan' => (float) ($salary->tunjangan_kesehatan ?? 0),
+        ];
 
-        /* ================= LEMBUR ================= */
+        $totalTunjanganMaster = array_sum($tunjanganArray);
+
+        $tunjanganPayroll = $salary->include_tunjangan
+            ? $totalTunjanganMaster
+            : 0;
+
+        // kompatibilitas blade lama
+        $totalTunjangan = $tunjanganPayroll;
+
+        /*
+        ================= GAJI HARIAN (SAMA LAPORAN)
+        */
+
+        $gajiPerHari = (float) ($salary->gaji_harian ?? 0);
+
+        $nilaiHariTambahan = $gajiPerHari;
+
+        if ($salary->include_tunjangan) {
+            $nilaiHariTambahan += ($totalTunjanganMaster / $hariKerjaStandar);
+        }
+
+        $gajiNormal   = $gajiPerHari * $hariNormal;
+        $gajiTambahan = $nilaiHariTambahan * $hariTambahan;
+
+        // kompatibilitas lama
+        $gajiBruto = $gajiNormal + $gajiTambahan;
+
+        /*
+        ================= LEMBUR
+        */
 
         $totalJamLembur = Lembur::where('user_id', $user->id)
             ->where('status', 'approved')
@@ -63,9 +103,11 @@ class PayrollController extends Controller
                     ->diffInMinutes(Carbon::parse($l->jam_selesai)) / 60
             );
 
-        $uangLembur = $totalJamLembur * ($salary->lembur_per_jam ?? 0);
+        $uangLembur = $totalJamLembur * (float) ($salary->lembur_per_jam ?? 0);
 
-        /* ================= BONUS JOB ================= */
+        /*
+        ================= BONUS JOB
+        */
 
         $jobBonus = DB::table('job_todo_user')
             ->join('job_todos', 'job_todos.id', '=', 'job_todo_user.job_todo_id')
@@ -78,34 +120,20 @@ class PayrollController extends Controller
 
         $totalBonusJob = $jobBonus->sum('bonus');
 
-        /* ================= TUNJANGAN ================= */
-
-        $tunjanganArray = [
-            'tunjangan_umum'      => $salary->tunjangan_umum ?? 0,
-            'tunjangan_transport' => $salary->tunjangan_transport ?? 0,
-            'tunjangan_thr'       => $salary->tunjangan_thr ?? 0,
-            'tunjangan_kesehatan' => $salary->tunjangan_kesehatan ?? 0,
-        ];
-
-        $totalTunjanganMaster = array_sum($tunjanganArray);
-
-        // checkbox payroll rule (identik laporan)
-        $tunjanganPayroll = $salary->include_tunjangan
-            ? $totalTunjanganMaster
-            : 0;
-
-        // backward compatibility blade
-        $totalTunjangan = $tunjanganPayroll;
-
-        /* ================= SALARY KOTOR (SAMA LAPORAN) ================= */
+        /*
+        ================= SALARY KOTOR (IDENTIK LAPORAN)
+        */
 
         $salaryKotor =
-            $gajiBruto +
+            $gajiNormal +
+            $gajiTambahan +
             $uangLembur +
             $totalBonusJob +
             $tunjanganPayroll;
 
-        /* ================= POTONGAN — IDENTIK LAPORAN ================= */
+        /*
+        ================= RULE ENGINE POTONGAN
+        */
 
         $rules = SalaryDeductionRule::where('aktif', true)->get();
 
@@ -114,27 +142,50 @@ class PayrollController extends Controller
 
         foreach ($rules as $rule) {
 
-            if (!$rule->isApplicableForPenempatan($user->penempatan)) {
-                continue;
-            }
+            if (!$rule->isApplicableForPenempatan($user->penempatan)) continue;
 
-            $kena = $rule->condition_type === 'terlambat'
-                ? $hariTelat >= ($rule->condition_value ?? 1)
-                : true;
+            $base = match ($rule->base_source) {
 
-            if (!$kena) continue;
+                'gaji_pokok' =>
+                    (float) ($salary->gaji_pokok ?? 0),
 
-            // 🔥 SAME AS LAPORAN
-            $nilai = $rule->calculate($salaryKotor);
+                'tunjangan' =>
+                    collect($rule->tunjangan_items ?? [])
+                        ->sum(fn ($item) => $tunjanganArray[$item] ?? 0),
+
+                default =>
+                    $salaryKotor,
+            };
+
+            if ($base <= 0) continue;
 
             if ($rule->condition_type === 'terlambat') {
+
+                $trigger = $rule->condition_value ?? 1;
+
+                if ($hariTelat < $trigger) continue;
+
+                if ($rule->max_minutes &&
+                    $menitTerlambat < $rule->max_minutes) continue;
+
+                $nilai = $rule->calculate($base);
+
                 $potonganTelatNominal += $nilai;
+                $totalPotongan += $nilai;
             }
 
-            $totalPotongan += $nilai;
+            if ($rule->condition_type === 'off_day') {
+
+                if ($offDay <= 0) continue;
+
+                $nilai = $rule->calculate($base);
+                $totalPotongan += $nilai;
+            }
         }
 
-        /* ================= TOTAL GAJI ================= */
+        /*
+        ================= FINAL
+        */
 
         $totalGaji = max($salaryKotor - $totalPotongan, 0);
 
@@ -144,10 +195,14 @@ class PayrollController extends Controller
 
             'hariHadir',
             'hariTelat',
+            'hariNormal',
+            'hariTambahan',
             'offDay',
             'menitTerlambat',
 
             'gajiPerHari',
+            'gajiNormal',
+            'gajiTambahan',
             'gajiBruto',
 
             'totalJamLembur',
@@ -200,7 +255,7 @@ class PayrollController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | BAYAR GAJI
+    | BAYAR GAJI + EMAIL SLIP
     |--------------------------------------------------------------------------
     */
 
