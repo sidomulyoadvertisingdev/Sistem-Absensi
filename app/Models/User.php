@@ -18,10 +18,31 @@ class User extends Authenticatable
     | ROLE CONSTANTS
     |--------------------------------------------------------------------------
     */
-    public const ROLE_ADMIN    = 'admin';
-    public const ROLE_KARYAWAN = 'karyawan';
-    public const ROLE_KEUANGAN = 'keuangan';
-    public const ROLE_USER     = 'user';
+    public const ROLE_OWNER       = 'owner';
+    public const ROLE_ADMIN       = 'admin'; // legacy admin
+    public const ROLE_ADMIN_STAFF = 'admin_staff';
+    public const ROLE_HRD         = 'hrd';
+    public const ROLE_KEUANGAN    = 'keuangan';
+    public const ROLE_KARYAWAN    = 'karyawan';
+    public const ROLE_USER        = 'user';
+
+    public const ADMIN_PERMISSION_LABELS = [
+        'dashboard'          => 'Dashboard',
+        'users'              => 'Manajemen User',
+        'karyawan'           => 'Data Karyawan',
+        'absensi'            => 'Absensi',
+        'lembur'             => 'Lembur',
+        'jadwal'             => 'Jadwal Kerja',
+        'gaji'               => 'Gaji & Payroll',
+        'laporan'            => 'Laporan',
+        'potongan'           => 'Aturan Potongan Gaji',
+        'jobs'               => 'Lowongan & Pelamar',
+        'job_todos'          => 'Job Todo',
+        'pelanggaran'        => 'Pelanggaran',
+        'submission_types'   => 'Jenis Pengajuan',
+        'submission'         => 'Pengajuan Masuk',
+        'announcements'      => 'Pengumuman',
+    ];
 
     /*
     |--------------------------------------------------------------------------
@@ -44,6 +65,7 @@ class User extends Authenticatable
 
         // Mobile / App
         'app_version_seen',
+        'admin_permissions',
     ];
 
     /*
@@ -64,6 +86,7 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed', // Laravel 10+
+        'admin_permissions' => 'array',
     ];
 
     /*
@@ -118,9 +141,25 @@ class User extends Authenticatable
     |--------------------------------------------------------------------------
     */
 
+    public function isOwner(): bool
+    {
+        return $this->role === self::ROLE_OWNER;
+    }
+
     public function isAdmin(): bool
     {
-        return $this->role === self::ROLE_ADMIN;
+        // Tetap dipakai luas di code lama -> jadikan alias panel admin.
+        return $this->isPanelAdmin();
+    }
+
+    public function isAdminStaff(): bool
+    {
+        return $this->role === self::ROLE_ADMIN_STAFF;
+    }
+
+    public function isHrd(): bool
+    {
+        return $this->role === self::ROLE_HRD;
     }
 
     public function isKaryawan(): bool
@@ -136,6 +175,128 @@ class User extends Authenticatable
     public function isUser(): bool
     {
         return $this->role === self::ROLE_USER;
+    }
+
+    public function isPanelAdmin(): bool
+    {
+        return in_array($this->role, self::adminRoles(), true);
+    }
+
+    public static function adminRoles(): array
+    {
+        return [
+            self::ROLE_OWNER,
+            self::ROLE_ADMIN,
+            self::ROLE_ADMIN_STAFF,
+            self::ROLE_HRD,
+            self::ROLE_KEUANGAN,
+        ];
+    }
+
+    public static function adminRoleOptions(): array
+    {
+        return [
+            self::ROLE_OWNER => 'Owner (Super Admin)',
+            self::ROLE_HRD => 'HRD',
+            self::ROLE_KEUANGAN => 'Keuangan',
+            self::ROLE_ADMIN_STAFF => 'Admin Staff',
+            self::ROLE_ADMIN => 'Admin (Legacy)',
+        ];
+    }
+
+    public static function adminPermissionOptions(): array
+    {
+        return self::ADMIN_PERMISSION_LABELS;
+    }
+
+    public static function defaultPermissionsByRole(string $role): array
+    {
+        $all = array_keys(self::ADMIN_PERMISSION_LABELS);
+
+        return match ($role) {
+            self::ROLE_OWNER => $all,
+
+            self::ROLE_HRD => [
+                'dashboard',
+                'users',
+                'karyawan',
+                'absensi',
+                'lembur',
+                'jadwal',
+                'jobs',
+                'job_todos',
+                'pelanggaran',
+                'submission',
+                'announcements',
+            ],
+
+            self::ROLE_KEUANGAN => [
+                'dashboard',
+                'gaji',
+                'laporan',
+                'potongan',
+                'submission',
+                'lembur',
+                'announcements',
+            ],
+
+            self::ROLE_ADMIN_STAFF => [
+                'dashboard',
+                'users',
+                'karyawan',
+                'absensi',
+                'lembur',
+                'jadwal',
+                'submission',
+                'announcements',
+            ],
+
+            // admin lama tetap luas agar tidak memutus alur lama.
+            self::ROLE_ADMIN => array_values(array_diff($all, ['manage_admin_access'])),
+
+            default => [],
+        };
+    }
+
+    public function resolvedAdminPermissions(): array
+    {
+        if (!$this->isPanelAdmin()) {
+            return [];
+        }
+
+        if ($this->isOwner()) {
+            return array_keys(self::ADMIN_PERMISSION_LABELS);
+        }
+
+        $stored = is_array($this->admin_permissions)
+            ? $this->admin_permissions
+            : [];
+
+        if (!empty($stored)) {
+            return array_values(array_intersect(
+                $stored,
+                array_keys(self::ADMIN_PERMISSION_LABELS)
+            ));
+        }
+
+        return self::defaultPermissionsByRole($this->role);
+    }
+
+    public function hasAdminPermission(string $permission): bool
+    {
+        if (!$this->isPanelAdmin()) {
+            return false;
+        }
+
+        if ($permission === 'manage_admin_access') {
+            return $this->isOwner();
+        }
+
+        if ($this->isOwner()) {
+            return true;
+        }
+
+        return in_array($permission, $this->resolvedAdminPermissions(), true);
     }
 
     public function jobTodos()

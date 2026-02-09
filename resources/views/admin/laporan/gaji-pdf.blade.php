@@ -158,6 +158,7 @@ BULAN {{ $periode }}
 <th>LBR</th>
 <th>B.JOB</th>
 
+<th>P.TRN</th>
 <th>POT</th>
 <th>KOTOR</th>
 <th>TERIMA</th>
@@ -222,6 +223,10 @@ $totalTunjangan =
 </td>
 
 <td class="text-right">
+{{ number_format($row['potongan_training'] ?? 0,0,',','.') }}
+</td>
+
+<td class="text-right">
 {{ number_format($row['total_potongan'] ?? 0,0,',','.') }}
 </td>
 
@@ -239,7 +244,7 @@ $totalTunjangan =
 
 @empty
 <tr>
-<td colspan="18" style="text-align:center;">
+<td colspan="19" style="text-align:center;">
 Tidak ada data laporan
 </td>
 </tr>

@@ -9,18 +9,42 @@ use App\Models\Lembur;
 use App\Models\UserSalary;
 use App\Models\JobApplicant;
 use App\Models\JobTodo;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $selectedMonth = Carbon::now()->startOfMonth();
+        $bulan = $request->query('bulan');
+
+        if (is_string($bulan) && preg_match('/^\d{4}-\d{2}$/', $bulan)) {
+            try {
+                $selectedMonth = Carbon::createFromFormat('Y-m', $bulan)->startOfMonth();
+            } catch (\Throwable $e) {
+                $selectedMonth = Carbon::now()->startOfMonth();
+            }
+        }
+
+        $selectedBulan = $selectedMonth->format('Y-m');
+        $startOfMonth = $selectedMonth->copy()->startOfMonth()->toDateString();
+        $endOfMonth = $selectedMonth->copy()->endOfMonth()->toDateString();
+        $periodeAbsensiLabel = $selectedMonth->copy()
+            ->locale('id')
+            ->translatedFormat('F Y');
+
+        $karyawanIds = User::where('role', User::ROLE_KARYAWAN)
+            ->pluck('id');
+
         /*
         |------------------------------------------------------------------
         | ABSENSI TERBARU
         |------------------------------------------------------------------
         */
         $absensiTerbaru = Absensi::with('user')
+            ->whereBetween('tanggal', [$startOfMonth, $endOfMonth])
             ->orderBy('tanggal', 'desc')
             ->orderBy('id', 'desc')
             ->limit(5)
@@ -75,6 +99,7 @@ class DashboardController extends Controller
         |------------------------------------------------------------------
         */
         $lemburTerbaru = Lembur::with('user')
+            ->whereBetween('tanggal', [$startOfMonth, $endOfMonth])
             ->latest('tanggal')
             ->limit(5)
             ->get();
@@ -88,6 +113,69 @@ class DashboardController extends Controller
         $totalLembur  = Lembur::count();
         $totalUser    = User::where('role', User::ROLE_KARYAWAN)->count();
         $totalGaji    = UserSalary::where('aktif', true)->count();
+
+        /*
+        |------------------------------------------------------------------
+        | ANALITIK DISIPLIN KARYAWAN (BULAN BERJALAN)
+        |------------------------------------------------------------------
+        */
+        $terlambatBulanIni = Absensi::whereIn('user_id', $karyawanIds)
+            ->whereBetween('tanggal', [$startOfMonth, $endOfMonth])
+            ->where('status', 'terlambat');
+
+        $karyawanTerlambat = (clone $terlambatBulanIni)
+            ->distinct()
+            ->count('user_id');
+
+        $totalKeterlambatan = (clone $terlambatBulanIni)->count();
+
+        $totalMenitTerlambat = (clone $terlambatBulanIni)
+            ->sum('menit_terlambat');
+
+        $hariKerjaStandar = 26;
+
+        // Samakan dengan laporan: tidak masuk = 26 - (hadir + terlambat) per karyawan.
+        $presensiPerUser = Absensi::select('user_id', DB::raw('COUNT(*) as total_presensi'))
+            ->whereIn('user_id', $karyawanIds)
+            ->whereBetween('tanggal', [$startOfMonth, $endOfMonth])
+            ->whereIn('status', ['hadir', 'terlambat'])
+            ->groupBy('user_id')
+            ->pluck('total_presensi', 'user_id');
+
+        $karyawanTidakMasuk = 0;
+        $totalTidakMasuk = 0;
+
+        foreach ($karyawanIds as $karyawanId) {
+            $totalPresensi = (int) ($presensiPerUser[$karyawanId] ?? 0);
+            $hariTidakMasuk = max($hariKerjaStandar - $totalPresensi, 0);
+
+            if ($hariTidakMasuk > 0) {
+                $karyawanTidakMasuk++;
+                $totalTidakMasuk += $hariTidakMasuk;
+            }
+        }
+
+        $karyawanTidakPernahTerlambat = max($totalUser - $karyawanTerlambat, 0);
+
+        $totalHadir = Absensi::whereIn('user_id', $karyawanIds)
+            ->whereBetween('tanggal', [$startOfMonth, $endOfMonth])
+            ->where('status', 'hadir')
+            ->count();
+
+        $topKaryawanTerlambat = Absensi::with('user:id,name')
+            ->select(
+                'user_id',
+                DB::raw('COUNT(*) as total_terlambat'),
+                DB::raw('COALESCE(SUM(menit_terlambat), 0) as total_menit')
+            )
+            ->whereIn('user_id', $karyawanIds)
+            ->whereBetween('tanggal', [$startOfMonth, $endOfMonth])
+            ->where('status', 'terlambat')
+            ->groupBy('user_id')
+            ->orderByDesc('total_terlambat')
+            ->orderByDesc('total_menit')
+            ->limit(5)
+            ->get();
 
         /*
         |------------------------------------------------------------------
@@ -142,6 +230,16 @@ class DashboardController extends Controller
             'totalLembur',
             'totalGaji',
             'totalUser',
+            'selectedBulan',
+            'periodeAbsensiLabel',
+            'karyawanTerlambat',
+            'totalKeterlambatan',
+            'totalMenitTerlambat',
+            'karyawanTidakPernahTerlambat',
+            'karyawanTidakMasuk',
+            'totalTidakMasuk',
+            'totalHadir',
+            'topKaryawanTerlambat',
 
             'pelamarPending',
             'pelamarReview',

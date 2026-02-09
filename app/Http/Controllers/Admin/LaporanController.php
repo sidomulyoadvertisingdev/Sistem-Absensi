@@ -83,6 +83,7 @@ class LaporanController extends Controller
             $hariTelat = $absensis->where('status', 'terlambat')->count();
 
             $presensi = $hariHadir + $hariTelat;
+            $hariKerjaMasuk = $presensi;
 
             $hariNormal     = min($presensi, $hariKerjaStandar);
             $hariTambahan   = max($presensi - $hariKerjaStandar, 0);
@@ -109,16 +110,11 @@ class LaporanController extends Controller
             ================= GAJI
             */
 
-            $gajiPerHari = (float) ($salary->gaji_harian ?? 0);
+            $gajiPerHari = (float) $salary->getGajiHarian($hariKerjaStandar);
 
-            $nilaiHariTambahan = $gajiPerHari;
-
-            if ($salary->include_tunjangan) {
-                $nilaiHariTambahan += ($totalTunjangan / $hariKerjaStandar);
-            }
-
+            // Basis lama: gaji harian x jumlah hari kerja masuk.
             $gajiNormal   = $gajiPerHari * $hariNormal;
-            $gajiTambahan = $nilaiHariTambahan * $hariTambahan;
+            $gajiTambahan = $gajiPerHari * $hariTambahan;
 
             /*
             ================= LEMBUR
@@ -168,6 +164,7 @@ class LaporanController extends Controller
 
             $totalPotongan = 0;
             $potonganTelat = 0;
+            $potonganTraining = 0;
 
             foreach ($rules as $rule) {
 
@@ -213,6 +210,14 @@ class LaporanController extends Controller
                 }
             }
 
+            $trainingInfo = $salary->calculateTrainingDeduction(
+                $salaryKotor,
+                Carbon::create($tahun, $bulan, 1)
+            );
+
+            $potonganTraining = (float) ($trainingInfo['deduction_nominal'] ?? 0);
+            $totalPotongan += $potonganTraining;
+
             /*
             ================= FINAL
             */
@@ -231,6 +236,7 @@ class LaporanController extends Controller
                 'nama' => $user->name,
 
                 'hari_hadir'       => $presensi,
+                'hari_kerja_masuk' => $hariKerjaMasuk,
                 'hari_normal'      => $hariNormal,
                 'hari_tambahan'    => $hariTambahan,
                 'hari_telat'       => $hariTelat,
@@ -252,7 +258,10 @@ class LaporanController extends Controller
                 'bonus_job' => $bonusJob,
 
                 'potongan_telat' => $potonganTelat,
+                'potongan_training' => $potonganTraining,
                 'total_potongan' => $totalPotongan,
+                'training_aktif' => (bool) ($trainingInfo['active'] ?? false),
+                'training_hari' => (int) ($trainingInfo['overlap_days'] ?? 0),
 
                 'salary_kotor'  => $salaryKotor,
                 'gaji_diterima' => $gajiDiterima,
@@ -268,3 +277,4 @@ class LaporanController extends Controller
         );
     }
 }
+

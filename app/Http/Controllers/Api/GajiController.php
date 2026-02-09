@@ -38,7 +38,7 @@ class GajiController extends Controller
         $tahun = $now->year;
 
         $jumlahHariBulan  = $now->daysInMonth;
-        $hariKerjaStandar = 22;
+        $hariKerjaStandar = 26;
         $potonganPerMenit = 1000;
 
         /* ==================================================
@@ -95,9 +95,9 @@ class GajiController extends Controller
         $potonganTelatNominal = $menitTerlambat * $potonganPerMenit;
 
         /* ==================================================
-         * GAJI POKOK PROPORSIONAL
+         * GAJI DASAR PROPORSIONAL
          * ================================================== */
-        $gajiPerHari  = $salary->gaji_pokok / $hariKerjaStandar;
+        $gajiPerHari  = $salary->getGajiHarian($hariKerjaStandar);
         $gajiPokokFix = round($gajiPerHari * $presensi);
 
         /* ==================================================
@@ -142,12 +142,19 @@ class GajiController extends Controller
         /* ==================================================
          * SALARY KOTOR
          * ================================================== */
+        $tunjanganMaster =
+            (float) ($salary->tunjangan_umum ?? 0) +
+            (float) ($salary->tunjangan_transport ?? 0) +
+            (float) ($salary->tunjangan_thr ?? 0) +
+            (float) ($salary->tunjangan_kesehatan ?? 0);
+
+        $tunjanganPayroll = $salary->include_tunjangan
+            ? $tunjanganMaster
+            : 0;
+
         $salaryKotor =
             $gajiPokokFix +
-            $salary->tunjangan_umum +
-            $salary->tunjangan_transport +
-            $salary->tunjangan_thr +
-            $salary->tunjangan_kesehatan +
+            $tunjanganPayroll +
             $uangLembur +
             $totalBonusJob;
 
@@ -215,10 +222,12 @@ class GajiController extends Controller
                 'off_day'             => $offDay,
 
                 'gaji_pokok_fix'      => $gajiPokokFix,
-                'tunjangan_umum'      => $salary->tunjangan_umum,
-                'tunjangan_transport' => $salary->tunjangan_transport,
-                'tunjangan_thr'       => $salary->tunjangan_thr,
-                'tunjangan_kesehatan' => $salary->tunjangan_kesehatan,
+                'tunjangan_umum'      => (float) ($salary->tunjangan_umum ?? 0),
+                'tunjangan_transport' => (float) ($salary->tunjangan_transport ?? 0),
+                'tunjangan_thr'       => (float) ($salary->tunjangan_thr ?? 0),
+                'tunjangan_kesehatan' => (float) ($salary->tunjangan_kesehatan ?? 0),
+                'include_tunjangan'   => (bool) $salary->include_tunjangan,
+                'tunjangan_payroll'   => round($tunjanganPayroll),
 
                 'jam_lembur'          => $jamLembur,
                 'uang_lembur'         => $uangLembur,
@@ -233,3 +242,4 @@ class GajiController extends Controller
         ], 200);
     }
 }
+

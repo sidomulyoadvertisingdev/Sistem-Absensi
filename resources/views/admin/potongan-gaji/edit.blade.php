@@ -15,13 +15,34 @@
             @method('PUT')
 
             <div class="card-body">
+                @php
+                    $selectedBaseSource = old(
+                        'base_source',
+                        $rule->base_source
+                            ?? (($rule->base_amount ?? null) === 'salary_kotor'
+                                ? 'total_gaji'
+                                : ($rule->base_amount ?? 'gaji_pokok'))
+                    );
+
+                    $selectedTunjanganItems = old(
+                        'tunjangan_items',
+                        is_array($rule->tunjangan_items)
+                            ? $rule->tunjangan_items
+                            : (json_decode($rule->tunjangan_items ?? '[]', true) ?? [])
+                    );
+
+                    $rulePenempatan = is_array($rule->penempatan)
+                        ? $rule->penempatan
+                        : json_decode($rule->penempatan ?? '[]', true) ?? [];
+                @endphp
 
                 {{-- ================= KODE ================= --}}
                 <div class="form-group">
                     <label>Kode Aturan</label>
                     <input type="text"
+                           name="kode"
                            class="form-control"
-                           value="{{ $rule->kode }}"
+                           value="{{ old('kode', $rule->kode) }}"
                            readonly>
                 </div>
 
@@ -30,12 +51,9 @@
                     <label>Nama Aturan</label>
                     <input type="text"
                            name="nama"
-                           class="form-control @error('nama') is-invalid @enderror"
+                           class="form-control"
                            value="{{ old('nama', $rule->nama) }}"
                            required>
-                    @error('nama')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
                 </div>
 
                 {{-- ================= KETERANGAN ================= --}}
@@ -51,9 +69,8 @@
                 {{-- ================= JENIS POTONGAN ================= --}}
                 <div class="form-group">
                     <label>Jenis Potongan</label>
-                    <select name="type"
-                            class="form-control @error('type') is-invalid @enderror"
-                            required>
+                    <select name="type" class="form-control" required>
+                        <option value="">-- Pilih --</option>
                         <option value="fixed" {{ old('type', $rule->type) === 'fixed' ? 'selected' : '' }}>
                             Nominal (Rp)
                         </option>
@@ -61,44 +78,66 @@
                             Persentase (%)
                         </option>
                     </select>
-                    @error('type')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
                 </div>
 
-                {{-- ================= NILAI POTONGAN ================= --}}
                 <div class="form-group">
                     <label>Nilai Potongan</label>
                     <input type="number"
                            step="0.01"
                            name="value"
-                           class="form-control @error('value') is-invalid @enderror"
+                           class="form-control"
                            value="{{ old('value', $rule->value) }}"
                            required>
-                    @error('value')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
                 </div>
 
-                {{-- ================= DASAR PERHITUNGAN ================= --}}
+                <hr>
+
+                {{-- ================= DASAR POTONGAN ================= --}}
                 <div class="form-group">
-                    <label>Dihitung Dari</label>
-                    <select name="base_amount"
-                            class="form-control @error('base_amount') is-invalid @enderror"
+                    <label>Potongan Dihitung Dari</label>
+                    <select name="base_source"
+                            id="base_source"
+                            class="form-control"
                             required>
-                        <option value="gaji_pokok" {{ old('base_amount', $rule->base_amount) === 'gaji_pokok' ? 'selected' : '' }}>
+                        <option value="">-- Pilih --</option>
+                        <option value="gaji_pokok" {{ $selectedBaseSource === 'gaji_pokok' ? 'selected' : '' }}>
                             Gaji Pokok
                         </option>
-                        <option value="salary_kotor" {{ old('base_amount', $rule->base_amount) === 'salary_kotor' ? 'selected' : '' }}>
-                            Salary Kotor
+                        <option value="tunjangan" {{ $selectedBaseSource === 'tunjangan' ? 'selected' : '' }}>
+                            Tunjangan
                         </option>
-                        <option value="total_gaji" {{ old('base_amount', $rule->base_amount) === 'total_gaji' ? 'selected' : '' }}>
+                        <option value="total_gaji" {{ $selectedBaseSource === 'total_gaji' ? 'selected' : '' }}>
                             Total Gaji
                         </option>
                     </select>
-                    @error('base_amount')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
+                </div>
+
+                {{-- ================= PILIH TUNJANGAN ================= --}}
+                <div class="form-group {{ $selectedBaseSource !== 'tunjangan' ? 'd-none' : '' }}" id="tunjangan-box">
+                    <label>Jenis Tunjangan yang Dipotong</label>
+                    <div class="border rounded p-3">
+                        @forelse($tunjangans as $key => $label)
+                            <div class="form-check">
+                                <input type="checkbox"
+                                       name="tunjangan_items[]"
+                                       value="{{ $key }}"
+                                       class="form-check-input"
+                                       id="tj_{{ $key }}"
+                                       {{ in_array($key, $selectedTunjanganItems ?? [], true) ? 'checked' : '' }}>
+                                <label for="tj_{{ $key }}" class="form-check-label">
+                                    {{ $label }}
+                                </label>
+                            </div>
+                        @empty
+                            <div class="text-muted">
+                                Belum ada tunjangan di struktur gaji
+                            </div>
+                        @endforelse
+                    </div>
+
+                    <small class="text-muted">
+                        Tunjangan diambil dari struktur gaji karyawan
+                    </small>
                 </div>
 
                 <hr>
@@ -106,64 +145,32 @@
                 {{-- ================= KONDISI ================= --}}
                 <div class="form-group">
                     <label>Jenis Kondisi</label>
-                    <select name="condition_type"
-                            class="form-control @error('condition_type') is-invalid @enderror"
-                            required>
+                    <select name="condition_type" class="form-control" required>
+                        <option value="">-- Pilih --</option>
                         <option value="terlambat" {{ old('condition_type', $rule->condition_type) === 'terlambat' ? 'selected' : '' }}>
                             Terlambat
                         </option>
                         <option value="off_day" {{ old('condition_type', $rule->condition_type) === 'off_day' ? 'selected' : '' }}>
-                            Off / Tidak Masuk
+                            Tidak Masuk
                         </option>
                         <option value="pelanggaran" {{ old('condition_type', $rule->condition_type) === 'pelanggaran' ? 'selected' : '' }}>
                             Pelanggaran
                         </option>
                     </select>
-                    @error('condition_type')
-                        <div class="invalid-feedback">{{ $message }}</div>
-                    @enderror
                 </div>
 
-                {{-- ================= TRIGGER ================= --}}
                 <div class="form-group">
-                    <label>Minimal Terjadi (Trigger)</label>
+                    <label>Trigger Minimal Kejadian</label>
                     <input type="number"
                            name="condition_value"
                            class="form-control"
-                           value="{{ old('condition_value', $rule->condition_value) }}"
-                           min="0">
-                </div>
-
-                {{-- ================= BATASAN ================= --}}
-                <div class="form-group">
-                    <label>Maksimal Jumlah Kejadian</label>
-                    <input type="number"
-                           name="max_occurrence"
-                           class="form-control"
-                           value="{{ old('max_occurrence', $rule->max_occurrence) }}"
+                           value="{{ old('condition_value', $rule->condition_value ?? 1) }}"
                            min="1">
-                    <small class="text-muted">Kosongkan jika tidak dibatasi</small>
-                </div>
-
-                <div class="form-group">
-                    <label>Maksimal Menit per Kejadian</label>
-                    <input type="number"
-                           name="max_minutes"
-                           class="form-control"
-                           value="{{ old('max_minutes', $rule->max_minutes) }}"
-                           min="1">
-                    <small class="text-muted">Kosongkan jika tidak dibatasi</small>
                 </div>
 
                 <hr>
 
                 {{-- ================= PENEMPATAN ================= --}}
-                @php
-                    $rulePenempatan = is_array($rule->penempatan)
-                        ? $rule->penempatan
-                        : json_decode($rule->penempatan, true) ?? [];
-                @endphp
-
                 <div class="form-group">
                     <label class="font-weight-bold">Berlaku Untuk Penempatan</label>
 
@@ -177,7 +184,7 @@
                                                value="{{ $p }}"
                                                class="form-check-input"
                                                id="p_{{ $loop->index }}"
-                                               {{ in_array($p, old('penempatan', $rulePenempatan)) ? 'checked' : '' }}>
+                                               {{ in_array($p, old('penempatan', $rulePenempatan), true) ? 'checked' : '' }}>
                                         <label for="p_{{ $loop->index }}" class="form-check-label">
                                             {{ $p }}
                                         </label>
@@ -191,8 +198,11 @@
                         </div>
 
                         <small class="text-muted d-block mt-2">
-                            Jika tidak dipilih → aturan berlaku global
+                            Pilih minimal satu penempatan (validasi di server)
                         </small>
+                        @error('penempatan')
+                            <div class="text-danger mt-2">{{ $message }}</div>
+                        @enderror
                     </div>
                 </div>
 
@@ -200,9 +210,9 @@
                 <div class="form-group form-check">
                     <input type="checkbox"
                            name="aktif"
+                           value="1"
                            class="form-check-input"
                            id="aktif"
-                           value="1"
                            {{ old('aktif', $rule->aktif) ? 'checked' : '' }}>
                     <label class="form-check-label" for="aktif">
                         Aktif
@@ -212,12 +222,12 @@
             </div>
 
             <div class="card-footer text-right">
-                <button class="btn btn-primary">
-                    <i class="fas fa-save"></i> Update
-                </button>
                 <a href="{{ route('admin.potongan-gaji.index') }}" class="btn btn-secondary">
                     Batal
                 </a>
+                <button type="submit" class="btn btn-primary">
+                    Simpan Aturan
+                </button>
             </div>
 
         </form>
@@ -225,3 +235,20 @@
 
 </div>
 @endsection
+
+@push('scripts')
+<script>
+const baseSelect = document.getElementById('base_source');
+const tunjanganBox = document.getElementById('tunjangan-box');
+
+function toggleTunjangan() {
+    tunjanganBox.classList.toggle(
+        'd-none',
+        baseSelect.value !== 'tunjangan'
+    );
+}
+
+baseSelect.addEventListener('change', toggleTunjangan);
+toggleTunjangan();
+</script>
+@endpush

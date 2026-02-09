@@ -72,7 +72,7 @@ Rp {{ number_format($gajiPerHari ?? 0,0,',','.') }}
 </tr>
 
 <tr>
-<th>Gaji Dasar ({{ $hariHadir ?? 0 }} hari)</th>
+<th>Gaji Dasar ({{ $hariKerjaMasuk ?? (($hariHadir ?? 0) + ($hariTelat ?? 0)) }} hari kerja masuk)</th>
 <td class="text-right">
 Rp {{ number_format($gajiFix,0,',','.') }}
 </td>

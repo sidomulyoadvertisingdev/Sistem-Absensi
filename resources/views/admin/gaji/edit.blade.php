@@ -45,6 +45,8 @@
 
 @php
 $salary = $user->salary;
+$selectedMode = old('gaji_harian_mode', $salary->gaji_harian_mode ?? 'manual');
+$trainingEnabled = old('training_enabled', $salary->training_enabled ?? false);
 @endphp
 
 <div class="card shadow-sm">
@@ -71,9 +73,9 @@ min="0" required>
 <select name="gaji_harian_mode"
 id="mode"
 class="form-control">
-<option value="manual">Manual</option>
-<option value="pokok">Dari Gaji Pokok</option>
-<option value="pokok_plus_tunjangan">Pokok + Tunjangan</option>
+<option value="manual" {{ $selectedMode === 'manual' ? 'selected' : '' }}>Manual</option>
+<option value="pokok" {{ $selectedMode === 'pokok' ? 'selected' : '' }}>Dari Gaji Pokok</option>
+<option value="pokok_plus_tunjangan" {{ $selectedMode === 'pokok_plus_tunjangan' ? 'selected' : '' }}>Pokok + Tunjangan</option>
 </select>
 </div>
 
@@ -100,6 +102,78 @@ class="form-control"
 value="{{ old('lembur_per_jam', $salary->lembur_per_jam ?? 0) }}">
 </div>
 
+</div>
+
+<hr>
+
+<h5>Masa Training</h5>
+
+<div class="form-check mb-3">
+<input type="checkbox"
+name="training_enabled"
+id="training_enabled"
+class="form-check-input"
+value="1"
+{{ $trainingEnabled ? 'checked' : '' }}>
+<label class="form-check-label" for="training_enabled">
+Aktifkan potongan masa training
+</label>
+</div>
+
+<div id="training-config" class="border rounded p-3 mb-3">
+<div class="row">
+
+<div class="col-md-4 mb-3">
+<label>Tanggal Mulai Training</label>
+<input type="date"
+name="training_start_date"
+id="training_start_date"
+class="form-control"
+value="{{ old('training_start_date', optional($salary?->training_start_date)->format('Y-m-d')) }}">
+</div>
+
+<div class="col-md-4 mb-3">
+<label>Durasi Training (Hari)</label>
+<input type="number"
+name="training_duration_days"
+id="training_duration_days"
+class="form-control"
+min="1"
+max="365"
+value="{{ old('training_duration_days', $salary->training_duration_days ?? 0) }}">
+</div>
+
+<div class="col-md-4 mb-3">
+<label>Jenis Potongan Training</label>
+<select name="training_deduction_type"
+id="training_deduction_type"
+class="form-control">
+<option value="percentage"
+{{ old('training_deduction_type', $salary->training_deduction_type ?? 'percentage') === 'percentage' ? 'selected' : '' }}>
+Persentase dari Gaji Harian (%)
+</option>
+<option value="fixed"
+{{ old('training_deduction_type', $salary->training_deduction_type ?? '') === 'fixed' ? 'selected' : '' }}>
+Nominal per Hari (Rp)
+</option>
+</select>
+</div>
+
+<div class="col-md-6 mb-0">
+<label>Nilai Potongan Training</label>
+<input type="number"
+name="training_deduction_value"
+id="training_deduction_value"
+class="form-control"
+step="0.01"
+min="0"
+value="{{ old('training_deduction_value', $salary->training_deduction_value ?? 0) }}">
+<small class="text-muted" id="training_value_hint">
+Isi nilai sesuai jenis potongan yang dipilih.
+</small>
+</div>
+
+</div>
 </div>
 
 <hr>
@@ -205,6 +279,34 @@ document.getElementById("gaji_harian").value = Math.round(hasil);
 
 document.querySelectorAll("#mode, #gaji_pokok, .tunjangan")
 .forEach(el => el.addEventListener("input", hitungHarian));
+
+function toggleTrainingConfig() {
+const enabled = document.getElementById("training_enabled").checked;
+const config = document.getElementById("training-config");
+const inputs = config.querySelectorAll("input, select");
+
+config.style.opacity = enabled ? "1" : ".55";
+
+inputs.forEach((el) => {
+el.disabled = !enabled;
+});
+
+const hint = document.getElementById("training_value_hint");
+const type = document.getElementById("training_deduction_type")?.value || "percentage";
+if (hint) {
+hint.textContent = type === "percentage"
+? "Isi angka tanpa simbol %, contoh: 25 = (25% x gaji harian) x jumlah hari training aktif."
+: "Isi nominal potongan per hari training (Rp/hari).";
+}
+}
+
+document.getElementById("training_enabled")
+.addEventListener("change", toggleTrainingConfig);
+
+document.getElementById("training_deduction_type")
+.addEventListener("change", toggleTrainingConfig);
+
+toggleTrainingConfig();
 
 </script>
 

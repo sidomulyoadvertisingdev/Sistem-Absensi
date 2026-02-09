@@ -42,6 +42,7 @@ class PayrollController extends Controller
         $hariTelat = $absensis->where('status', 'terlambat')->count();
 
         $presensi = $hariHadir + $hariTelat;
+        $hariKerjaMasuk = $presensi;
 
         $hariNormal     = min($presensi, $hariKerjaStandar);
         $hariTambahan   = max($presensi - $hariKerjaStandar, 0);
@@ -75,19 +76,14 @@ class PayrollController extends Controller
         ================= GAJI HARIAN (SAMA LAPORAN)
         */
 
-        $gajiPerHari = (float) ($salary->gaji_harian ?? 0);
+        $gajiPerHari = (float) $salary->getGajiHarian($hariKerjaStandar);
 
-        $nilaiHariTambahan = $gajiPerHari;
-
-        if ($salary->include_tunjangan) {
-            $nilaiHariTambahan += ($totalTunjanganMaster / $hariKerjaStandar);
-        }
-
+        // Basis lama: gaji harian x jumlah hari kerja masuk.
         $gajiNormal   = $gajiPerHari * $hariNormal;
-        $gajiTambahan = $nilaiHariTambahan * $hariTambahan;
+        $gajiTambahan = $gajiPerHari * $hariTambahan;
 
         // kompatibilitas lama
-        $gajiBruto = $gajiNormal + $gajiTambahan;
+        $gajiBruto = $gajiPerHari * $hariKerjaMasuk;
 
         /*
         ================= LEMBUR
@@ -139,6 +135,7 @@ class PayrollController extends Controller
 
         $totalPotongan = 0;
         $potonganTelatNominal = 0;
+        $potonganTrainingNominal = 0;
 
         foreach ($rules as $rule) {
 
@@ -183,10 +180,16 @@ class PayrollController extends Controller
             }
         }
 
+        $trainingInfo = $salary->calculateTrainingDeduction($salaryKotor, $date);
+        $potonganTrainingNominal = (float) ($trainingInfo['deduction_nominal'] ?? 0);
+        $totalPotongan += $potonganTrainingNominal;
+
         /*
         ================= FINAL
         */
 
+        $gajiDasar = $gajiBruto;
+        $totalLembur = $uangLembur;
         $totalGaji = max($salaryKotor - $totalPotongan, 0);
 
         return compact(
@@ -195,6 +198,7 @@ class PayrollController extends Controller
 
             'hariHadir',
             'hariTelat',
+            'hariKerjaMasuk',
             'hariNormal',
             'hariTambahan',
             'offDay',
@@ -204,9 +208,11 @@ class PayrollController extends Controller
             'gajiNormal',
             'gajiTambahan',
             'gajiBruto',
+            'gajiDasar',
 
             'totalJamLembur',
             'uangLembur',
+            'totalLembur',
 
             'totalBonusJob',
 
@@ -217,7 +223,9 @@ class PayrollController extends Controller
             'salaryKotor',
 
             'potonganTelatNominal',
+            'potonganTrainingNominal',
             'totalPotongan',
+            'trainingInfo',
 
             'totalGaji'
         );
@@ -313,3 +321,4 @@ class PayrollController extends Controller
             ->with('success', 'Gaji berhasil dibayar & slip dikirim.');
     }
 }
+

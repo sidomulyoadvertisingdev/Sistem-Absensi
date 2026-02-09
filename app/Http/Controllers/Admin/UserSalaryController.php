@@ -55,6 +55,12 @@ class UserSalaryController extends Controller
             'lembur_per_jam'      => 'nullable|numeric|min:0',
 
             'gaji_harian_mode'    => 'nullable|in:manual,pokok,pokok_plus_tunjangan',
+
+            'training_enabled'         => 'nullable|boolean',
+            'training_start_date'      => 'nullable|required_if:training_enabled,1|date',
+            'training_duration_days'   => 'nullable|required_if:training_enabled,1|integer|min:1|max:365',
+            'training_deduction_type'  => 'nullable|required_if:training_enabled,1|in:percentage,fixed',
+            'training_deduction_value' => 'nullable|required_if:training_enabled,1|numeric|min:0',
         ]);
 
         $hariKerjaStandar = 26;
@@ -68,6 +74,7 @@ class UserSalaryController extends Controller
             (float) ($request->tunjangan_kesehatan ?? 0);
 
         $mode = $request->gaji_harian_mode ?? 'manual';
+        $trainingEnabled = $request->boolean('training_enabled');
 
         if ($mode === 'pokok') {
 
@@ -101,6 +108,20 @@ class UserSalaryController extends Controller
 
                 'include_tunjangan' => $request->boolean('include_tunjangan'),
                 'aktif'             => $request->boolean('aktif'),
+
+                'training_enabled'         => $trainingEnabled,
+                'training_start_date'      => $trainingEnabled
+                    ? $request->training_start_date
+                    : null,
+                'training_duration_days'   => $trainingEnabled
+                    ? (int) ($request->training_duration_days ?? 0)
+                    : 0,
+                'training_deduction_type'  => $trainingEnabled
+                    ? ($request->training_deduction_type ?? 'percentage')
+                    : 'percentage',
+                'training_deduction_value' => $trainingEnabled
+                    ? (float) ($request->training_deduction_value ?? 0)
+                    : 0,
             ]
         );
 
@@ -142,6 +163,7 @@ class UserSalaryController extends Controller
         $hariTelat = $absensis->where('status', 'terlambat')->count();
 
         $presensi = $hariHadir + $hariTelat;
+        $hariKerjaMasuk = $presensi;
 
         $hariNormal   = min($presensi, $hariKerjaStandar);
         $hariTambahan = max($presensi - $hariKerjaStandar, 0);
@@ -153,7 +175,7 @@ class UserSalaryController extends Controller
         /*
         ================= GAJI (SAMA LAPORAN)
         */
-        $gajiPerHari = (float) $salary->gaji_harian;
+        $gajiPerHari = (float) $salary->getGajiHarian($hariKerjaStandar);
 
         $tunjangan = [
             $salary->tunjangan_umum,
@@ -164,14 +186,8 @@ class UserSalaryController extends Controller
 
         $totalTunjangan = array_sum($tunjangan);
 
-        $nilaiHariTambahan = $gajiPerHari;
-
-        if ($salary->include_tunjangan) {
-            $nilaiHariTambahan += ($totalTunjangan / $hariKerjaStandar);
-        }
-
         $gajiNormal   = $gajiPerHari * $hariNormal;
-        $gajiTambahan = $nilaiHariTambahan * $hariTambahan;
+        $gajiTambahan = $gajiPerHari * $hariTambahan;
 
         /*
         ================= LEMBUR
@@ -222,6 +238,7 @@ class UserSalaryController extends Controller
 
         $totalPotongan = 0;
         $potonganTelatNominal = 0;
+        $potonganTrainingNominal = 0;
 
         foreach ($rules as $rule) {
 
@@ -249,9 +266,14 @@ class UserSalaryController extends Controller
             }
         }
 
+        $trainingInfo = $salary->calculateTrainingDeduction($salaryKotor, $date);
+        $potonganTrainingNominal = (float) ($trainingInfo['deduction_nominal'] ?? 0);
+        $totalPotongan += $potonganTrainingNominal;
+
         /*
         ================= FINAL
         */
+        $gajiDasar = $gajiPerHari * $hariKerjaMasuk;
         $totalGaji = max($salaryKotor - $totalPotongan, 0);
 
         return Pdf::loadView('admin.gaji.slip-pdf', compact(
@@ -261,6 +283,7 @@ class UserSalaryController extends Controller
 
             'hariHadir',
             'hariTelat',
+            'hariKerjaMasuk',
             'menitTerlambat',
 
             'gajiPerHari',
@@ -276,12 +299,16 @@ class UserSalaryController extends Controller
             'totalTunjangan',
 
             'potonganTelatNominal',
+            'potonganTrainingNominal',
             'totalPotongan',
 
             'salaryKotor',
+            'gajiDasar',
+            'trainingInfo',
             'totalGaji'
         ))->stream(
             'Slip-Gaji-' . $user->name . '-' . $date->format('m-Y') . '.pdf'
         );
     }
 }
+

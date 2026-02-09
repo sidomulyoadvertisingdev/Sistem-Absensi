@@ -20,7 +20,8 @@ use App\Http\Controllers\Admin\{
     JobTodoController,
     SalaryDeductionRuleController,
     SubmissionTypeController,
-    PayrollController
+    PayrollController,
+    AdminAccessController
 };
 
 /*
@@ -74,6 +75,16 @@ Route::middleware(['web', 'auth', 'is_admin'])
             Route::get('/', [UserController::class, 'allUsers'])->name('index');
             Route::post('/{user}/promote', [UserController::class, 'promoteToKaryawan'])->name('promote');
             Route::post('/{user}/demote', [UserController::class, 'demoteToUser'])->name('demote');
+        });
+
+        /* ================= ADMIN ACCESS (OWNER) ================= */
+        Route::prefix('admin-access')->name('admin-access.')->group(function () {
+            Route::get('/', [AdminAccessController::class, 'index'])->name('index');
+            Route::get('/create', [AdminAccessController::class, 'create'])->name('create');
+            Route::post('/', [AdminAccessController::class, 'store'])->name('store');
+            Route::get('/{user}/edit', [AdminAccessController::class, 'edit'])->name('edit');
+            Route::put('/{user}', [AdminAccessController::class, 'update'])->name('update');
+            Route::delete('/{user}', [AdminAccessController::class, 'destroy'])->name('destroy');
         });
 
        /* ================= ABSENSI ================= */

@@ -124,6 +124,7 @@ class="btn btn-danger">
 <th>Lembur</th>
 <th>Bonus Job</th>
 
+<th>Pot. Training</th>
 <th>Potongan</th>
 <th>Salary Kotor</th>
 <th>Gaji Diterima</th>
@@ -216,6 +217,10 @@ class="btn btn-danger">
 </td>
 
 <td class="text-right text-danger">
+{{ number_format($row['potongan_training'] ?? 0,0,',','.') }}
+</td>
+
+<td class="text-right text-danger">
 {{ number_format($row['total_potongan'] ?? 0,0,',','.') }}
 </td>
 
@@ -231,7 +236,7 @@ class="btn btn-danger">
 
 @empty
 <tr>
-<td colspan="21" class="text-center text-muted">
+<td colspan="22" class="text-center text-muted">
 Tidak ada data laporan
 </td>
 </tr>
@@ -241,7 +246,7 @@ Tidak ada data laporan
 
 <tfoot class="bg-light font-weight-bold">
 <tr>
-<td colspan="20" class="text-right">
+<td colspan="21" class="text-right">
 TOTAL GAJI KELUAR PERIODE:
 </td>
 

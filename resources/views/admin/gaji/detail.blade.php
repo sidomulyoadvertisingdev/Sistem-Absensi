@@ -171,7 +171,7 @@ Tidak ada bonus
 </tr>
 
 <tr>
-<th>Gaji Dasar ({{ $hariHadir }} hari)</th>
+<th>Gaji Dasar ({{ $hariKerjaMasuk ?? ($hariHadir + $hariTelat) }} hari kerja masuk)</th>
 <td>Rp {{ number_format($gajiBruto,0,',','.') }}</td>
 </tr>
 
@@ -209,6 +209,19 @@ Rp {{ number_format($totalTunjanganMaster,0,',','.') }}
 <th>Potongan Terlambat</th>
 <td class="text-danger">
 Rp {{ number_format($potonganTelatNominal ?? 0,0,',','.') }}
+</td>
+</tr>
+
+<tr>
+<th>Potongan Training</th>
+<td class="text-danger">
+Rp {{ number_format($potonganTrainingNominal ?? 0,0,',','.') }}
+@if(($trainingInfo['active'] ?? false))
+<br>
+<small class="text-muted">
+Aktif {{ $trainingInfo['overlap_days'] ?? 0 }} hari, potongan/hari Rp {{ number_format($trainingInfo['deduction_per_day'] ?? 0,0,',','.') }}
+</small>
+@endif
 </td>
 </tr>
 

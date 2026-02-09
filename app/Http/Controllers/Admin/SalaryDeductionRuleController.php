@@ -134,6 +134,24 @@ class SalaryDeductionRuleController extends Controller
      */
     private function validateRule(Request $request, bool $isCreate = true, $ignoreId = null)
     {
+        // Kompatibilitas field lama dari form legacy.
+        if (!$request->filled('base_source') && $request->filled('base_amount')) {
+            $legacyBaseAmount = $request->input('base_amount');
+            $request->merge([
+                'base_source' => $legacyBaseAmount === 'salary_kotor'
+                    ? 'total_gaji'
+                    : $legacyBaseAmount,
+            ]);
+        }
+
+        // Pada edit, kode bisa readonly/tidak terkirim dari beberapa versi form.
+        if (!$isCreate && !$request->filled('kode') && $ignoreId) {
+            $existingRule = SalaryDeductionRule::find($ignoreId);
+            if ($existingRule?->kode) {
+                $request->merge(['kode' => $existingRule->kode]);
+            }
+        }
+
         $uniqueRule = $isCreate
             ? 'unique:salary_deduction_rules,kode'
             : "unique:salary_deduction_rules,kode,$ignoreId";

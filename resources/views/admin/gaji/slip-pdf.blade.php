@@ -73,6 +73,7 @@ $periode = $periode ?? now()->translatedFormat('F Y');
 
 $hariHadir = $hariHadir ?? 0;
 $hariTelat = $hariTelat ?? 0;
+$hariKerjaMasuk = $hariKerjaMasuk ?? ($hariHadir + $hariTelat);
 $menitTerlambat = $menitTerlambat ?? 0;
 
 $gajiPerHari = $gajiPerHari ?? 0;
@@ -88,6 +89,8 @@ $totalPotongan = $totalPotongan ?? 0;
 $totalGaji = $totalGaji ?? 0;
 
 $potonganTelatNominal = $potonganTelatNominal ?? 0;
+$potonganTrainingNominal = $potonganTrainingNominal ?? 0;
+$trainingInfo = $trainingInfo ?? [];
 
 $tunjUmum = $salary->tunjangan_umum ?? 0;
 $tunjTransport = $salary->tunjangan_transport ?? 0;
@@ -136,8 +139,8 @@ SLIP GAJI — {{ $periode }}
 <th>Nama</th>
 <td>: {{ $user->name }}</td>
 
-<th>Hadir</th>
-<td>: {{ $hariHadir }}</td>
+<th>Hari Masuk</th>
+<td>: {{ $hariKerjaMasuk }}</td>
 </tr>
 
 <tr>
@@ -229,11 +232,22 @@ SLIP GAJI — {{ $periode }}
 </tr>
 
 <tr>
+<td>Potongan Training</td>
+<td class="right">Rp {{ number_format($potonganTrainingNominal,0,',','.') }}</td>
+</tr>
+
+<tr>
 <th>Total Potongan</th>
 <th class="right">Rp {{ number_format($totalPotongan,0,',','.') }}</th>
 </tr>
 
 </table>
+
+@if(($trainingInfo['active'] ?? false))
+<div class="note">
+* Potongan training aktif {{ $trainingInfo['overlap_days'] ?? 0 }} hari. Potongan per hari: Rp {{ number_format($trainingInfo['deduction_per_day'] ?? 0,0,',','.') }}.
+</div>
+@endif
 
 </div>
 
