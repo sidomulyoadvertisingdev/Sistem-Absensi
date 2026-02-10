@@ -105,6 +105,7 @@ class LaporanController extends Controller
             ];
 
             $totalTunjangan = array_sum($tunjangan);
+            $totalGajiMaster = (float) ($salary->gaji_pokok ?? 0) + $totalTunjangan;
 
             /*
             ================= GAJI
@@ -245,6 +246,8 @@ class LaporanController extends Controller
 
                 'gaji_pokok'   => (float) ($salary->gaji_pokok ?? 0),
                 'gaji_per_hari'=> $gajiPerHari,
+                'total_tunjangan' => $totalTunjangan,
+                'total_gaji_master' => $totalGajiMaster,
 
                 'gaji_bruto' => $gajiNormal,
                 'gaji_bonus' => $gajiTambahan,

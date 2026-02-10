@@ -120,6 +120,8 @@ class="btn btn-danger">
 <th>Transport</th>
 <th>THR</th>
 <th>Kesehatan</th>
+<th>Total Tunjangan</th>
+<th>Gaji Master</th>
 
 <th>Lembur</th>
 <th>Bonus Job</th>
@@ -208,6 +210,14 @@ class="btn btn-danger">
 {{ number_format($row['tunjangan_kesehatan'] ?? 0,0,',','.') }}
 </td>
 
+<td class="text-right font-weight-bold">
+{{ number_format($row['total_tunjangan'] ?? 0,0,',','.') }}
+</td>
+
+<td class="text-right font-weight-bold text-primary">
+{{ number_format($row['total_gaji_master'] ?? 0,0,',','.') }}
+</td>
+
 <td class="text-right">
 {{ number_format($row['lembur'] ?? 0,0,',','.') }}
 </td>
@@ -236,7 +246,7 @@ class="btn btn-danger">
 
 @empty
 <tr>
-<td colspan="22" class="text-center text-muted">
+<td colspan="24" class="text-center text-muted">
 Tidak ada data laporan
 </td>
 </tr>
@@ -246,7 +256,7 @@ Tidak ada data laporan
 
 <tfoot class="bg-light font-weight-bold">
 <tr>
-<td colspan="21" class="text-right">
+<td colspan="23" class="text-right">
 TOTAL GAJI KELUAR PERIODE:
 </td>
 

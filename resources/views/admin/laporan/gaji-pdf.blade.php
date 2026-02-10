@@ -154,6 +154,7 @@ BULAN {{ $periode }}
 <th>B.HR</th>
 
 <th>TUNJ</th>
+<th>G.MST</th>
 
 <th>LBR</th>
 <th>B.JOB</th>
@@ -171,11 +172,15 @@ BULAN {{ $periode }}
 @forelse($laporan as $row)
 
 @php
-$totalTunjangan =
-($row['tunjangan_umum'] ?? 0) +
-($row['tunjangan_transport'] ?? 0) +
-($row['tunjangan_thr'] ?? 0) +
-($row['tunjangan_kesehatan'] ?? 0);
+$totalTunjangan = $row['total_tunjangan'] ?? (
+    ($row['tunjangan_umum'] ?? 0) +
+    ($row['tunjangan_transport'] ?? 0) +
+    ($row['tunjangan_thr'] ?? 0) +
+    ($row['tunjangan_kesehatan'] ?? 0)
+);
+$totalGajiMaster = $row['total_gaji_master'] ?? (
+    ($row['gaji_pokok'] ?? 0) + $totalTunjangan
+);
 @endphp
 
 <tr>
@@ -215,6 +220,10 @@ $totalTunjangan =
 </td>
 
 <td class="text-right">
+{{ number_format($totalGajiMaster,0,',','.') }}
+</td>
+
+<td class="text-right">
 {{ number_format($row['lembur'] ?? 0,0,',','.') }}
 </td>
 
@@ -244,7 +253,7 @@ $totalTunjangan =
 
 @empty
 <tr>
-<td colspan="19" style="text-align:center;">
+<td colspan="20" style="text-align:center;">
 Tidak ada data laporan
 </td>
 </tr>
