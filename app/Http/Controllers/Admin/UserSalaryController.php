@@ -94,7 +94,7 @@ class UserSalaryController extends Controller
             [
 
                 'gaji_pokok'  => $gajiPokok,
-                'gaji_harian' => round($gajiHarian),
+                'gaji_harian' => round($gajiHarian, 2),
 
                 'gaji_harian_mode'     => $mode,
                 'auto_generate_harian' => $mode !== 'manual',

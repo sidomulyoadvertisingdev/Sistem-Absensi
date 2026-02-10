@@ -72,13 +72,6 @@ class AbsensiController extends Controller
 
         /*
         =====================================
-        RESET HITUNG TELAT — ANTI DOUBLE
-        =====================================
-        */
-        $menitTerlambat = 0;
-
-        /*
-        =====================================
         MASUK
         =====================================
         */
@@ -86,18 +79,6 @@ class AbsensiController extends Controller
 
             $absensi->jam_masuk = $request->jam;
 
-            if ($jadwal && $jadwal->jam_masuk) {
-
-                $jamMasuk = Carbon::parse($request->tanggal.' '.$request->jam);
-
-                $batas = Carbon::parse(
-                    $request->tanggal.' '.$jadwal->jam_masuk
-                )->addMinutes($jadwal->toleransi_masuk ?? 0);
-
-                if ($jamMasuk->gt($batas)) {
-                    $menitTerlambat += $batas->diffInMinutes($jamMasuk);
-                }
-            }
         }
 
         /*
@@ -122,9 +103,41 @@ class AbsensiController extends Controller
 
             $absensi->jam_pulang = $request->jam;
 
-            if ($jadwal && $jadwal->jam_pulang) {
+        }
 
-                $jamPulang = Carbon::parse($request->tanggal.' '.$request->jam);
+        /*
+        =====================================
+        FINAL STATUS
+        =====================================
+        */
+        $menitTerlambat = $absensi->menit_terlambat ?? 0;
+        $status = $absensi->status ?? 'hadir';
+
+        if ($jadwal) {
+            $menitTerlambat = 0;
+
+            if ($absensi->jam_masuk && $jadwal->jam_masuk) {
+                $jamMasuk = Carbon::parse(
+                    $request->tanggal.' '.$absensi->jam_masuk
+                );
+
+                $batas = Carbon::parse(
+                    $request->tanggal.' '.$jadwal->jam_masuk
+                );
+
+                if (!empty($jadwal->toleransi_masuk)) {
+                    $batas->addMinutes($jadwal->toleransi_masuk);
+                }
+
+                if ($jamMasuk->gt($batas)) {
+                    $menitTerlambat += $batas->diffInMinutes($jamMasuk);
+                }
+            }
+
+            if ($absensi->jam_pulang && $jadwal->jam_pulang) {
+                $jamPulang = Carbon::parse(
+                    $request->tanggal.' '.$absensi->jam_pulang
+                );
 
                 $batas = Carbon::parse(
                     $request->tanggal.' '.$jadwal->jam_pulang
@@ -134,18 +147,12 @@ class AbsensiController extends Controller
                     $menitTerlambat += $jamPulang->diffInMinutes($batas);
                 }
             }
+
+            $status = $menitTerlambat > 0 ? 'terlambat' : 'hadir';
         }
 
-        /*
-        =====================================
-        FINAL STATUS
-        =====================================
-        */
         $absensi->menit_terlambat = $menitTerlambat;
-
-        $absensi->status = $menitTerlambat > 0
-            ? 'terlambat'
-            : 'hadir';
+        $absensi->status = $status;
 
         $absensi->save();
 

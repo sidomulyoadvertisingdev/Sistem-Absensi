@@ -87,7 +87,8 @@ id="gaji_harian"
 name="gaji_harian"
 class="form-control"
 value="{{ old('gaji_harian', $salary->gaji_harian ?? 0) }}"
-min="0">
+min="0"
+step="0.01">
 <small class="text-muted">
 Akan otomatis dihitung jika mode ≠ manual
 </small>
@@ -272,7 +273,7 @@ hasil = (pokok + tunjangan) / hariKerja;
 }
 
 if(mode !== "manual") {
-document.getElementById("gaji_harian").value = Math.round(hasil);
+document.getElementById("gaji_harian").value = (Math.round(hasil * 100) / 100).toFixed(2);
 }
 
 }
