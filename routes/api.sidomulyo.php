@@ -78,6 +78,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('profile', [ProfileController::class, 'update'])
         ->name('api.profile.update');
 
+    // Backward-compatible endpoint (frontend lama)
+    Route::post('me/update', [ProfileController::class, 'update'])
+        ->name('api.me.update');
+
     // 🔥 RIWAYAT LAMARAN (INI YANG KURANG)
     Route::get('my-applications', [ProfileController::class, 'applications'])
         ->name('api.profile.applications');
