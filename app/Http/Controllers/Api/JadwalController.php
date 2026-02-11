@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\WorkSchedule;
+use App\Models\WorkScheduleDate;
 
 class JadwalController extends Controller
 {
@@ -16,6 +17,31 @@ class JadwalController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
+        $mode = $user->schedule_mode ?? 'per_hari';
+
+        if ($mode === 'per_tanggal') {
+            $jadwalTanggal = WorkScheduleDate::where('user_id', $user->id)
+                ->orderBy('tanggal', 'asc')
+                ->get();
+
+            $result = [];
+
+            foreach ($jadwalTanggal as $item) {
+                $result[] = [
+                    'tanggal' => optional($item->tanggal)->format('Y-m-d'),
+                    'jam_masuk' => $item->jam_masuk,
+                    'jam_pulang' => $item->jam_pulang,
+                    'istirahat_mulai' => $item->istirahat_mulai,
+                    'istirahat_selesai' => $item->istirahat_selesai,
+                    'aktif' => (bool) $item->aktif,
+                ];
+            }
+
+            return response()->json([
+                'mode' => $mode,
+                'data' => $result
+            ]);
+        }
 
         $jadwal = WorkSchedule::where('user_id', $user->id)
             ->where('aktif', true)
@@ -56,6 +82,7 @@ class JadwalController extends Controller
         }
 
         return response()->json([
+            'mode' => $mode,
             'data' => $result
         ]);
     }

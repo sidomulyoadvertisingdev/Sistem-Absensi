@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Carbon\Carbon;
 
 class User extends Authenticatable
 {
@@ -67,6 +68,9 @@ class User extends Authenticatable
         // Mobile / App
         'app_version_seen',
         'admin_permissions',
+
+        // Schedule
+        'schedule_mode',
     ];
 
     /*
@@ -110,6 +114,44 @@ class User extends Authenticatable
     public function workSchedules(): HasMany
     {
         return $this->hasMany(WorkSchedule::class, 'user_id');
+    }
+
+    /**
+     * Jadwal kerja per tanggal (fleksibel)
+     */
+    public function workScheduleDates(): HasMany
+    {
+        return $this->hasMany(WorkScheduleDate::class, 'user_id');
+    }
+
+    /**
+     * Resolve jadwal kerja berdasarkan mode dan tanggal.
+     */
+    public function resolveWorkSchedule(string|Carbon $tanggal)
+    {
+        $date = $tanggal instanceof Carbon
+            ? $tanggal->toDateString()
+            : Carbon::parse($tanggal)->toDateString();
+
+        $mode = $this->schedule_mode ?? 'per_hari';
+
+        if ($mode === 'per_tanggal') {
+            return WorkScheduleDate::where('user_id', $this->id)
+                ->where('tanggal', $date)
+                ->where('aktif', true)
+                ->first();
+        }
+
+        $hari = strtolower(
+            Carbon::parse($date)
+                ->locale('id')
+                ->isoFormat('dddd')
+        );
+
+        return WorkSchedule::where('user_id', $this->id)
+            ->where('hari', $hari)
+            ->where('aktif', true)
+            ->first();
     }
 
     /**

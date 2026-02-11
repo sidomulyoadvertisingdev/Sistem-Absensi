@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Absensi;
 use App\Models\User;
-use App\Models\WorkSchedule;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -44,6 +43,8 @@ class AbsensiController extends Controller
             'foto'    => 'nullable|image|max:2048',
         ]);
 
+        $user = User::findOrFail($request->user_id);
+
         $absensi = Absensi::firstOrCreate(
             [
                 'user_id' => $request->user_id,
@@ -59,16 +60,7 @@ class AbsensiController extends Controller
             $absensi->foto = $request->file('foto')->store('absensi', 'public');
         }
 
-        $hari = strtolower(
-            Carbon::parse($request->tanggal)
-                ->locale('id')
-                ->isoFormat('dddd')
-        );
-
-        $jadwal = WorkSchedule::where('user_id', $request->user_id)
-            ->where('hari', $hari)
-            ->where('aktif', true)
-            ->first();
+        $jadwal = $user->resolveWorkSchedule($request->tanggal);
 
         /*
         =====================================
@@ -211,14 +203,7 @@ class AbsensiController extends Controller
                     continue;
                 }
 
-                $hari = strtolower(
-                    Carbon::parse($tanggal)->locale('id')->isoFormat('dddd')
-                );
-
-                $jadwal = WorkSchedule::where('user_id', $user->id)
-                    ->where('hari', $hari)
-                    ->where('aktif', true)
-                    ->first();
+                $jadwal = $user->resolveWorkSchedule($tanggal);
 
                 $menitTerlambat = 0;
 

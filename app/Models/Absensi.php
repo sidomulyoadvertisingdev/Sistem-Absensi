@@ -18,10 +18,14 @@ class Absensi extends Model
         'user_id',
         'tanggal',
         'jam_masuk',
+        'istirahat_mulai',
+        'istirahat_selesai',
         'jam_pulang',
         'foto',
         'status',
-        'terlambat'
+        'terlambat',
+        'menit_terlambat',
+        'locked'
     ];
 
     /**

@@ -25,6 +25,7 @@
                 <thead class="thead-light text-center">
                     <tr>
                         <th rowspan="2">Nama</th>
+                        <th rowspan="2">Mode</th>
                         <th colspan="7">Hari Kerja</th>
                         <th rowspan="2" width="120">Aksi</th>
                     </tr>
@@ -43,12 +44,20 @@
                 @forelse($users as $user)
                     <tr>
                         <td>{{ $user->name }}</td>
+                        <td class="text-center">
+                            @if(($user->schedule_mode ?? 'per_hari') === 'per_tanggal')
+                                <span class="badge badge-info">Per Tanggal</span>
+                            @else
+                                <span class="badge badge-primary">Per Hari</span>
+                            @endif
+                        </td>
 
                         @php
                             $hariList = [
                                 'senin','selasa','rabu',
                                 'kamis','jumat','sabtu','minggu'
                             ];
+                            $mode = $user->schedule_mode ?? 'per_hari';
                         @endphp
 
                         @foreach($hariList as $hari)
@@ -59,7 +68,9 @@
                             @endphp
 
                             <td class="text-center">
-                                @if($jadwal && $jadwal->aktif)
+                                @if($mode === 'per_tanggal')
+                                    <span class="text-muted">-</span>
+                                @elseif($jadwal && $jadwal->aktif)
                                     <span class="badge badge-success">
                                         {{ $jadwal->jam_masuk }} - {{ $jadwal->jam_pulang }}
                                     </span>
@@ -82,7 +93,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="9" class="text-center text-muted">
+                        <td colspan="10" class="text-center text-muted">
                             Tidak ada data karyawan
                         </td>
                     </tr>

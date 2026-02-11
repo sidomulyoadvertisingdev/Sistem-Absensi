@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Lembur;
 use App\Models\Absensi;
-use App\Models\WorkSchedule;
 use App\Models\SalaryDeductionRule;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -64,16 +63,7 @@ class GajiController extends Controller
 
             if (!$absen->jam_masuk) continue;
 
-            $hari = strtolower(
-                Carbon::parse($absen->tanggal)
-                    ->locale('id')
-                    ->isoFormat('dddd')
-            );
-
-            $jadwal = WorkSchedule::where('user_id', $user->id)
-                ->where('hari', $hari)
-                ->where('aktif', true)
-                ->first();
+            $jadwal = $user->resolveWorkSchedule($absen->tanggal);
 
             if (!$jadwal || !$jadwal->jam_masuk) continue;
 

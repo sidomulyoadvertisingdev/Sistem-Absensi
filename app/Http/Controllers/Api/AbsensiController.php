@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Absensi;
-use App\Models\WorkSchedule;
 use Carbon\Carbon;
 
 class AbsensiController extends Controller
@@ -57,6 +56,7 @@ class AbsensiController extends Controller
             ],
             [
                 'status' => 'hadir',
+                'menit_terlambat' => 0,
             ]
         );
 
@@ -65,7 +65,12 @@ class AbsensiController extends Controller
          * FOTO WAJIB UNTUK AKSI TERTENTU
          * ===============================
          */
-        $fotoWajib = ['masuk', 'istirahat_selesai', 'pulang'];
+        $fotoWajib = [
+            'masuk',
+            'istirahat_mulai',
+            'istirahat_selesai',
+            'pulang',
+        ];
 
         if (in_array($request->aksi, $fotoWajib)) {
             if (!$request->hasFile('foto')) {
@@ -75,7 +80,7 @@ class AbsensiController extends Controller
             }
 
             $request->validate([
-                'foto' => 'image|mimes:jpg,jpeg,png|max:2048',
+                'foto' => 'required|image|mimes:jpg,jpeg,png|max:2048',
             ]);
 
             $absensi->foto = $request->file('foto')
@@ -84,17 +89,10 @@ class AbsensiController extends Controller
 
         /**
          * ===============================
-         * AMBIL JADWAL KERJA HARI INI
+         * AMBIL JADWAL KERJA SESUAI MODE
          * ===============================
          */
-        $hari = strtolower(
-            Carbon::parse($tanggal)->locale('id')->isoFormat('dddd')
-        );
-
-        $jadwal = WorkSchedule::where('user_id', $user->id)
-            ->where('hari', $hari)
-            ->where('aktif', true)
-            ->first();
+        $jadwal = $user->resolveWorkSchedule($tanggal);
 
         /**
          * ===============================
@@ -102,30 +100,7 @@ class AbsensiController extends Controller
          * ===============================
          */
         if ($request->aksi === 'masuk') {
-
-            $jamMasuk = Carbon::createFromFormat(
-                'Y-m-d H:i',
-                $tanggal . ' ' . $jam
-            );
-
-            $status = 'hadir';
-
-            if ($jadwal && $jadwal->jam_masuk) {
-                $batasMasuk = Carbon::parse(
-                    $tanggal . ' ' . $jadwal->jam_masuk
-                );
-
-                if (!empty($jadwal->toleransi_masuk)) {
-                    $batasMasuk->addMinutes($jadwal->toleransi_masuk);
-                }
-
-                if ($jamMasuk->gt($batasMasuk)) {
-                    $status = 'terlambat';
-                }
-            }
-
             $absensi->jam_masuk = $jam;
-            $absensi->status = $status;
         }
 
         /**
@@ -147,24 +122,57 @@ class AbsensiController extends Controller
          * ===============================
          */
         if ($request->aksi === 'pulang') {
+            $absensi->jam_pulang = $jam;
+        }
 
-            $jamPulang = Carbon::createFromFormat(
-                'Y-m-d H:i',
-                $tanggal . ' ' . $jam
-            );
+        /**
+         * ===============================
+         * FINAL STATUS + MENIT TERLAMBAT
+         * ===============================
+         */
+        $menitTerlambat = $absensi->menit_terlambat ?? 0;
+        $status = $absensi->status ?? 'hadir';
 
-            if ($jadwal && $jadwal->jam_pulang) {
-                $batasPulang = Carbon::parse(
-                    $tanggal . ' ' . $jadwal->jam_pulang
+        if ($jadwal) {
+            $menitTerlambat = 0;
+
+            if ($absensi->jam_masuk && $jadwal->jam_masuk) {
+                $jamMasuk = Carbon::parse(
+                    $tanggal.' '.$absensi->jam_masuk
                 );
 
-                if ($jamPulang->lt($batasPulang)) {
-                    $absensi->status = 'terlambat';
+                $batas = Carbon::parse(
+                    $tanggal.' '.$jadwal->jam_masuk
+                );
+
+                if (!empty($jadwal->toleransi_masuk)) {
+                    $batas->addMinutes($jadwal->toleransi_masuk);
+                }
+
+                if ($jamMasuk->gt($batas)) {
+                    $menitTerlambat += $batas->diffInMinutes($jamMasuk);
                 }
             }
 
-            $absensi->jam_pulang = $jam;
+            if ($absensi->jam_pulang && $jadwal->jam_pulang) {
+                $jamPulang = Carbon::parse(
+                    $tanggal.' '.$absensi->jam_pulang
+                );
+
+                $batas = Carbon::parse(
+                    $tanggal.' '.$jadwal->jam_pulang
+                );
+
+                if ($jamPulang->lt($batas)) {
+                    $menitTerlambat += $jamPulang->diffInMinutes($batas);
+                }
+            }
+
+            $status = $menitTerlambat > 0 ? 'terlambat' : 'hadir';
         }
+
+        $absensi->menit_terlambat = $menitTerlambat;
+        $absensi->status = $status;
 
         $absensi->save();
 
