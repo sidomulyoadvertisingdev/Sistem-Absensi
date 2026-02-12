@@ -33,8 +33,9 @@ class Absensi extends Model
      */
     protected $casts = [
         'tanggal'   => 'date',
-        'jam_masuk' => 'datetime:H:i:s',
-        'jam_pulang'=> 'datetime:H:i:s',
+        // kolom TIME, jangan dicast ke datetime agar tidak error parsing
+        'jam_masuk' => 'string',
+        'jam_pulang'=> 'string',
     ];
 
     /**

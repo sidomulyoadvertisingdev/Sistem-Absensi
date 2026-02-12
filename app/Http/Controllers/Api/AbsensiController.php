@@ -119,14 +119,16 @@ class AbsensiController extends Controller
 
         if ($jadwal) {
 
+            $absensiJamMasuk = $this->normalizeJamInput($absensi->jam_masuk ?? null);
+            $absensiJamPulang = $this->normalizeJamInput($absensi->jam_pulang ?? null);
             $jadwalJamMasuk = $this->normalizeJamInput($jadwal->jam_masuk ?? null);
             $jadwalJamPulang = $this->normalizeJamInput($jadwal->jam_pulang ?? null);
 
-            if ($absensi->jam_masuk && $jadwalJamMasuk) {
+            if ($absensiJamMasuk && $jadwalJamMasuk) {
 
                 $jamMasuk = Carbon::createFromFormat(
                     'Y-m-d H:i:s',
-                    $tanggal.' '.$absensi->jam_masuk
+                    $tanggal.' '.$absensiJamMasuk
                 );
 
                 $batasMasuk = Carbon::createFromFormat(
@@ -143,11 +145,11 @@ class AbsensiController extends Controller
                 }
             }
 
-            if ($absensi->jam_pulang && $jadwalJamPulang) {
+            if ($absensiJamPulang && $jadwalJamPulang) {
 
                 $jamPulang = Carbon::createFromFormat(
                     'Y-m-d H:i:s',
-                    $tanggal.' '.$absensi->jam_pulang
+                    $tanggal.' '.$absensiJamPulang
                 );
 
                 $batasPulang = Carbon::createFromFormat(
