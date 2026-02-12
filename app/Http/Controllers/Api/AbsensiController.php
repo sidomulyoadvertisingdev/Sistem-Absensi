@@ -53,12 +53,27 @@ class AbsensiController extends Controller
          * NORMALISASI JAM (ANTI DOUBLE DATE)
          * ===================================
          */
+        $jamInput = trim((string) $request->jam);
+
+        // normalisasi input jam: hapus duplikasi tanggal dan samakan pemisah waktu
+        $jamNormalized = preg_replace(
+            '/^(\d{4}-\d{2}-\d{2})\s+\1\s+/',
+            '$1 ',
+            str_replace('.', ':', $jamInput)
+        );
+
         try {
-            $jam = Carbon::parse($request->jam)->format('H:i:s');
+            $jam = Carbon::parse($jamNormalized)->format('H:i:s');
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Format jam tidak valid'
-            ], 422);
+            // fallback: ambil bagian jam saja bila string mengandung tanggal ganda/format tidak umum
+            if (preg_match('/\b(\d{2}:\d{2}(?::\d{2})?)\b/', $jamNormalized, $matches)) {
+                $format = strlen($matches[1]) === 5 ? 'H:i' : 'H:i:s';
+                $jam = Carbon::createFromFormat($format, $matches[1])->format('H:i:s');
+            } else {
+                return response()->json([
+                    'message' => 'Format jam tidak valid'
+                ], 422);
+            }
         }
 
         $absensi = Absensi::firstOrCreate(
