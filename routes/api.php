@@ -27,6 +27,11 @@ use App\Http\Controllers\Api\EmployeeApiController;
 /* ================= AUTH ================= */
 Route::post('/login', [AuthController::class, 'login']);
 
+/* ================= PREFLIGHT (CORS) ================= */
+Route::options('/{any}', function () {
+    return response()->noContent();
+})->where('any', '.*');
+
 /* ================= PROTECTED ROUTES ================= */
 Route::middleware('auth:sanctum')->group(function () {
 
