@@ -53,27 +53,12 @@ class AbsensiController extends Controller
          * NORMALISASI JAM (ANTI DOUBLE DATE)
          * ===================================
          */
-        $jamInput = trim((string) $request->jam);
+        $jam = $this->normalizeJamInput($request->jam);
 
-        // normalisasi input jam: hapus duplikasi tanggal dan samakan pemisah waktu
-        $jamNormalized = preg_replace(
-            '/^(\d{4}-\d{2}-\d{2})\s+\1\s+/',
-            '$1 ',
-            str_replace('.', ':', $jamInput)
-        );
-
-        try {
-            $jam = Carbon::parse($jamNormalized)->format('H:i:s');
-        } catch (\Exception $e) {
-            // fallback: ambil bagian jam saja bila string mengandung tanggal ganda/format tidak umum
-            if (preg_match('/\b(\d{2}:\d{2}(?::\d{2})?)\b/', $jamNormalized, $matches)) {
-                $format = strlen($matches[1]) === 5 ? 'H:i' : 'H:i:s';
-                $jam = Carbon::createFromFormat($format, $matches[1])->format('H:i:s');
-            } else {
-                return response()->json([
-                    'message' => 'Format jam tidak valid'
-                ], 422);
-            }
+        if (!$jam) {
+            return response()->json([
+                'message' => 'Format jam tidak valid'
+            ], 422);
         }
 
         $absensi = Absensi::firstOrCreate(
@@ -134,7 +119,10 @@ class AbsensiController extends Controller
 
         if ($jadwal) {
 
-            if ($absensi->jam_masuk && $jadwal->jam_masuk) {
+            $jadwalJamMasuk = $this->normalizeJamInput($jadwal->jam_masuk ?? null);
+            $jadwalJamPulang = $this->normalizeJamInput($jadwal->jam_pulang ?? null);
+
+            if ($absensi->jam_masuk && $jadwalJamMasuk) {
 
                 $jamMasuk = Carbon::createFromFormat(
                     'Y-m-d H:i:s',
@@ -143,7 +131,7 @@ class AbsensiController extends Controller
 
                 $batasMasuk = Carbon::createFromFormat(
                     'Y-m-d H:i:s',
-                    $tanggal.' '.$jadwal->jam_masuk
+                    $tanggal.' '.$jadwalJamMasuk
                 );
 
                 if (!empty($jadwal->toleransi_masuk)) {
@@ -155,7 +143,7 @@ class AbsensiController extends Controller
                 }
             }
 
-            if ($absensi->jam_pulang && $jadwal->jam_pulang) {
+            if ($absensi->jam_pulang && $jadwalJamPulang) {
 
                 $jamPulang = Carbon::createFromFormat(
                     'Y-m-d H:i:s',
@@ -164,7 +152,7 @@ class AbsensiController extends Controller
 
                 $batasPulang = Carbon::createFromFormat(
                     'Y-m-d H:i:s',
-                    $tanggal.' '.$jadwal->jam_pulang
+                    $tanggal.' '.$jadwalJamPulang
                 );
 
                 if ($jamPulang->lt($batasPulang)) {
@@ -184,5 +172,37 @@ class AbsensiController extends Controller
             'message' => 'Absensi berhasil disimpan',
             'data' => $absensi,
         ]);
+    }
+
+    private function normalizeJamInput(?string $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $jamInput = trim((string) $value);
+
+        if ($jamInput === '') {
+            return null;
+        }
+
+        // normalisasi input jam: hapus duplikasi tanggal dan samakan pemisah waktu
+        $jamNormalized = preg_replace(
+            '/^(\d{4}-\d{2}-\d{2})\s+\1\s+/',
+            '$1 ',
+            str_replace('.', ':', $jamInput)
+        );
+
+        try {
+            return Carbon::parse($jamNormalized)->format('H:i:s');
+        } catch (\Exception $e) {
+            // fallback: ambil bagian jam saja bila string mengandung tanggal ganda/format tidak umum
+            if (preg_match('/\b(\d{2}:\d{2}(?::\d{2})?)\b/', $jamNormalized, $matches)) {
+                $format = strlen($matches[1]) === 5 ? 'H:i' : 'H:i:s';
+                return Carbon::createFromFormat($format, $matches[1])->format('H:i:s');
+            }
+        }
+
+        return null;
     }
 }
