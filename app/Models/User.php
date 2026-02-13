@@ -8,7 +8,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Carbon\Carbon;
+use App\Models\ChatRoom;
+use App\Models\ChatMessage;
 
 class User extends Authenticatable
 {
@@ -43,6 +46,7 @@ class User extends Authenticatable
         'submission_types'   => 'Jenis Pengajuan',
         'submission'         => 'Pengajuan Masuk',
         'announcements'      => 'Pengumuman',
+        'chat'               => 'Chat',
     ];
 
     /*
@@ -178,6 +182,25 @@ class User extends Authenticatable
         return $this->hasMany(JobApplicant::class, 'user_id');
     }
 
+    /**
+     * 💬 CHAT ROOMS
+     */
+    public function chatRooms(): BelongsToMany
+    {
+        // pivot uses room_id instead of default chat_room_id
+        return $this->belongsToMany(ChatRoom::class, 'chat_room_user', 'user_id', 'room_id')
+            ->withPivot(['role', 'unread_count', 'last_read_message_id'])
+            ->withTimestamps();
+    }
+
+    /**
+     * 💬 CHAT MESSAGES
+     */
+    public function chatMessages(): HasMany
+    {
+        return $this->hasMany(ChatMessage::class, 'user_id');
+    }
+
     /*
     |--------------------------------------------------------------------------
     | ROLE HELPERS (AUTHORIZATION)
@@ -271,6 +294,7 @@ class User extends Authenticatable
                 'pelanggaran',
                 'submission',
                 'announcements',
+                'chat',
             ],
 
             self::ROLE_KEUANGAN => [
@@ -281,6 +305,7 @@ class User extends Authenticatable
                 'submission',
                 'lembur',
                 'announcements',
+                'chat',
             ],
 
             self::ROLE_ADMIN_STAFF => [
@@ -292,6 +317,7 @@ class User extends Authenticatable
                 'jadwal',
                 'submission',
                 'announcements',
+                'chat',
             ],
 
             // admin lama tetap luas agar tidak memutus alur lama.

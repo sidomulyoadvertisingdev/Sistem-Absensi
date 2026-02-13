@@ -707,6 +707,17 @@
                             </li>
                         @endif
 
+                        {{-- Chat --}}
+                        @if($menuUser->hasAdminPermission('chat'))
+                            <li class="nav-item">
+                                <a href="{{ route('admin.chat') }}"
+                                    class="nav-link {{ request()->routeIs('admin.chat') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-comments"></i>
+                                    <p>Chat</p>
+                                </a>
+                            </li>
+                        @endif
+
                         {{-- Manajemen User --}}
                         @if($menuUser->hasAdminPermission('users') || $menuUser->hasAdminPermission('manage_admin_access'))
                             <li class="nav-item has-treeview {{ request()->is('admin/users*') || request()->is('admin/admin-access*') ? 'menu-open' : '' }}">
