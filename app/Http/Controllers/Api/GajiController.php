@@ -30,204 +30,228 @@ class GajiController extends Controller
         }
 
         /* ==================================================
-         * BULAN & KONSTANTA
+         * BULAN (OPTIONAL: ?bulan=YYYY-MM)
          * ================================================== */
-        $now   = Carbon::now();
-        $bulan = $now->month;
-        $tahun = $now->year;
+        $bulanYm = $request->query('bulan');
+        $date = Carbon::now();
 
-        $jumlahHariBulan  = $now->daysInMonth;
+        if (!empty($bulanYm)) {
+            try {
+                $date = Carbon::createFromFormat('Y-m', $bulanYm);
+            } catch (\Exception $e) {
+                $date = Carbon::now();
+            }
+        }
+
+        $bulan = $date->month;
+        $tahun = $date->year;
         $hariKerjaStandar = 26;
-        $potonganPerMenit = 1000;
 
         /* ==================================================
-         * ABSENSI
+         * ABSENSI (SELARAS PAYROLL)
          * ================================================== */
         $absensis = Absensi::where('user_id', $user->id)
             ->whereMonth('tanggal', $bulan)
             ->whereYear('tanggal', $tahun)
             ->get();
 
-        $hadir     = $absensis->where('status', 'hadir')->count();
-        $terlambat = $absensis->where('status', 'terlambat')->count();
+        $hariHadir = $absensis->where('status', 'hadir')->count();
+        $hariTelat = $absensis->where('status', 'terlambat')->count();
 
-        $presensi = $hadir + $terlambat;
-        $offDay   = max($jumlahHariBulan - $presensi, 0);
+        $presensi = $hariHadir + $hariTelat;
+        $hariKerjaMasuk = $presensi;
 
-        /* ==================================================
-         * MENIT TERLAMBAT
-         * ================================================== */
-        $menitTerlambat = 0;
+        $hariNormal   = min($presensi, $hariKerjaStandar);
+        $hariTambahan = max($presensi - $hariKerjaStandar, 0);
+        $offDay       = max($hariKerjaStandar - $hariNormal, 0);
 
-        foreach ($absensis->where('status', 'terlambat') as $absen) {
-
-            if (!$absen->jam_masuk) continue;
-
-            $jadwal = $user->resolveWorkSchedule($absen->tanggal);
-
-            if (!$jadwal || !$jadwal->jam_masuk) continue;
-
-            $batasMasuk = Carbon::parse($absen->tanggal)
-                ->setTimeFromTimeString($jadwal->jam_masuk);
-
-            if ($jadwal->toleransi_masuk) {
-                $batasMasuk->addMinutes($jadwal->toleransi_masuk);
-            }
-
-            $jamMasukReal = Carbon::parse($absen->tanggal)
-                ->setTimeFromTimeString($absen->jam_masuk);
-
-            if ($jamMasukReal->gt($batasMasuk)) {
-                $menitTerlambat += $batasMasuk->diffInMinutes($jamMasukReal);
-            }
-        }
-
-        $potonganTelatNominal = $menitTerlambat * $potonganPerMenit;
+        $menitTerlambat = (int) $absensis
+            ->where('status', 'terlambat')
+            ->sum('menit_terlambat');
 
         /* ==================================================
-         * GAJI DASAR PROPORSIONAL
+         * TUNJANGAN (SELARAS PAYROLL)
          * ================================================== */
-        $gajiPerHari  = $salary->getGajiHarian($hariKerjaStandar);
-        $gajiPokokFix = round($gajiPerHari * $presensi);
+        $tunjanganArray = [
+            'tunjangan_umum'      => (float) ($salary->tunjangan_umum ?? 0),
+            'tunjangan_transport' => (float) ($salary->tunjangan_transport ?? 0),
+            'tunjangan_thr'       => (float) ($salary->tunjangan_thr ?? 0),
+            'tunjangan_kesehatan' => (float) ($salary->tunjangan_kesehatan ?? 0),
+        ];
+
+        $totalTunjanganMaster = array_sum($tunjanganArray);
+
+        $tunjanganPayroll = $salary->include_tunjangan
+            ? $totalTunjanganMaster
+            : 0;
+
+        $totalTunjangan = $tunjanganPayroll;
 
         /* ==================================================
-         * LEMBUR
+         * GAJI HARIAN (SELARAS PAYROLL)
          * ================================================== */
-        $totalMenitLembur = 0;
+        $gajiPerHari = (float) $salary->getGajiHarian($hariKerjaStandar);
 
-        $lemburs = Lembur::where('user_id', $user->id)
+        $gajiNormal   = $gajiPerHari * $hariNormal;
+        $gajiTambahan = $gajiPerHari * $hariTambahan;
+
+        $gajiBruto = $gajiPerHari * $hariKerjaMasuk;
+
+        /* ==================================================
+         * LEMBUR (SELARAS PAYROLL)
+         * ================================================== */
+        $totalJamLembur = Lembur::where('user_id', $user->id)
+            ->where('status', 'approved')
             ->whereMonth('tanggal', $bulan)
             ->whereYear('tanggal', $tahun)
-            ->where('status', 'approved')
-            ->get();
+            ->get()
+            ->sum(fn ($l) =>
+                Carbon::parse($l->jam_mulai)
+                    ->diffInMinutes(Carbon::parse($l->jam_selesai)) / 60
+            );
 
-        foreach ($lemburs as $l) {
-            if (!$l->jam_mulai || !$l->jam_selesai) continue;
-
-            $mulai   = Carbon::parse($l->tanggal)->setTimeFromTimeString($l->jam_mulai);
-            $selesai = Carbon::parse($l->tanggal)->setTimeFromTimeString($l->jam_selesai);
-
-            if ($selesai->lessThan($mulai)) {
-                $selesai->addDay();
-            }
-
-            $totalMenitLembur += $mulai->diffInMinutes($selesai);
-        }
-
-        $jamLembur  = round($totalMenitLembur / 60, 1);
-        $uangLembur = round($jamLembur * ($salary->lembur_per_jam ?? 0));
+        $uangLembur = $totalJamLembur * (float) ($salary->lembur_per_jam ?? 0);
 
         /* ==================================================
-         * BONUS JOB TODO (WAJIB completed_at TERISI)
+         * BONUS JOB (SELARAS PAYROLL)
          * ================================================== */
-        $totalBonusJob = DB::table('job_todo_user')
+        $jobBonus = DB::table('job_todo_user')
             ->join('job_todos', 'job_todos.id', '=', 'job_todo_user.job_todo_id')
             ->where('job_todo_user.user_id', $user->id)
             ->where('job_todo_user.status', 'completed')
-            ->whereNotNull('job_todo_user.completed_at')
             ->whereMonth('job_todo_user.completed_at', $bulan)
             ->whereYear('job_todo_user.completed_at', $tahun)
-            ->sum('job_todos.bonus');
+            ->select('job_todos.title', 'job_todos.bonus')
+            ->get();
+
+        $totalBonusJob = $jobBonus->sum('bonus');
 
         /* ==================================================
-         * SALARY KOTOR
+         * SALARY KOTOR (SELARAS PAYROLL)
          * ================================================== */
-        $tunjanganMaster =
-            (float) ($salary->tunjangan_umum ?? 0) +
-            (float) ($salary->tunjangan_transport ?? 0) +
-            (float) ($salary->tunjangan_thr ?? 0) +
-            (float) ($salary->tunjangan_kesehatan ?? 0);
-
-        $tunjanganPayroll = $salary->include_tunjangan
-            ? $tunjanganMaster
-            : 0;
-
         $salaryKotor =
-            $gajiPokokFix +
-            $tunjanganPayroll +
+            $gajiNormal +
+            $gajiTambahan +
             $uangLembur +
-            $totalBonusJob;
+            $totalBonusJob +
+            $tunjanganPayroll;
 
         /* ==================================================
-         * POTONGAN ATURAN (ADMIN)
+         * POTONGAN ATURAN (SELARAS PAYROLL)
          * ================================================== */
-        $potonganAturan = 0;
-
         $rules = SalaryDeductionRule::where('aktif', true)->get();
+
+        $totalPotongan = 0;
+        $potonganTelatNominal = 0;
+        $potonganTrainingNominal = 0;
 
         foreach ($rules as $rule) {
 
-            // Filter penempatan
-            if (!empty($rule->penempatan)) {
-                $penempatanRule = is_array($rule->penempatan)
-                    ? $rule->penempatan
-                    : json_decode($rule->penempatan, true);
-
-                if (!in_array($user->penempatan, $penempatanRule)) {
-                    continue;
-                }
+            if (!$rule->isApplicableForPenempatan($user->penempatan)) {
+                continue;
             }
 
-            // Cek kondisi
-            $kena = false;
-
-            if ($rule->condition_type === 'terlambat' && $terlambat >= $rule->condition_value) {
-                $kena = true;
-            }
-
-            if ($rule->condition_type === 'off_day' && $offDay >= $rule->condition_value) {
-                $kena = true;
-            }
-
-            if ($rule->condition_type === 'pelanggaran') {
-                $kena = true;
-            }
-
-            if (!$kena) continue;
-
-            $basis = match ($rule->base_amount) {
-                'gaji_pokok'   => $gajiPokokFix,
-                'salary_kotor' => $salaryKotor,
-                'total_gaji'   => max($salaryKotor - $potonganTelatNominal, 0),
-                default        => $salaryKotor,
+            $base = match ($rule->base_source) {
+                'gaji_pokok' =>
+                    (float) ($salary->gaji_pokok ?? 0),
+                'tunjangan' =>
+                    collect($rule->tunjangan_items ?? [])
+                        ->sum(fn ($item) => $tunjanganArray[$item] ?? 0),
+                default =>
+                    $salaryKotor,
             };
 
-            $potonganAturan +=
-                $rule->type === 'percentage'
-                    ? ($basis * $rule->value / 100)
-                    : $rule->value;
+            if ($base <= 0) {
+                continue;
+            }
+
+            if ($rule->condition_type === 'terlambat') {
+
+                $trigger = $rule->condition_value ?? 1;
+
+                if ($hariTelat < $trigger) {
+                    continue;
+                }
+
+                if ($rule->max_minutes &&
+                    $menitTerlambat < $rule->max_minutes) {
+                    continue;
+                }
+
+                $nilai = $rule->calculate($base);
+
+                $potonganTelatNominal += $nilai;
+                $totalPotongan += $nilai;
+            }
+
+            if ($rule->condition_type === 'off_day') {
+
+                if ($offDay <= 0) {
+                    continue;
+                }
+
+                $nilai = $rule->calculate($base);
+                $totalPotongan += $nilai;
+            }
         }
 
+        $trainingInfo = $salary->calculateTrainingDeduction($salaryKotor, $date);
+        $potonganTrainingNominal = (float) ($trainingInfo['deduction_nominal'] ?? 0);
+        $totalPotongan += $potonganTrainingNominal;
+
         /* ==================================================
-         * TOTAL GAJI BERSIH
+         * TOTAL GAJI BERSIH (SELARAS PAYROLL)
          * ================================================== */
-        $totalPotongan = $potonganTelatNominal + $potonganAturan;
-        $totalGaji     = max($salaryKotor - $totalPotongan, 0);
+        $totalGaji = max($salaryKotor - $totalPotongan, 0);
 
         return response()->json([
             'data' => [
-                'bulan'               => $now->translatedFormat('F Y'),
+                'bulan'                 => $date->translatedFormat('F Y'),
+                'periode'               => $date->format('Y-m'),
 
-                'presensi'            => $presensi,
-                'off_day'             => $offDay,
+                'presensi'              => $hariKerjaMasuk,
+                'hari_hadir'            => $hariHadir,
+                'hari_telat'            => $hariTelat,
+                'hari_normal'           => $hariNormal,
+                'hari_tambahan'         => $hariTambahan,
+                'off_day'               => $offDay,
+                'menit_terlambat'        => $menitTerlambat,
 
-                'gaji_pokok_fix'      => $gajiPokokFix,
-                'tunjangan_umum'      => (float) ($salary->tunjangan_umum ?? 0),
-                'tunjangan_transport' => (float) ($salary->tunjangan_transport ?? 0),
-                'tunjangan_thr'       => (float) ($salary->tunjangan_thr ?? 0),
-                'tunjangan_kesehatan' => (float) ($salary->tunjangan_kesehatan ?? 0),
-                'include_tunjangan'   => (bool) $salary->include_tunjangan,
-                'tunjangan_payroll'   => round($tunjanganPayroll),
+                'gaji_pokok'            => (float) ($salary->gaji_pokok ?? 0),
+                'gaji_per_hari'         => round($gajiPerHari, 2),
+                'gaji_normal'           => round($gajiNormal),
+                'gaji_tambahan'         => round($gajiTambahan),
+                'gaji_bruto'            => round($gajiBruto),
+                'gaji_dasar'            => round($gajiBruto),
+                // compat lama
+                'gaji_pokok_fix'        => round($gajiBruto),
 
-                'jam_lembur'          => $jamLembur,
-                'uang_lembur'         => $uangLembur,
-                'bonus_job'           => round($totalBonusJob),
+                'tunjangan_umum'        => (float) ($salary->tunjangan_umum ?? 0),
+                'tunjangan_transport'   => (float) ($salary->tunjangan_transport ?? 0),
+                'tunjangan_thr'         => (float) ($salary->tunjangan_thr ?? 0),
+                'tunjangan_kesehatan'   => (float) ($salary->tunjangan_kesehatan ?? 0),
+                'total_tunjangan_master'=> round($totalTunjanganMaster),
+                'include_tunjangan'     => (bool) $salary->include_tunjangan,
+                'tunjangan_payroll'     => round($tunjanganPayroll),
+                'total_tunjangan'       => round($totalTunjangan),
 
-                'potongan_telat'      => $potonganTelatNominal,
-                'potongan_aturan'     => round($potonganAturan),
+                'jam_lembur'            => round($totalJamLembur, 1),
+                'uang_lembur'           => round($uangLembur),
+                'total_lembur'          => round($uangLembur),
+                'bonus_job'             => round($totalBonusJob),
 
-                'salary_kotor'        => round($salaryKotor),
-                'total_gaji'          => round($totalGaji),
+                'salary_kotor'          => round($salaryKotor),
+
+                'potongan_telat'        => round($potonganTelatNominal),
+                'potongan_training'     => round($potonganTrainingNominal),
+                'potongan_aturan'       => round(max($totalPotongan - $potonganTelatNominal - $potonganTrainingNominal, 0)),
+                'total_potongan'        => round($totalPotongan),
+
+                'total_gaji'            => round($totalGaji),
+
+                // detail opsional
+                'training_info'         => $trainingInfo,
+                'bonus_job_items'       => $jobBonus,
             ]
         ], 200);
     }

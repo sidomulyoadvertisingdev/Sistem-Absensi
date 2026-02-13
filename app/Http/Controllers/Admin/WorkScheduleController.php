@@ -151,6 +151,7 @@ class WorkScheduleController extends Controller
 
         if ($request->schedule_mode === 'per_tanggal') {
             $tanggalList = $request->input('tanggal_tgl', []);
+            $timeRule = ['required', 'regex:/^\\d{2}:\\d{2}(:\\d{2})?$/'];
 
             foreach ($tanggalList as $key => $tanggalRaw) {
                 if (empty($tanggalRaw)) {
@@ -174,17 +175,22 @@ class WorkScheduleController extends Controller
 
                 if ($aktif) {
                     $request->validate([
-                        "jam_masuk_tgl.$key"         => 'required|date_format:H:i',
-                        "jam_pulang_tgl.$key"        => 'required|date_format:H:i',
-                        "istirahat_mulai_tgl.$key"   => 'required|date_format:H:i',
-                        "istirahat_selesai_tgl.$key" => 'required|date_format:H:i',
+                        "jam_masuk_tgl.$key"         => $timeRule,
+                        "jam_pulang_tgl.$key"        => $timeRule,
+                        "istirahat_mulai_tgl.$key"   => $timeRule,
+                        "istirahat_selesai_tgl.$key" => $timeRule,
                     ], [
-                        "jam_masuk_tgl.$key.required"         => "Jam masuk tanggal $tanggal wajib diisi",
-                        "jam_pulang_tgl.$key.required"        => "Jam pulang tanggal $tanggal wajib diisi",
-                        "istirahat_mulai_tgl.$key.required"   => "Istirahat mulai tanggal $tanggal wajib diisi",
-                        "istirahat_selesai_tgl.$key.required" => "Istirahat selesai tanggal $tanggal wajib diisi",
+                        "jam_masuk_tgl.$key.regex"         => "Format jam masuk tanggal $tanggal harus HH:MM atau HH:MM:SS",
+                        "jam_pulang_tgl.$key.regex"        => "Format jam pulang tanggal $tanggal harus HH:MM atau HH:MM:SS",
+                        "istirahat_mulai_tgl.$key.regex"   => "Format istirahat mulai tanggal $tanggal harus HH:MM atau HH:MM:SS",
+                        "istirahat_selesai_tgl.$key.regex" => "Format istirahat selesai tanggal $tanggal harus HH:MM atau HH:MM:SS",
                     ]);
                 }
+
+                $jamMasuk   = $this->normalizeJamInput($request->input("jam_masuk_tgl.$key"));
+                $jamPulang  = $this->normalizeJamInput($request->input("jam_pulang_tgl.$key"));
+                $istMulai   = $this->normalizeJamInput($request->input("istirahat_mulai_tgl.$key"));
+                $istSelesai = $this->normalizeJamInput($request->input("istirahat_selesai_tgl.$key"));
 
                 WorkScheduleDate::updateOrCreate(
                     [
@@ -192,10 +198,10 @@ class WorkScheduleController extends Controller
                         'tanggal' => $tanggal,
                     ],
                     [
-                        'jam_masuk'         => $aktif ? $request->input("jam_masuk_tgl.$key") : null,
-                        'jam_pulang'        => $aktif ? $request->input("jam_pulang_tgl.$key") : null,
-                        'istirahat_mulai'   => $aktif ? $request->input("istirahat_mulai_tgl.$key") : null,
-                        'istirahat_selesai' => $aktif ? $request->input("istirahat_selesai_tgl.$key") : null,
+                        'jam_masuk'         => $aktif ? $jamMasuk : null,
+                        'jam_pulang'        => $aktif ? $jamPulang : null,
+                        'istirahat_mulai'   => $aktif ? $istMulai : null,
+                        'istirahat_selesai' => $aktif ? $istSelesai : null,
                         'aktif'             => $aktif,
                     ]
                 );
@@ -205,5 +211,32 @@ class WorkScheduleController extends Controller
         return redirect()
             ->route('admin.jadwal')
             ->with('success', 'Jadwal kerja berhasil disimpan');
+    }
+
+    /**
+     * Normalize various hour formats into H:i:s.
+     */
+    private function normalizeJamInput(?string $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $value = str_replace('.', ':', trim($value));
+
+        if ($value === '') {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($value)->format('H:i:s');
+        } catch (\Exception $e) {
+            if (preg_match('/\\b(\\d{2}:\\d{2}(?::\\d{2})?)\\b/', $value, $matches)) {
+                $format = strlen($matches[1]) === 5 ? 'H:i' : 'H:i:s';
+                return Carbon::createFromFormat($format, $matches[1])->format('H:i:s');
+            }
+        }
+
+        return null;
     }
 }
