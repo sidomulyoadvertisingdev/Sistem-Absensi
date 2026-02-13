@@ -43,6 +43,15 @@ class ChatRoom extends Model
 
     public function latestMessage(): HasOne
     {
-        return $this->hasOne(ChatMessage::class, 'room_id')->latestOfMany('id');
+        // Explicitly qualify columns to avoid ambiguity with latestOfMany join
+        return $this->hasOne(ChatMessage::class, 'room_id')
+            ->latestOfMany('id')
+            ->select([
+                'chat_messages.id',
+                'chat_messages.room_id',
+                'chat_messages.user_id',
+                'chat_messages.text',
+                'chat_messages.created_at',
+            ]);
     }
 }
