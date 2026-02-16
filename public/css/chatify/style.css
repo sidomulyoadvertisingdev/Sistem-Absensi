@@ -1182,3 +1182,53 @@ div.loadingPlaceholder-date {
   border-radius: 4px;
   background: transparent;
 }
+
+/* Group chat additions */
+.group-avatar {
+  background-color: #4b4b4b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+}
+.group-avatar span {
+  font-size: 16px;
+}
+.message-sender {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 0 0 4px 2px;
+}
+.group-members-list {
+  max-height: 220px;
+  overflow: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 8px;
+}
+.group-member-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 4px;
+}
+.group-member-item input {
+  margin: 0;
+}
+.group-create-error {
+  color: #dc2626;
+  font-size: 12px;
+  margin-top: 8px;
+  min-height: 16px;
+}
+.app-input {
+  width: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: var(--secondary-bg-color);
+  color: inherit;
+}
+.text-muted {
+  color: #6b7280;
+}

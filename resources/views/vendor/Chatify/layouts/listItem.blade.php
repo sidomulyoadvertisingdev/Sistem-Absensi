@@ -62,6 +62,50 @@ $lastMessageBody = strlen($lastMessageBody) > 30 ? mb_substr($lastMessageBody, 0
 </table>
 @endif
 
+{{-- -------------------- Group list -------------------- --}}
+@if($get == 'group')
+<?php
+$lastMessageBody = '';
+$lastMessageTime = '';
+$hasAttachment = false;
+if (!empty($lastMessage)) {
+    $lastMessageBody = mb_convert_encoding($lastMessage->body ?? '', 'UTF-8', 'UTF-8');
+    $lastMessageBody = strlen($lastMessageBody) > 30 ? mb_substr($lastMessageBody, 0, 30, 'UTF-8').'..' : $lastMessageBody;
+    $lastMessageTime = $lastMessage->created_at?->toIso8601String();
+    $hasAttachment = !empty($lastMessage->attachment);
+}
+?>
+<table class="messenger-list-item" data-contact="group-{{ $group->id }}">
+    <tr data-action="0">
+        <td>
+            <div class="avatar av-m group-avatar">
+                <span class="fas fa-users"></span>
+            </div>
+        </td>
+        <td>
+            <p data-id="{{ $group->id }}" data-type="group">
+                {{ strlen($group->name) > 12 ? trim(substr($group->name,0,12)).'..' : $group->name }}
+                @if($lastMessageTime)
+                    <span class="contact-item-time" data-time="{{ $lastMessageTime }}">{{ $lastMessage->created_at->diffForHumans() }}</span>
+                @endif
+            </p>
+            <span>
+                @if($lastMessageBody)
+                    {!! $lastMessageSender ? '<span class="lastMessageIndicator">'.$lastMessageSender.' :</span>' : '' !!}
+                    {!! $lastMessageBody !!}
+                @elseif($hasAttachment)
+                    {!! $lastMessageSender ? '<span class="lastMessageIndicator">'.$lastMessageSender.' :</span>' : '' !!}
+                    <span class="fas fa-file"></span> Attachment
+                @else
+                    Belum ada pesan
+                @endif
+            </span>
+            {!! $unseenCounter > 0 ? "<b>".$unseenCounter."</b>" : '' !!}
+        </td>
+    </tr>
+</table>
+@endif
+
 {{-- -------------------- Search Item -------------------- --}}
 @if($get == 'search_item')
 <table class="messenger-list-item" data-contact="{{ $user->id }}">
@@ -86,5 +130,3 @@ $lastMessageBody = strlen($lastMessageBody) > 30 ? mb_substr($lastMessageBody, 0
 @if($get == 'sharedPhoto')
 <div class="shared-photo chat-image" style="background-image: url('{{ $image }}')"></div>
 @endif
-
-

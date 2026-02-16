@@ -14,6 +14,9 @@ $timeAndSeen = "<span data-time='$created_at' class='message-time'>
     @endif
     {{-- Card --}}
     <div class="message-card-content">
+        @if(isset($room_type) && $room_type === 'group' && !empty($from_name) && !$isSender)
+            <div class="message-sender">{{ $from_name }}</div>
+        @endif
         @if (@$attachment->type != 'image' || $message)
             <div class="message">
                 {!! ($message == null && $attachment != null && @$attachment->type != 'file') ? $attachment->title : nl2br($message) !!}

@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Chatify\MessagesController as ChatifyMessagesController;
 use App\Http\Controllers\Admin\{
     DashboardController,
     AbsensiController,
@@ -44,6 +45,18 @@ Route::middleware(['web', 'guest'])->group(function () {
 Route::post('/logout', [LoginController::class, 'logout'])
     ->middleware(['web', 'auth'])
     ->name('logout');
+
+/*
+|--------------------------------------------------------------------------
+| CHATIFY GROUPS
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['web', 'auth'])
+    ->prefix(config('chatify.routes.prefix'))
+    ->group(function () {
+        Route::post('/group', [ChatifyMessagesController::class, 'createGroup'])
+            ->name('chatify.group.create');
+    });
 
 /*
 |--------------------------------------------------------------------------

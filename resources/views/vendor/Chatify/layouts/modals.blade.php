@@ -71,3 +71,41 @@
           </div>
       </div>
   </div>
+  {{-- ---------------------- Create Group Modal ---------------------- --}}
+  <div class="app-modal" data-name="create-group">
+      <div class="app-modal-container">
+          <div class="app-modal-card" data-name="create-group" data-modal="0">
+              <form id="create-group-form" action="{{ route('chatify.group.create') }}" method="POST">
+                  @csrf
+                  <div class="app-modal-header">Create Group</div>
+                  <div class="app-modal-body">
+                      <div class="form-group">
+                          <label>Group Name</label>
+                          <input type="text" name="name" class="app-input" placeholder="e.g. Tim Marketing" required>
+                      </div>
+                      <p class="divider"></p>
+                      <small class="text-muted d-block mb-2">Select members:</small>
+                      <div class="group-members-list app-scroll">
+                          @isset($chatifyUsers)
+                              @forelse($chatifyUsers as $user)
+                                  <label class="group-member-item">
+                                      <input type="checkbox" name="member_ids[]" value="{{ $user->id }}">
+                                      <span>{{ $user->name }}</span>
+                                  </label>
+                              @empty
+                                  <div class="text-muted">Tidak ada user.</div>
+                              @endforelse
+                          @else
+                              <div class="text-muted">Tidak ada user.</div>
+                          @endisset
+                      </div>
+                      <div class="group-create-error"></div>
+                  </div>
+                  <div class="app-modal-footer">
+                      <a href="javascript:void(0)" class="app-btn cancel">Cancel</a>
+                      <button type="submit" class="app-btn a-btn-success">Create</button>
+                  </div>
+              </form>
+          </div>
+      </div>
+  </div>
