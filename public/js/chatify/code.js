@@ -54,6 +54,9 @@ if (chatify.pusher.options.host) {
   } else if (typeof chatify.pusher.options.useTLS !== "undefined") {
     pusherOptions.forceTLS = !!chatify.pusher.options.useTLS;
   }
+  if (chatify.pusher.options.path) {
+    pusherOptions.wsPath = chatify.pusher.options.path;
+  }
   pusherOptions.enabledTransports = [pusherOptions.forceTLS ? "wss" : "ws"];
 }
 

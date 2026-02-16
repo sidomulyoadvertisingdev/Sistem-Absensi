@@ -48,6 +48,7 @@ return [
             'host' => env('PUSHER_HOST'),
             'port' => env('PUSHER_PORT'),
             'scheme' => env('PUSHER_SCHEME', 'https'),
+            'path' => env('PUSHER_PATH'),
             'useTLS' => env('PUSHER_SCHEME', 'https') === 'https',
         ],
     ],
