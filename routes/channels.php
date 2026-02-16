@@ -20,3 +20,14 @@ Broadcast::channel('chat.room.{roomId}', function ($user, $roomId) {
 Broadcast::channel('chat.user.{userId}', function ($user, $userId) {
     return (int) $user->id === (int) $userId;
 });
+
+Broadcast::channel('chatify.user.{userId}', function ($user, $userId) {
+    return (int) $user->id === (int) $userId;
+});
+
+Broadcast::channel('chatify.group.{groupId}', function ($user, $groupId) {
+    return \Illuminate\Support\Facades\DB::table('ch_group_user')
+        ->where('group_id', $groupId)
+        ->where('user_id', $user->id)
+        ->exists();
+});

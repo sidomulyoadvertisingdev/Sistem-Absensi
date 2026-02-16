@@ -707,11 +707,11 @@
                             </li>
                         @endif
 
-                        {{-- Chat --}}
+                        {{-- Chatify --}}
                         @if($menuUser->hasAdminPermission('chat'))
                             <li class="nav-item">
-                                <a href="{{ route('admin.chat') }}"
-                                    class="nav-link {{ request()->routeIs('admin.chat') ? 'active' : '' }}">
+                                <a href="{{ route('chatify') }}"
+                                    class="nav-link {{ request()->routeIs('chatify') ? 'active' : '' }}">
                                     <i class="nav-icon fas fa-comments"></i>
                                     <p>Chat</p>
                                 </a>

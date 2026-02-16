@@ -14,8 +14,7 @@ use App\Http\Controllers\Api\PelanggaranApiController;
 use App\Http\Controllers\Api\SubmissionApiController;
 use App\Http\Controllers\Api\AnnouncementApiController;
 use App\Http\Controllers\Api\EmployeeApiController;
-use App\Http\Controllers\Api\ChatRoomController;
-use App\Http\Controllers\Api\ChatMessageController;
+use App\Http\Controllers\Api\ChatifyController;
 
 /*
 |--------------------------------------------------------------------------
@@ -92,24 +91,19 @@ Route::middleware('auth:sanctum')->group(function () {
     // Leaderboard Top 1 - Top 3 (berdasarkan reward / produktivitas)
     Route::get('/employees/leaderboard', [EmployeeApiController::class, 'leaderboard']);
 
-    /* ================= CHAT (REALTIME) ================= */
-    Route::prefix('chat')->group(function () {
-        Route::get('/rooms', [ChatRoomController::class, 'index']);
-        Route::post('/rooms', [ChatRoomController::class, 'store']);
-        Route::post('/rooms/{room}/members', [ChatRoomController::class, 'addMembers']);
-        Route::delete('/rooms/{room}/members/{userId}', [ChatRoomController::class, 'removeMember'])
-            ->whereNumber('userId');
-
-        Route::get('/rooms/{room}/messages', [ChatMessageController::class, 'index']);
-        Route::post('/rooms/{room}/messages', [ChatMessageController::class, 'store'])
-            ->middleware('throttle:chat-send');
-        Route::post('/rooms/{room}/read', [ChatMessageController::class, 'markRead']);
-        Route::post('/rooms/{room}/delivered', [ChatMessageController::class, 'markDelivered']);
-        Route::post('/rooms/{room}/typing', [ChatMessageController::class, 'typing']);
-    });
-
     /* ================= USER PROFILE ================= */
     Route::get('/me', function (Request $request) {
         return $request->user();
+    });
+
+    /* ================= CHAT (NATIVE RN) ================= */
+    Route::prefix('chat')->group(function () {
+        Route::get('/users', [ChatifyController::class, 'users']);
+        Route::get('/rooms', [ChatifyController::class, 'rooms']);
+        Route::post('/rooms', [ChatifyController::class, 'createRoom']);
+        Route::get('/rooms/{room}/messages', [ChatifyController::class, 'messages']);
+        Route::post('/rooms/{room}/messages', [ChatifyController::class, 'sendMessage']);
+        Route::post('/rooms/{room}/read', [ChatifyController::class, 'read']);
+        Route::post('/rooms/{room}/typing', [ChatifyController::class, 'typing']);
     });
 });

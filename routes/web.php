@@ -21,8 +21,7 @@ use App\Http\Controllers\Admin\{
     SalaryDeductionRuleController,
     SubmissionTypeController,
     PayrollController,
-    AdminAccessController,
-    ChatController
+    AdminAccessController
 };
 
 /*
@@ -70,11 +69,6 @@ Route::middleware(['web', 'auth', 'is_admin'])
 
         /* ================= DASHBOARD ================= */
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
-
-        /* ================= CHAT (PANEL) ================= */
-        Route::get('/chat', [ChatController::class, 'index'])->name('chat');
-        Route::post('/chat/direct', [ChatController::class, 'startDirect'])->name('chat.direct');
-        Route::post('/chat/group', [ChatController::class, 'createGroup'])->name('chat.group');
 
         /* ================= USERS ================= */
         Route::prefix('users')->name('users.')->group(function () {
