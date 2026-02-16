@@ -614,6 +614,15 @@
                 @endauth
 
                 @auth
+                    @if($panelUser->hasAdminPermission('chat'))
+                        <li class="nav-item mr-2 d-flex align-items-center">
+                            <a class="navbar-noti-btn"
+                                href="{{ route('chatify') }}"
+                                title="Chat">
+                                <i class="fas fa-comments"></i>
+                            </a>
+                        </li>
+                    @endif
                     @if($panelUser->isPanelAdmin() && ($canSubmissionNotif || $canLemburNotif))
                         <li class="nav-item dropdown mr-2 d-flex align-items-center">
                             <a class="navbar-noti-btn"
@@ -703,17 +712,6 @@
                                     class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                                     <i class="nav-icon fas fa-home"></i>
                                     <p>Dashboard</p>
-                                </a>
-                            </li>
-                        @endif
-
-                        {{-- Chatify --}}
-                        @if($menuUser->hasAdminPermission('chat'))
-                            <li class="nav-item">
-                                <a href="{{ route('chatify') }}"
-                                    class="nav-link {{ request()->routeIs('chatify') ? 'active' : '' }}">
-                                    <i class="nav-icon fas fa-comments"></i>
-                                    <p>Chat</p>
                                 </a>
                             </li>
                         @endif
