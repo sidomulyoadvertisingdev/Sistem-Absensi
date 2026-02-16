@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Str;
 
 class Announcement extends Model
 {
@@ -36,7 +37,18 @@ class Announcement extends Model
             return null;
         }
 
-        // ✅ image sudah: announcements/xxx.jpg
-        return asset('storage/' . $this->image);
+        $image = $this->image;
+        if (Str::startsWith($image, ['http://', 'https://'])) {
+            return $image;
+        }
+        if (Str::startsWith($image, 'storage/')) {
+            return asset($image);
+        }
+        if (Str::startsWith($image, 'announcements/')) {
+            return asset('storage/' . $image);
+        }
+
+        // ✅ file disimpan ke storage/app/public/announcements
+        return asset('storage/announcements/' . $image);
     }
 }

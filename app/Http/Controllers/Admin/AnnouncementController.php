@@ -41,7 +41,7 @@ class AnnouncementController extends Controller
         $request->validate([
             'title'   => 'required|string|max:255',
             'content' => 'required|string',
-            'image'   => 'nullable|image|max:2048',
+            'image'   => 'nullable|image|max:30720', // 30 MB
         ]);
 
         $imageName = null;
