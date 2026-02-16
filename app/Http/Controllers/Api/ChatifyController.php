@@ -62,13 +62,15 @@ class ChatifyController extends Controller
             if (! $partner) {
                 continue;
             }
-            $directRooms[$partnerId] = [
-                'id' => (int) $partnerId,
-                'type' => 'direct',
-                'name' => $partner->name,
-                'last_message' => $this->transformMessage($msg),
-                'unread_count' => (int) ($directUnread[$partnerId] ?? 0),
-            ];
+        $directRooms[$partnerId] = [
+            'id' => (int) $partnerId,
+            'type' => 'direct',
+            'name' => $partner->name,
+            'last_message' => $this->transformMessage($msg, [
+                $msg->from_id => $msg->from_id == $user->id ? $user->name : $partner->name,
+            ]),
+            'unread_count' => (int) ($directUnread[$partnerId] ?? 0),
+        ];
         }
 
         $groups = DB::table('ch_groups')
@@ -188,8 +190,13 @@ class ChatifyController extends Controller
                 ->orderBy('created_at')
                 ->get();
 
+            $usersById = User::query()
+                ->whereIn('id', $messages->pluck('from_id')->unique())
+                ->pluck('name', 'id')
+                ->all();
+
             return response()->json([
-                'data' => $messages->map(fn ($m) => $this->transformMessage($m)),
+                'data' => $messages->map(fn ($m) => $this->transformMessage($m, $usersById)),
             ]);
         }
 
@@ -207,8 +214,13 @@ class ChatifyController extends Controller
             ->orderBy('created_at')
             ->get();
 
+        $usersById = User::query()
+            ->whereIn('id', $messages->pluck('from_id')->unique())
+            ->pluck('name', 'id')
+            ->all();
+
         return response()->json([
-            'data' => $messages->map(fn ($m) => $this->transformMessage($m)),
+            'data' => $messages->map(fn ($m) => $this->transformMessage($m, $usersById)),
         ]);
     }
 
@@ -247,7 +259,7 @@ class ChatifyController extends Controller
             'seen' => false,
         ]);
 
-        $payload = $this->transformMessage($message);
+        $payload = $this->transformMessage($message, [$user->id => $user->name]);
         $payload['room_type'] = $type === 'group' ? 'group' : 'direct';
         $payload['room_id'] = $roomId;
 
@@ -337,6 +349,7 @@ class ChatifyController extends Controller
                 'room_id' => $roomId,
                 'type' => $type === 'group' ? 'group' : 'direct',
                 'user_id' => $user->id,
+                'user_name' => $user->name,
                 'is_typing' => $isTyping,
             ],
             $type === 'group' ? 'group' : 'direct',
@@ -358,11 +371,16 @@ class ChatifyController extends Controller
         abort_if(! $exists, 403, 'Not a group member');
     }
 
-    private function transformMessage(ChMessage $message): array
+    private function transformMessage(ChMessage $message, array $usersById = []): array
     {
+        $fromName = $usersById[$message->from_id] ?? User::query()
+            ->where('id', $message->from_id)
+            ->value('name');
+
         return [
             'id' => $message->id,
             'from_id' => (int) $message->from_id,
+            'from_name' => $fromName,
             'to_id' => (int) $message->to_id,
             'to_type' => $message->to_type ?? 'user',
             'body' => $message->body,

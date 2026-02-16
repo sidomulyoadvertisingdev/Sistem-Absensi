@@ -31,3 +31,10 @@ Broadcast::channel('chatify.group.{groupId}', function ($user, $groupId) {
         ->where('user_id', $user->id)
         ->exists();
 });
+
+Broadcast::channel('chatify.presence', function ($user) {
+    return [
+        'id' => (int) $user->id,
+        'name' => $user->name,
+    ];
+});
