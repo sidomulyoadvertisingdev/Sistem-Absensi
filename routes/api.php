@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\LemburController;
 use App\Http\Controllers\Api\JobTodoController;
 use App\Http\Controllers\Api\PelanggaranApiController;
 use App\Http\Controllers\Api\SubmissionApiController;
+use App\Http\Controllers\Api\NotificationApiController;
 use App\Http\Controllers\Api\AnnouncementApiController;
 use App\Http\Controllers\Api\EmployeeApiController;
 use App\Http\Controllers\Api\ChatifyController;
@@ -78,6 +79,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/submissions', [SubmissionApiController::class, 'store']);
     Route::get('/submissions/{id}', [SubmissionApiController::class, 'show'])
         ->whereNumber('id');
+
+    /* ================= NOTIFIKASI ================= */
+    Route::get('/notifications', [NotificationApiController::class, 'index']);
+    Route::post('/notifications/{id}/read', [NotificationApiController::class, 'markRead']);
 
     /* ================= ANNOUNCEMENTS / PENGUMUMAN ================= */
     Route::get('/announcements', [AnnouncementApiController::class, 'index']);

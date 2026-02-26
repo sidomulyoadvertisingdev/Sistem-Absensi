@@ -18,6 +18,15 @@ class Submission extends Model
         'lampiran',
         'status',
         'catatan_admin',
+        'approved_by',
+        'approved_at',
+        'rejected_by',
+        'rejected_at',
+    ];
+
+    protected $casts = [
+        'approved_at' => 'datetime',
+        'rejected_at' => 'datetime',
     ];
 
     public function user()
@@ -28,5 +37,15 @@ class Submission extends Model
     public function type()
     {
         return $this->belongsTo(SubmissionType::class, 'submission_type_id');
+    }
+
+    public function approver()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function rejector()
+    {
+        return $this->belongsTo(User::class, 'rejected_by');
     }
 }

@@ -27,6 +27,7 @@ class SubmissionTypeController extends Controller
             'deskripsi' => 'nullable|string',
             'butuh_alasan' => 'nullable|boolean',
             'butuh_lampiran' => 'nullable|boolean',
+            'is_izin_pulang_awal' => 'nullable|boolean',
         ]);
 
         SubmissionType::create([
@@ -35,6 +36,7 @@ class SubmissionTypeController extends Controller
             'deskripsi' => $request->deskripsi,
             'butuh_alasan' => $request->boolean('butuh_alasan'),
             'butuh_lampiran' => $request->boolean('butuh_lampiran'),
+            'is_izin_pulang_awal' => $request->boolean('is_izin_pulang_awal'),
             'aktif' => true,
         ]);
 
@@ -51,17 +53,21 @@ class SubmissionTypeController extends Controller
     public function update(Request $request, SubmissionType $type)
     {
         $request->validate([
+            'kode' => 'required|string|max:50|unique:submission_types,kode,' . $type->id,
             'nama' => 'required|string|max:255',
             'deskripsi' => 'nullable|string',
             'butuh_alasan' => 'nullable|boolean',
             'butuh_lampiran' => 'nullable|boolean',
+            'is_izin_pulang_awal' => 'nullable|boolean',
         ]);
 
         $type->update([
+            'kode' => strtoupper($request->kode),
             'nama' => $request->nama,
             'deskripsi' => $request->deskripsi,
             'butuh_alasan' => $request->boolean('butuh_alasan'),
             'butuh_lampiran' => $request->boolean('butuh_lampiran'),
+            'is_izin_pulang_awal' => $request->boolean('is_izin_pulang_awal'),
         ]);
 
         return redirect()

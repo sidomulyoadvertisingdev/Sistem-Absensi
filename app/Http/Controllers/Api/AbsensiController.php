@@ -72,6 +72,12 @@ class AbsensiController extends Controller
             ]
         );
 
+        if ($absensi->locked) {
+            return response()->json([
+                'message' => 'Absensi hari ini sudah ditutup dan tidak bisa diubah.',
+            ], 423);
+        }
+
         /**
          * ===============================
          * FOTO WAJIB

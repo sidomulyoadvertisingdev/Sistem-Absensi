@@ -12,6 +12,12 @@
     </div>
 @endif
 
+@if(session('error'))
+    <div class="alert alert-danger">
+        {{ session('error') }}
+    </div>
+@endif
+
 <div class="card mb-3">
     <div class="card-body">
 
@@ -29,6 +35,9 @@
         <p>
             <strong>Jenis Pengajuan:</strong><br>
             {{ $submission->nama }}
+            @if(optional($submission->type)->is_izin_pulang_awal)
+                <span class="badge bg-info ml-2">Izin Pulang Awal</span>
+            @endif
         </p>
 
         {{-- ALASAN --}}
@@ -55,6 +64,20 @@
             <p>
                 <strong>Catatan Admin:</strong><br>
                 {{ $submission->catatan_admin }}
+            </p>
+        @endif
+
+        @if($submission->approved_at)
+            <p>
+                <strong>Disetujui Pada:</strong><br>
+                {{ $submission->approved_at->translatedFormat('d M Y H:i') }}
+            </p>
+        @endif
+
+        @if($submission->rejected_at)
+            <p>
+                <strong>Ditolak Pada:</strong><br>
+                {{ $submission->rejected_at->translatedFormat('d M Y H:i') }}
             </p>
         @endif
 

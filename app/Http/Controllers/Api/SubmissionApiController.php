@@ -3,29 +3,34 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Absensi;
 use App\Models\Submission;
 use App\Models\SubmissionType;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class SubmissionApiController extends Controller
 {
-    /**
-     * =====================================================
-     * 🔹 LIST JENIS PENGAJUAN AKTIF
-     * =====================================================
-     */
-    public function types()
+    public function types(Request $request)
     {
-        $types = SubmissionType::where('aktif', true)
+        $typesQuery = SubmissionType::where('aktif', true)
             ->orderBy('nama')
-            ->get([
+            ->select([
                 'id',
                 'kode',
                 'nama',
                 'deskripsi',
                 'butuh_alasan',
                 'butuh_lampiran',
+                'is_izin_pulang_awal',
             ]);
+
+        // sidomulyo-app saat ini belum mendukung upload lampiran pada submission.
+        if (strtolower((string) $request->header('X-Client-Type')) === 'mobile') {
+            $typesQuery->where('butuh_lampiran', false);
+        }
+
+        $types = $typesQuery->get();
 
         return response()->json([
             'status' => true,
@@ -33,11 +38,6 @@ class SubmissionApiController extends Controller
         ]);
     }
 
-    /**
-     * =====================================================
-     * 🔹 LIST PENGAJUAN USER LOGIN
-     * =====================================================
-     */
     public function index(Request $request)
     {
         $user = $request->user();
@@ -60,11 +60,6 @@ class SubmissionApiController extends Controller
         ]);
     }
 
-    /**
-     * =====================================================
-     * 🔹 KIRIM PENGAJUAN BARU
-     * =====================================================
-     */
     public function store(Request $request)
     {
         $user = $request->user();
@@ -82,12 +77,10 @@ class SubmissionApiController extends Controller
             'lampiran' => 'nullable|file|max:2048',
         ]);
 
-        // Ambil jenis pengajuan aktif
         $type = SubmissionType::where('id', $request->submission_type_id)
             ->where('aktif', true)
             ->firstOrFail();
 
-        // 🔒 Validasi aturan dari admin
         if ($type->butuh_alasan && empty($request->alasan)) {
             return response()->json([
                 'status' => false,
@@ -102,14 +95,47 @@ class SubmissionApiController extends Controller
             ], 422);
         }
 
-        // 📎 Upload lampiran
+        if ($type->is_izin_pulang_awal) {
+            $today = Carbon::today()->toDateString();
+
+            $absensiToday = Absensi::where('user_id', $user->id)
+                ->where('tanggal', $today)
+                ->first();
+
+            if (!$absensiToday || empty($absensiToday->jam_masuk)) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Pengajuan ini hanya bisa dibuat setelah absen masuk.',
+                ], 422);
+            }
+
+            if (!empty($absensiToday->jam_pulang)) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Absensi hari ini sudah ditutup, pengajuan tidak diperlukan.',
+                ], 422);
+            }
+
+            $pendingToday = Submission::where('user_id', $user->id)
+                ->where('submission_type_id', $type->id)
+                ->whereDate('created_at', $today)
+                ->where('status', 'pending')
+                ->exists();
+
+            if ($pendingToday) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Anda sudah mengajukan izin pulang awal hari ini.',
+                ], 422);
+            }
+        }
+
         $lampiranPath = null;
         if ($request->hasFile('lampiran')) {
             $lampiranPath = $request->file('lampiran')
                 ->store('submission-lampiran', 'public');
         }
 
-        // 💾 Simpan submission (snapshot)
         $submission = Submission::create([
             'user_id' => $user->id,
             'submission_type_id' => $type->id,
@@ -120,10 +146,6 @@ class SubmissionApiController extends Controller
             'status' => 'pending',
         ]);
 
-        /**
-         * 🔥 PENTING
-         * Load relasi supaya frontend TIDAK error
-         */
         $submission->load('type');
 
         return response()->json([
@@ -133,11 +155,6 @@ class SubmissionApiController extends Controller
         ], 201);
     }
 
-    /**
-     * =====================================================
-     * 🔹 DETAIL PENGAJUAN USER LOGIN
-     * =====================================================
-     */
     public function show(Request $request, $id)
     {
         $user = $request->user();

@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Absensi;
 use App\Models\Lembur;
 use App\Models\SalaryDeductionRule;
+use App\Services\EarlyLeaveSalaryService;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
@@ -113,9 +114,20 @@ class LaporanController extends Controller
 
             $gajiPerHari = (float) $salary->getGajiHarian($hariKerjaStandar);
 
-            // Basis lama: gaji harian x jumlah hari kerja masuk.
-            $gajiNormal   = $gajiPerHari * $hariNormal;
-            $gajiTambahan = $gajiPerHari * $hariTambahan;
+            $earlyLeaveSalary = app(EarlyLeaveSalaryService::class)->calculate(
+                user: $user,
+                absensis: $absensis,
+                gajiPerHari: $gajiPerHari,
+                bulan: $bulan,
+                tahun: $tahun,
+                hariKerjaStandar: $hariKerjaStandar
+            );
+
+            $gajiNormal = (float) $earlyLeaveSalary['gaji_normal'];
+            $gajiTambahan = (float) $earlyLeaveSalary['gaji_tambahan'];
+            $hariKerjaSetara = (float) $earlyLeaveSalary['hari_kerja_setara'];
+            $jumlahIzinPulangAwal = (int) $earlyLeaveSalary['jumlah_izin_pulang_awal'];
+            $potonganIzinPulangAwal = (float) $earlyLeaveSalary['potongan_izin_pulang_awal'];
 
             /*
             ================= LEMBUR
@@ -238,6 +250,7 @@ class LaporanController extends Controller
 
                 'hari_hadir'       => $presensi,
                 'hari_kerja_masuk' => $hariKerjaMasuk,
+                'hari_kerja_setara'=> $hariKerjaSetara,
                 'hari_normal'      => $hariNormal,
                 'hari_tambahan'    => $hariTambahan,
                 'hari_telat'       => $hariTelat,
@@ -262,6 +275,8 @@ class LaporanController extends Controller
 
                 'potongan_telat' => $potonganTelat,
                 'potongan_training' => $potonganTraining,
+                'potongan_izin_pulang_awal' => $potonganIzinPulangAwal,
+                'jumlah_izin_pulang_awal' => $jumlahIzinPulangAwal,
                 'total_potongan' => $totalPotongan,
                 'training_aktif' => (bool) ($trainingInfo['active'] ?? false),
                 'training_hari' => (int) ($trainingInfo['overlap_days'] ?? 0),

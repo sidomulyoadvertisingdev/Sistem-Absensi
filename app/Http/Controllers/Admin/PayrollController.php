@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Absensi;
 use App\Models\Lembur;
 use App\Models\SalaryDeductionRule;
+use App\Services\EarlyLeaveSalaryService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -78,12 +79,23 @@ class PayrollController extends Controller
 
         $gajiPerHari = (float) $salary->getGajiHarian($hariKerjaStandar);
 
-        // Basis lama: gaji harian x jumlah hari kerja masuk.
-        $gajiNormal   = $gajiPerHari * $hariNormal;
-        $gajiTambahan = $gajiPerHari * $hariTambahan;
+        $earlyLeaveSalary = app(EarlyLeaveSalaryService::class)->calculate(
+            user: $user,
+            absensis: $absensis,
+            gajiPerHari: $gajiPerHari,
+            bulan: $bulan,
+            tahun: $tahun,
+            hariKerjaStandar: $hariKerjaStandar
+        );
 
-        // kompatibilitas lama
-        $gajiBruto = $gajiPerHari * $hariKerjaMasuk;
+        $gajiNormal = (float) $earlyLeaveSalary['gaji_normal'];
+        $gajiTambahan = (float) $earlyLeaveSalary['gaji_tambahan'];
+        $gajiBruto = (float) $earlyLeaveSalary['gaji_bruto'];
+        $hariKerjaSetara = (float) $earlyLeaveSalary['hari_kerja_setara'];
+        $hariNormalSetara = (float) $earlyLeaveSalary['hari_normal_setara'];
+        $hariTambahanSetara = (float) $earlyLeaveSalary['hari_tambahan_setara'];
+        $jumlahIzinPulangAwal = (int) $earlyLeaveSalary['jumlah_izin_pulang_awal'];
+        $potonganIzinPulangAwal = (float) $earlyLeaveSalary['potongan_izin_pulang_awal'];
 
         /*
         ================= LEMBUR
@@ -199,6 +211,9 @@ class PayrollController extends Controller
             'hariHadir',
             'hariTelat',
             'hariKerjaMasuk',
+            'hariKerjaSetara',
+            'hariNormalSetara',
+            'hariTambahanSetara',
             'hariNormal',
             'hariTambahan',
             'offDay',
@@ -209,6 +224,8 @@ class PayrollController extends Controller
             'gajiTambahan',
             'gajiBruto',
             'gajiDasar',
+            'jumlahIzinPulangAwal',
+            'potonganIzinPulangAwal',
 
             'totalJamLembur',
             'uangLembur',

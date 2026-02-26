@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Lembur;
 use App\Models\Absensi;
 use App\Models\SalaryDeductionRule;
+use App\Services\EarlyLeaveSalaryService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -92,10 +93,23 @@ class GajiController extends Controller
          * ================================================== */
         $gajiPerHari = (float) $salary->getGajiHarian($hariKerjaStandar);
 
-        $gajiNormal   = $gajiPerHari * $hariNormal;
-        $gajiTambahan = $gajiPerHari * $hariTambahan;
+        $earlyLeaveSalary = app(EarlyLeaveSalaryService::class)->calculate(
+            user: $user,
+            absensis: $absensis,
+            gajiPerHari: $gajiPerHari,
+            bulan: $bulan,
+            tahun: $tahun,
+            hariKerjaStandar: $hariKerjaStandar
+        );
 
-        $gajiBruto = $gajiPerHari * $hariKerjaMasuk;
+        $gajiNormal = (float) $earlyLeaveSalary['gaji_normal'];
+        $gajiTambahan = (float) $earlyLeaveSalary['gaji_tambahan'];
+        $gajiBruto = (float) $earlyLeaveSalary['gaji_bruto'];
+        $hariKerjaSetara = (float) $earlyLeaveSalary['hari_kerja_setara'];
+        $hariNormalSetara = (float) $earlyLeaveSalary['hari_normal_setara'];
+        $hariTambahanSetara = (float) $earlyLeaveSalary['hari_tambahan_setara'];
+        $jumlahIzinPulangAwal = (int) $earlyLeaveSalary['jumlah_izin_pulang_awal'];
+        $potonganIzinPulangAwal = (float) $earlyLeaveSalary['potongan_izin_pulang_awal'];
 
         /* ==================================================
          * LEMBUR (SELARAS PAYROLL)
@@ -212,6 +226,9 @@ class GajiController extends Controller
                 'presensi'              => $hariKerjaMasuk,
                 'hari_hadir'            => $hariHadir,
                 'hari_telat'            => $hariTelat,
+                'hari_kerja_setara'     => round($hariKerjaSetara, 2),
+                'hari_normal_setara'    => round($hariNormalSetara, 2),
+                'hari_tambahan_setara'  => round($hariTambahanSetara, 2),
                 'hari_normal'           => $hariNormal,
                 'hari_tambahan'         => $hariTambahan,
                 'off_day'               => $offDay,
@@ -225,6 +242,8 @@ class GajiController extends Controller
                 'gaji_dasar'            => round($gajiBruto),
                 // compat lama
                 'gaji_pokok_fix'        => round($gajiBruto),
+                'izin_pulang_awal_count'=> $jumlahIzinPulangAwal,
+                'potongan_izin_pulang_awal' => round($potonganIzinPulangAwal),
 
                 'tunjangan_umum'        => (float) ($salary->tunjangan_umum ?? 0),
                 'tunjangan_transport'   => (float) ($salary->tunjangan_transport ?? 0),

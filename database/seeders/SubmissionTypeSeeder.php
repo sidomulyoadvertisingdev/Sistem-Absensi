@@ -16,6 +16,7 @@ class SubmissionTypeSeeder extends Seeder
                 'deskripsi' => 'Pengajuan pengunduran diri dari perusahaan',
                 'butuh_alasan' => true,
                 'butuh_lampiran' => false,
+                'is_izin_pulang_awal' => false,
             ],
             [
                 'kode' => 'IZIN',
@@ -23,6 +24,7 @@ class SubmissionTypeSeeder extends Seeder
                 'deskripsi' => 'Izin tidak masuk kerja',
                 'butuh_alasan' => true,
                 'butuh_lampiran' => true,
+                'is_izin_pulang_awal' => false,
             ],
             [
                 'kode' => 'CUTI',
@@ -30,6 +32,7 @@ class SubmissionTypeSeeder extends Seeder
                 'deskripsi' => 'Pengajuan cuti tahunan',
                 'butuh_alasan' => true,
                 'butuh_lampiran' => false,
+                'is_izin_pulang_awal' => false,
             ],
             [
                 'kode' => 'MUTASI',
@@ -37,6 +40,7 @@ class SubmissionTypeSeeder extends Seeder
                 'deskripsi' => 'Pengajuan mutasi kerja',
                 'butuh_alasan' => true,
                 'butuh_lampiran' => false,
+                'is_izin_pulang_awal' => false,
             ],
             [
                 'kode' => 'SP_BANDING',
@@ -44,6 +48,15 @@ class SubmissionTypeSeeder extends Seeder
                 'deskripsi' => 'Pengajuan banding atas Surat Peringatan',
                 'butuh_alasan' => true,
                 'butuh_lampiran' => true,
+                'is_izin_pulang_awal' => false,
+            ],
+            [
+                'kode' => 'IZIN_PULANG_AWAL',
+                'nama' => 'Izin Pulang Sebelum Jam Kerja',
+                'deskripsi' => 'Pengajuan pulang lebih awal dan gaji dihitung proporsional jam kerja',
+                'butuh_alasan' => true,
+                'butuh_lampiran' => false,
+                'is_izin_pulang_awal' => true,
             ],
         ];
 

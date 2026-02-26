@@ -30,6 +30,7 @@
                     <th>Nama</th>
                     <th>Butuh Alasan</th>
                     <th>Butuh Lampiran</th>
+                    <th>Izin Pulang Awal</th>
                     <th>Status</th>
                     <th width="180">Aksi</th>
                 </tr>
@@ -47,6 +48,11 @@
                     <td>
                         <span class="badge {{ $type->butuh_lampiran ? 'bg-success' : 'bg-secondary' }}">
                             {{ $type->butuh_lampiran ? 'Ya' : 'Tidak' }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge {{ $type->is_izin_pulang_awal ? 'bg-info' : 'bg-secondary' }}">
+                            {{ $type->is_izin_pulang_awal ? 'Ya' : 'Tidak' }}
                         </span>
                     </td>
                     <td>
@@ -74,7 +80,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="6" class="text-center text-muted py-4">
+                    <td colspan="7" class="text-center text-muted py-4">
                         Belum ada jenis pengajuan
                     </td>
                 </tr>
