@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\NotificationApiController;
 use App\Http\Controllers\Api\AnnouncementApiController;
 use App\Http\Controllers\Api\EmployeeApiController;
 use App\Http\Controllers\Api\ChatifyController;
+use App\Http\Controllers\Api\AttendanceIntegrationReportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -36,6 +37,10 @@ Route::options('/{any}', function () {
 
 /* ================= PROTECTED ROUTES ================= */
 Route::middleware('auth:sanctum')->group(function () {
+    /* ================= INTEGRATION (SMPO) ================= */
+    Route::match(['GET', 'POST'], '/integrations/attendance/report', [AttendanceIntegrationReportController::class, 'report']);
+    Route::match(['GET', 'POST'], '/attendance/report', [AttendanceIntegrationReportController::class, 'report']);
+    Route::match(['GET', 'POST'], '/attendance/reports', [AttendanceIntegrationReportController::class, 'report']);
 
     /* ================= DASHBOARD ================= */
     Route::get('/dashboard', [DashboardController::class, 'index']);
