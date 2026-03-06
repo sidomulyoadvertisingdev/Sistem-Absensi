@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\AnnouncementApiController;
 use App\Http\Controllers\Api\EmployeeApiController;
 use App\Http\Controllers\Api\ChatifyController;
 use App\Http\Controllers\Api\AttendanceIntegrationReportController;
+use App\Http\Controllers\Api\AttendancePayrollIntegrationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -41,6 +42,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::match(['GET', 'POST'], '/integrations/attendance/report', [AttendanceIntegrationReportController::class, 'report']);
     Route::match(['GET', 'POST'], '/attendance/report', [AttendanceIntegrationReportController::class, 'report']);
     Route::match(['GET', 'POST'], '/attendance/reports', [AttendanceIntegrationReportController::class, 'report']);
+    Route::get('/integrations/attendance/salaries', [AttendancePayrollIntegrationController::class, 'index']);
+    Route::match(['PUT', 'PATCH', 'POST'], '/integrations/attendance/salaries/{user}', [AttendancePayrollIntegrationController::class, 'update'])
+        ->whereNumber('user');
+    Route::match(['POST', 'PUT'], '/integrations/attendance/salaries/{user}/pay', [AttendancePayrollIntegrationController::class, 'pay'])
+        ->whereNumber('user');
+    Route::get('/attendance/salaries', [AttendancePayrollIntegrationController::class, 'index']);
+    Route::match(['PUT', 'PATCH', 'POST'], '/attendance/salaries/{user}', [AttendancePayrollIntegrationController::class, 'update'])
+        ->whereNumber('user');
+    Route::match(['POST', 'PUT'], '/attendance/salaries/{user}/pay', [AttendancePayrollIntegrationController::class, 'pay'])
+        ->whereNumber('user');
 
     /* ================= DASHBOARD ================= */
     Route::get('/dashboard', [DashboardController::class, 'index']);
