@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\{
     AbsensiController,
     LemburController,
     LaporanController,
+    IntegrationTokenController,
     WorkScheduleController,
     UserSalaryController,
     UserController,
@@ -98,6 +99,14 @@ Route::middleware(['web', 'auth', 'is_admin'])
             Route::get('/{user}/edit', [AdminAccessController::class, 'edit'])->name('edit');
             Route::put('/{user}', [AdminAccessController::class, 'update'])->name('update');
             Route::delete('/{user}', [AdminAccessController::class, 'destroy'])->name('destroy');
+        });
+
+        /* ================= API INTEGRATION TOKENS ================= */
+        Route::prefix('integration-tokens')->name('integration-tokens.')->group(function () {
+            Route::get('/', [IntegrationTokenController::class, 'index'])->name('index');
+            Route::get('/docs', [IntegrationTokenController::class, 'docs'])->name('docs');
+            Route::post('/', [IntegrationTokenController::class, 'store'])->name('store');
+            Route::delete('/{token}', [IntegrationTokenController::class, 'destroy'])->name('destroy');
         });
 
        /* ================= ABSENSI ================= */

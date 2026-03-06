@@ -33,6 +33,7 @@ class User extends Authenticatable
     public const ADMIN_PERMISSION_LABELS = [
         'dashboard'          => 'Dashboard',
         'users'              => 'Manajemen User',
+        'integrations'       => 'Integrasi API',
         'karyawan'           => 'Data Karyawan',
         'absensi'            => 'Absensi',
         'lembur'             => 'Lembur',

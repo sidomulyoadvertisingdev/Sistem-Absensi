@@ -18,6 +18,10 @@ class AttendanceIntegrationReportController extends Controller
 {
     public function report(Request $request): JsonResponse
     {
+        if ($response = $this->ensureAuthorized($request, 'integration.attendance.report.read')) {
+            return $response;
+        }
+
         $validated = $request->validate([
             'date_from' => ['nullable', 'date'],
             'date_to' => ['nullable', 'date'],
@@ -140,6 +144,28 @@ class AttendanceIntegrationReportController extends Controller
                 'rows' => $rows,
             ],
         ]);
+    }
+
+    private function ensureAuthorized(Request $request, string $ability): ?JsonResponse
+    {
+        $user = $request->user();
+
+        if (!$user || !$user->isPanelAdmin()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Akses ditolak.',
+            ], 403);
+        }
+
+        $token = $user->currentAccessToken();
+        if ($request->bearerToken() && $token && !$token->can($ability)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Token tidak memiliki izin untuk endpoint ini.',
+            ], 403);
+        }
+
+        return null;
     }
 
     private function resolvePenempatanFilter(Request $request): string

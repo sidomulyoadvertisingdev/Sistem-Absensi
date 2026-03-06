@@ -18,11 +18,8 @@ class AttendancePayrollIntegrationController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        if (!$request->user() || !$request->user()->isPanelAdmin()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Akses ditolak.',
-            ], 403);
+        if ($response = $this->ensureAuthorized($request, 'integration.attendance.payroll.read')) {
+            return $response;
         }
 
         $validated = $request->validate([
@@ -126,11 +123,8 @@ class AttendancePayrollIntegrationController extends Controller
 
     public function update(Request $request, User $user): JsonResponse
     {
-        if (!$request->user() || !$request->user()->isPanelAdmin()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Akses ditolak.',
-            ], 403);
+        if ($response = $this->ensureAuthorized($request, 'integration.attendance.payroll.write')) {
+            return $response;
         }
 
         if (!$user->isKaryawan()) {
@@ -213,11 +207,8 @@ class AttendancePayrollIntegrationController extends Controller
 
     public function pay(Request $request, User $user): JsonResponse
     {
-        if (!$request->user() || !$request->user()->isPanelAdmin()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Akses ditolak.',
-            ], 403);
+        if ($response = $this->ensureAuthorized($request, 'integration.attendance.payroll.write')) {
+            return $response;
         }
 
         if (!$user->isKaryawan()) {
@@ -281,6 +272,28 @@ class AttendancePayrollIntegrationController extends Controller
                 'paid_at' => now()->toDateTimeString(),
             ],
         ]);
+    }
+
+    private function ensureAuthorized(Request $request, string $ability): ?JsonResponse
+    {
+        $user = $request->user();
+
+        if (!$user || !$user->isPanelAdmin()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Akses ditolak.',
+            ], 403);
+        }
+
+        $token = $user->currentAccessToken();
+        if ($request->bearerToken() && $token && !$token->can($ability)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Token tidak memiliki izin untuk endpoint ini.',
+            ], 403);
+        }
+
+        return null;
     }
 
     private function resolvePenempatanFilter(Request $request): string
@@ -454,4 +467,3 @@ class AttendancePayrollIntegrationController extends Controller
         ];
     }
 }
-

@@ -746,6 +746,32 @@
                             </li>
                         @endif
 
+                        {{-- Integrasi API --}}
+                        @if($menuUser->hasAdminPermission('integrations'))
+                            <li class="nav-item has-treeview {{ request()->is('admin/integration-tokens*') ? 'menu-open' : '' }}">
+                                <a href="#" class="nav-link {{ request()->is('admin/integration-tokens*') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-key"></i>
+                                    <p>Integrasi API<i class="right fas fa-angle-left"></i></p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="{{ route('admin.integration-tokens.index') }}"
+                                            class="nav-link {{ request()->routeIs('admin.integration-tokens.index') ? 'active' : '' }}">
+                                            <i class="far fa-circle nav-icon"></i>
+                                            <p>Token API</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('admin.integration-tokens.docs') }}"
+                                            class="nav-link {{ request()->routeIs('admin.integration-tokens.docs') ? 'active' : '' }}">
+                                            <i class="far fa-circle nav-icon"></i>
+                                            <p>Dokumentasi API</p>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        @endif
+
                         {{-- Karyawan --}}
                         @if($menuUser->hasAdminPermission('karyawan'))
                             <li class="nav-item">

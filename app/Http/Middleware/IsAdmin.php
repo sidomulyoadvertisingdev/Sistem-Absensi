@@ -37,6 +37,7 @@ class IsAdmin
 
             'admin.users*' => 'users',
             'admin.admin-access*' => 'manage_admin_access',
+            'admin.integration-tokens*' => 'integrations',
 
             'admin.karyawan*' => 'karyawan',
             'admin.absensi*' => 'absensi',
