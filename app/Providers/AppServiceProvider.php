@@ -30,7 +30,15 @@ class AppServiceProvider extends ServiceProvider
             $client->refreshToken($config['refreshToken']);
             $service = new \Google\Service\Drive($client);
 
-            $adapter = new GoogleDriveAdapter($service, $config['folderId'] ?? null);
+            $folderId = $config['folderId'] ?? null;
+
+            // toleransi: jika folderId berupa URL Drive, ekstrak ID-nya
+            if ($folderId && str_contains($folderId, 'drive.google.com')) {
+                preg_match('/[-\w]{25,}/', $folderId, $matches);
+                $folderId = $matches[0] ?? null;
+            }
+
+            $adapter = new GoogleDriveAdapter($service, $folderId);
 
             return new Filesystem($adapter);
         });
