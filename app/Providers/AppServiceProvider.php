@@ -8,7 +8,6 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use League\Flysystem\Filesystem;
 use Masbug\Flysystem\GoogleDriveAdapter;
 
 class AppServiceProvider extends ServiceProvider
@@ -38,9 +37,7 @@ class AppServiceProvider extends ServiceProvider
                 $folderId = $matches[0] ?? null;
             }
 
-            $adapter = new GoogleDriveAdapter($service, $folderId);
-
-            return new Filesystem($adapter);
+            return new GoogleDriveAdapter($service, $folderId);
         });
 
         RateLimiter::for('chat-send', function (Request $request) {
