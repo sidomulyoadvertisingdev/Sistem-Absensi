@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Http\Request;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Chatify\MessagesController as ChatifyMessagesController;
 use App\Http\Controllers\Admin\{
@@ -23,7 +25,8 @@ use App\Http\Controllers\Admin\{
     SalaryDeductionRuleController,
     SubmissionTypeController,
     PayrollController,
-    AdminAccessController
+    AdminAccessController,
+    WebhookController
 };
 
 /*
@@ -32,6 +35,24 @@ use App\Http\Controllers\Admin\{
 |--------------------------------------------------------------------------
 */
 Route::get('/', fn () => redirect('/admin'));
+
+/*
+|--------------------------------------------------------------------------
+| GOOGLE DRIVE OAUTH CALLBACK
+|--------------------------------------------------------------------------
+*/
+Route::get('/google-drive/callback', function (Request $request) {
+    $code = $request->query('code');
+
+    if (empty($code)) {
+        return response('Authorization code tidak ditemukan.', 400);
+    }
+
+    Cache::put('google_drive_auth_code', $code, now()->addMinutes(5));
+
+    return response('Authorization berhasil! Anda bisa menutup browser ini.', 200)
+        ->header('Content-Type', 'text/html');
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -107,6 +128,14 @@ Route::middleware(['web', 'auth', 'is_admin'])
             Route::get('/docs', [IntegrationTokenController::class, 'docs'])->name('docs');
             Route::post('/', [IntegrationTokenController::class, 'store'])->name('store');
             Route::delete('/{token}', [IntegrationTokenController::class, 'destroy'])->name('destroy');
+        });
+
+        /* ================= OUTBOUND WEBHOOKS ================= */
+        Route::prefix('integration-webhooks')->name('integration-webhooks.')->group(function () {
+            Route::get('/', [WebhookController::class, 'index'])->name('index');
+            Route::get('/create', [WebhookController::class, 'create'])->name('create');
+            Route::post('/', [WebhookController::class, 'store'])->name('store');
+            Route::delete('/{webhook}', [WebhookController::class, 'destroy'])->name('destroy');
         });
 
        /* ================= ABSENSI ================= */

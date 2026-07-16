@@ -98,4 +98,47 @@ Content-Type: application/json</code></pre>
             </div>
         </div>
     @endforeach
+
+    <div class="card mb-4 border-primary">
+        <div class="card-header">
+            <h3 class="card-title mb-0">Webhook Keluar (Sistem → Aplikasi Eksternal)</h3>
+        </div>
+        <div class="card-body">
+            <p>Sistem akan mengirim <strong>POST JSON</strong> ke URL webhook yang kamu daftarkan
+                (menu <em>Webhook (Notifikasi)</em>) setiap kali ada user yang melakukan absen di aplikasi.</p>
+
+            <div class="mb-3">
+                <div class="font-weight-bold mb-1">Header</div>
+                <pre class="p-3 rounded border bg-light mb-0"><code>Content-Type: application/json
+X-Integration-Signature: sha256=&lt;HMAC_SHA256(body, secret)&gt;
+User-Agent: SidoMulyo-Webhook</code></pre>
+            </div>
+
+            <div class="mb-3">
+                <div class="font-weight-bold mb-1">Contoh Body</div>
+                <pre class="p-3 rounded border bg-light mb-0"><code>{
+  "event": "attendance.recorded",
+  "occurred_at": "2026-07-16T08:05:00+00:00",
+  "data": {
+    "user_id": 7,
+    "nik": "KRY0001",
+    "name": "Budi Santoso",
+    "jabatan": "Kasir",
+    "penempatan": "Outlet A",
+    "tanggal": "2026-03-01",
+    "aksi": "masuk",
+    "jam_masuk": "08:05:00",
+    "istirahat_mulai": null,
+    "istirahat_selesai": null,
+    "jam_pulang": null,
+    "status": "hadir",
+    "menit_terlambat": 0
+  }
+}</code></pre>
+            </div>
+
+            <p class="mb-0">Verifikasi signature di sisi penerima dengan <code>hash_hmac('sha256', $rawBody, $secret)</code>
+                dan bandingkan dengan header <code>X-Integration-Signature</code> (tanpa prefix <code>sha256=</code>).</p>
+        </div>
+    </div>
 @endsection

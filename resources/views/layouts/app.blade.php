@@ -768,6 +768,13 @@
                                             <p>Dokumentasi API</p>
                                         </a>
                                     </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('admin.integration-webhooks.index') }}"
+                                            class="nav-link {{ request()->routeIs('admin.integration-webhooks.*') ? 'active' : '' }}">
+                                            <i class="far fa-circle nav-icon"></i>
+                                            <p>Webhook (Notifikasi)</p>
+                                        </a>
+                                    </li>
                                 </ul>
                             </li>
                         @endif

@@ -22,6 +22,7 @@ class Absensi extends Model
         'istirahat_selesai',
         'jam_pulang',
         'foto',
+        'foto_backed_up',
         'status',
         'terlambat',
         'menit_terlambat',

@@ -135,6 +135,7 @@ class IntegrationTokenController extends Controller
     {
         return [
             'integration.attendance.report.read' => 'Baca laporan absensi',
+            'integration.attendance.submit' => 'Kirim absensi karyawan (write)',
             'integration.attendance.payroll.read' => 'Baca data payroll',
             'integration.attendance.payroll.write' => 'Ubah payroll dan proses bayar',
         ];
@@ -338,6 +339,47 @@ CURL,
     "employee_id": 7,
     "period": "2026-03",
     "paid_at": "2026-03-06 15:10:00"
+  }
+}
+JSON,
+            ],
+            [
+                'title' => 'Kirim Absensi Karyawan',
+                'method' => 'POST',
+                'url' => $baseUrl . '/api/integrations/attendance/submit',
+                'ability' => 'integration.attendance.submit',
+                'description' => 'Mencatat satu atau banyak absensi karyawan (masuk/istirahat/pulang) berdasarkan user_id. Foto bersifat opsional.',
+                'params' => [
+                    ['name' => 'user_id', 'type' => 'integer', 'required' => true, 'description' => 'ID karyawan (users.id) yang dilakukan absen.'],
+                    ['name' => 'aksi', 'type' => 'enum', 'required' => true, 'description' => 'masuk, istirahat_mulai, istirahat_selesai, atau pulang.'],
+                    ['name' => 'jam', 'type' => 'string', 'required' => true, 'description' => 'Waktu aksi, format HH:MM atau YYYY-MM-DD HH:MM:SS.'],
+                    ['name' => 'tanggal', 'type' => 'date', 'required' => false, 'description' => 'Tanggal absensi (Y-m-d). Default hari ini.'],
+                    ['name' => 'foto', 'type' => 'file', 'required' => false, 'description' => 'Foto absensi (jpg/png, maks 2MB). Opsional untuk integrasi.'],
+                    ['name' => 'records', 'type' => 'array', 'required' => false, 'description' => 'Jika diisi (array of object), request diproses sebagai batch. Field tiap item sama dengan parameter di atas.'],
+                ],
+                'curl' => <<<CURL
+curl --request POST "{$baseUrl}/api/integrations/attendance/submit" \
+  --header "Authorization: Bearer {TOKEN}" \
+  --header "Accept: application/json" \
+  --header "Content-Type: application/json" \
+  --data "{
+    \"user_id\": 7,
+    \"aksi\": \"masuk\",
+    \"jam\": \"08:05:00\",
+    \"tanggal\": \"2026-03-01\"
+  }"
+CURL,
+                'response' => <<<'JSON'
+{
+  "status": "ok",
+  "message": "Absensi berhasil disimpan.",
+  "data": {
+    "id": 123,
+    "user_id": 7,
+    "tanggal": "2026-03-01",
+    "jam_masuk": "08:05:00",
+    "status": "terlambat",
+    "menit_terlambat": 5
   }
 }
 JSON,
