@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Services\GoogleDriveAdapter as AppGoogleDriveAdapter;
+use Illuminate\Filesystem\FilesystemAdapter;
+use League\Flysystem\Filesystem;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -37,7 +39,9 @@ class AppServiceProvider extends ServiceProvider
                 $folderId = $matches[0] ?? null;
             }
 
-            return new AppGoogleDriveAdapter($service, $folderId);
+            return new FilesystemAdapter(
+                new Filesystem(new AppGoogleDriveAdapter($service, $folderId))
+            );
         });
 
         RateLimiter::for('chat-send', function (Request $request) {
