@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class BackupAbsensiFoto extends Command
 {
@@ -37,9 +38,10 @@ class BackupAbsensiFoto extends Command
             ->get();
 
         foreach ($records as $absensi) {
-            $localPath = Storage::disk('public')->path($absensi->foto);
+            $relativePath = Str::after($absensi->foto, '/storage/');
+            $relativePath = ltrim($relativePath, '/');
 
-            if (! file_exists($localPath)) {
+            if (! Storage::disk('public')->exists($relativePath)) {
                 $this->warn("File tidak ditemukan: {$absensi->foto} (ID: {$absensi->id})");
                 $failCount++;
                 continue;
@@ -50,7 +52,13 @@ class BackupAbsensiFoto extends Command
             $googleDrivePath = "Foto-Absensi/{$monthFolder}/{$filename}";
 
             try {
-                $fileContents = file_get_contents($localPath);
+                $fileContents = Storage::disk('public')->get($relativePath);
+
+                if ($fileContents === null) {
+                    $this->warn("Gagal membaca file: {$absensi->foto} (ID: {$absensi->id})");
+                    $failCount++;
+                    continue;
+                }
 
                 Storage::disk('google')->put($googleDrivePath, $fileContents);
 
