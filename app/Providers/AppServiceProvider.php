@@ -39,8 +39,12 @@ class AppServiceProvider extends ServiceProvider
                 $folderId = $matches[0] ?? null;
             }
 
+            $adapter = new AppGoogleDriveAdapter($service, $folderId);
+
             return new FilesystemAdapter(
-                new Filesystem(new AppGoogleDriveAdapter($service, $folderId))
+                new Filesystem($adapter),
+                $adapter,
+                $config
             );
         });
 
