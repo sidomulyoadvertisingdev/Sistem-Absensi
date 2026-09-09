@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Job Todo')
+@section('title', 'Tugas Kerja')
 
 @section('content')
 <div class="container-fluid">
@@ -8,12 +8,12 @@
     {{-- ================= HEADER ================= --}}
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
-            <h1 class="mb-0">Job Todo</h1>
-            <small class="text-muted">Manajemen job untuk karyawan</small>
+            <h1 class="mb-0">Tugas Kerja</h1>
+            <small class="text-muted">Manajemen tugas untuk karyawan</small>
         </div>
 
         <a href="{{ route('admin.job-todos.create') }}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Buat Job Todo
+            <i class="fas fa-plus"></i> Buat Tugas
         </a>
     </div>
 
@@ -58,11 +58,11 @@
                         <td class="text-center">
                             @if($todo->broadcast)
                                 <span class="badge badge-info">
-                                    <i class="fas fa-bullhorn"></i> Broadcast
+                                    <i class="fas fa-bullhorn"></i> Siaran
                                 </span>
                             @else
                                 <span class="badge badge-secondary">
-                                    <i class="fas fa-user"></i> Direct
+                                    <i class="fas fa-user"></i> Langsung
                                 </span>
                             @endif
                         </td>
@@ -77,25 +77,25 @@
                             @switch($todo->status)
                                 @case('open')
                                     <span class="badge badge-success">
-                                        <i class="fas fa-unlock"></i> Open
+                                        <i class="fas fa-unlock"></i> Terbuka
                                     </span>
                                     @break
 
                                 @case('in_progress')
                                     <span class="badge badge-warning">
-                                        <i class="fas fa-spinner fa-spin"></i> In Progress
+                                        <i class="fas fa-spinner fa-spin"></i> Dikerjakan
                                     </span>
                                     @break
 
                                 @case('done')
                                     <span class="badge badge-primary">
-                                        <i class="fas fa-check-circle"></i> Done
+                                        <i class="fas fa-check-circle"></i> Selesai
                                     </span>
                                     @break
 
                                 @case('closed')
                                     <span class="badge badge-danger">
-                                        <i class="fas fa-lock"></i> Closed
+                                        <i class="fas fa-lock"></i> Ditutup
                                     </span>
                                     @break
                             @endswitch
@@ -118,21 +118,32 @@
                                 <form action="{{ route('admin.job-todos.close', $todo->id) }}"
                                       method="POST"
                                       class="d-inline"
-                                      onsubmit="return confirm('Tutup job ini?')">
+                                    onsubmit="return confirm('Tutup tugas ini?')">
                                     @csrf
                                     @method('PUT')
-                                    <button class="btn btn-danger btn-sm" title="Tutup Job">
+                                    <button class="btn btn-danger btn-sm" title="Tutup Tugas">
                                         <i class="fas fa-lock"></i>
                                     </button>
                                 </form>
                             @endif
+
+                            <form action="{{ route('admin.job-todos.destroy', $todo->id) }}"
+                                  method="POST"
+                                  class="d-inline"
+                                  onsubmit="return confirm('Hapus tugas \"{{ $todo->title }}\"? Semua status karyawan ikut terhapus.')">
+                                @csrf
+                                @method('DELETE')
+                                <button class="btn btn-danger btn-sm" title="Hapus Tugas">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
                         </td>
                     </tr>
                 @empty
                     <tr>
                         <td colspan="7" class="text-center text-muted py-4">
                             <i class="fas fa-clipboard-list fa-2x mb-2"></i><br>
-                            Belum ada job todo
+                            Belum ada tugas kerja
                         </td>
                     </tr>
                 @endforelse

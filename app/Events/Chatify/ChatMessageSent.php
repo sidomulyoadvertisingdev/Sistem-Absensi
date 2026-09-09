@@ -37,4 +37,13 @@ class ChatMessageSent implements ShouldBroadcast
     {
         return 'chatify.message.sent';
     }
+
+    /**
+     * Kirim isi pesan datar (sesuai bentuk ChatMessage di aplikasi),
+     * bukan objek event terbungkus {payload, roomType, ...}.
+     */
+    public function broadcastWith(): array
+    {
+        return $this->payload;
+    }
 }

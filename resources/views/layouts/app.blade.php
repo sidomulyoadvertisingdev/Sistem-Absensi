@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title', config('app.name', 'Admin Panel'))</title>
+    <title>@yield('title', config('app.name', 'Panel Admin'))</title>
 
     <script>
         (function () {
@@ -25,7 +25,7 @@
 
     <!-- Fonts -->
     <link rel="dns-prefetch" href="//fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=Nunito" rel="stylesheet">
+    <link href="https://fonts.bunny.net/css?family=Inter:400,500,600,700,800" rel="stylesheet">
 
     <!-- AdminLTE -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
@@ -35,28 +35,29 @@
 
     <style>
         :root {
-            --accent: #1f5d96;
-            --accent-soft: #e8f0fb;
-            --accent-strong: #124978;
-            --ok: #188754;
-            --warning: #db8a13;
-            --danger: #cd5f3d;
+            --accent: #3f6fea;
+            --accent-soft: #edf4ff;
+            --accent-strong: #244fc2;
+            --ok: #2b9a67;
+            --warning: #d99522;
+            --danger: #d45d45;
         }
 
         :root[data-theme='light'] {
-            --bg: #eef2f7;
+            --bg: #f2f5f9;
             --surface: #ffffff;
-            --surface-2: #f8fafd;
-            --text: #1e2a3d;
-            --text-muted: #62718f;
-            --border: #dbe4f1;
-            --sidebar-bg: #132b45;
-            --sidebar-text: #c2d4eb;
-            --sidebar-hover: rgba(255, 255, 255, .09);
-            --sidebar-active-bg: linear-gradient(120deg, #2b6ea8 0%, #236f73 100%);
+            --surface-2: #f7f9fc;
+            --text: #20293a;
+            --text-muted: #64748b;
+            --border: #e4e9f1;
+            --sidebar-bg: #141821;
+            --sidebar-bg-2: #11151d;
+            --sidebar-text: #aeb7c6;
+            --sidebar-hover: rgba(255, 255, 255, .08);
+            --sidebar-active-bg: rgba(255, 255, 255, .12);
             --sidebar-active-text: #ffffff;
             --navbar-bg: #ffffff;
-            --shadow: 0 10px 24px rgba(24, 44, 79, .08);
+            --shadow: 0 14px 34px rgba(22, 34, 51, .08);
         }
 
         :root[data-theme='dark'] {
@@ -67,17 +68,21 @@
             --text-muted: #9eb0cc;
             --border: #2f3c51;
             --sidebar-bg: #0d1622;
+            --sidebar-bg-2: #101a28;
             --sidebar-text: #a5b6d2;
             --sidebar-hover: rgba(255, 255, 255, .07);
-            --sidebar-active-bg: linear-gradient(120deg, #355f8f 0%, #2f7b7f 100%);
+            --sidebar-active-bg: rgba(255, 255, 255, .11);
             --sidebar-active-text: #ffffff;
             --navbar-bg: #1a2433;
             --shadow: 0 12px 28px rgba(0, 0, 0, .35);
         }
 
+        html,
         body {
             background: var(--bg) !important;
             color: var(--text);
+            font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            font-size: 14px;
         }
 
         h1, h2, h3, h4, h5, h6 {
@@ -99,11 +104,17 @@
             background: var(--bg) !important;
         }
 
+        .content-wrapper .content {
+            padding: 22px !important;
+        }
+
         .main-header.navbar {
             background: var(--navbar-bg) !important;
             border-bottom: 1px solid var(--border);
-            box-shadow: var(--shadow);
+            box-shadow: 0 8px 24px rgba(22, 34, 51, .05);
             min-height: 62px;
+            padding-left: 1rem;
+            padding-right: 1rem;
         }
 
         .main-header .nav-link,
@@ -120,14 +131,15 @@
 
         .main-sidebar.sidebar-dark-primary {
             background: var(--sidebar-bg) !important;
+            background-image: linear-gradient(180deg, var(--sidebar-bg) 0%, var(--sidebar-bg-2) 72%, #17245d 140%) !important;
         }
 
         .main-sidebar .brand-link {
             border-bottom: 1px solid rgba(255, 255, 255, .08);
             background: transparent !important;
             min-height: 72px;
-            padding: .55rem .75rem;
-            margin-bottom: .25rem;
+            padding: .75rem .75rem;
+            margin-bottom: .55rem;
         }
 
         .main-sidebar .sidebar {
@@ -143,10 +155,13 @@
             text-decoration: none !important;
         }
 
-        .sidebar-brand-stack img {
-            width: auto;
-            height: 34px;
-            object-fit: contain;
+        .sidebar-brand-stack .app-logo-text {
+            font-size: 1.45rem;
+            font-weight: 800;
+            letter-spacing: .3em;
+            padding-left: .3em;
+            color: #fff;
+            line-height: 1;
         }
 
         .sidebar-brand-stack .app-version {
@@ -154,6 +169,59 @@
             font-weight: 700;
             color: rgba(255, 255, 255, .72);
             letter-spacing: .25px;
+        }
+
+        body.sidebar-collapse .sidebar-brand-stack {
+            padding-left: .35rem;
+            padding-right: .35rem;
+        }
+
+        body.sidebar-collapse .sidebar-brand-stack .app-logo-text {
+            font-size: 1.05rem;
+            letter-spacing: .12em;
+            padding-left: .12em;
+        }
+
+        body.sidebar-collapse .sidebar-brand-stack .app-version {
+            display: none;
+        }
+
+        body.sidebar-collapse .main-sidebar .nav-link {
+            justify-content: center;
+            margin-left: 10px;
+            margin-right: 10px;
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        body.sidebar-collapse .main-sidebar .nav-link .nav-icon {
+            margin-right: 0;
+        }
+
+        /* Sembunyikan teks label saat sidebar di-collapse agar tidak meluber/terpotong */
+        body.sidebar-collapse .main-sidebar .nav-link > p:not(.right),
+        body.sidebar-collapse .main-sidebar .nav-link .right {
+            display: none;
+        }
+
+        /* Ikon tetap rata tengah saat collapse */
+        body.sidebar-collapse .main-sidebar .nav-link {
+            padding-left: 0;
+            padding-right: 0;
+            justify-content: center;
+        }
+
+        body.sidebar-collapse .main-sidebar .nav-link .nav-icon {
+            margin-right: 0;
+        }
+
+        /* ⛔ Nonaktifkan hover-otomatis submenu saat sidebar collapse */
+        body.sidebar-collapse.sidebar-mini .main-sidebar .nav-sidebar .nav-item.has-treeview:hover .nav-treeview,
+        body.sidebar-collapse .main-sidebar .nav-sidebar .nav-item.has-treeview:hover > .nav-treeview {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
         }
 
         .navbar-noti-btn {
@@ -237,11 +305,57 @@
         .main-sidebar .nav-link {
             color: var(--sidebar-text) !important;
             border-radius: 10px;
-            margin: 3px 10px;
+            margin: 4px 10px;
+            min-height: 42px;
+            display: flex;
+            align-items: center;
+            font-weight: 600;
+        }
+
+        .main-sidebar .nav-link .nav-icon {
+            font-size: .98rem;
+            margin-right: .62rem;
+            opacity: .86;
+            text-align: center;
+            width: 1.35rem;
+        }
+
+        .main-sidebar .nav-treeview .nav-link {
+            font-size: .88rem;
+            margin-left: 18px;
+            min-height: 36px;
+            padding-left: .8rem;
         }
 
         .main-sidebar .nav-sidebar > .nav-item:first-child {
             margin-top: .35rem;
+        }
+
+        .main-sidebar .nav-header {
+            color: rgba(255, 255, 255, .42) !important;
+            font-size: .68rem;
+            font-weight: 700;
+            letter-spacing: .13em;
+            text-transform: uppercase;
+            padding: 1.05rem 1.2rem .3rem;
+            margin: .35rem .1rem 0;
+            border-top: 1px solid rgba(255, 255, 255, .07);
+        }
+
+        .main-sidebar .nav-sidebar > .nav-header:first-child {
+            border-top: 0;
+            margin-top: 0;
+            padding-top: .25rem;
+        }
+
+        body.sidebar-collapse .main-sidebar .nav-header {
+            display: none;
+        }
+
+        .main-sidebar .nav-divider-top {
+            border-top: 1px solid rgba(255, 255, 255, .1);
+            margin-top: .4rem;
+            padding-top: .15rem;
         }
 
         .main-sidebar .nav-link:hover {
@@ -252,7 +366,12 @@
         .main-sidebar .nav-link.active {
             background: var(--sidebar-active-bg) !important;
             color: var(--sidebar-active-text) !important;
-            box-shadow: 0 6px 14px rgba(24, 52, 86, .22);
+            box-shadow: inset 3px 0 0 #6f8eff;
+        }
+
+        .main-sidebar .nav-link.active .nav-icon,
+        .main-sidebar .nav-link:hover .nav-icon {
+            opacity: 1;
         }
 
         .card,
@@ -263,12 +382,19 @@
             color: var(--text);
             border: 1px solid var(--border);
             box-shadow: var(--shadow);
+            border-radius: 14px;
         }
 
         .card-header,
         .card-footer {
             background: var(--surface-2);
             border-color: var(--border);
+            padding: 1rem 1.15rem;
+        }
+
+        .card-title {
+            font-weight: 800;
+            margin-bottom: 0;
         }
 
         .table,
@@ -277,6 +403,16 @@
         .table thead th {
             color: var(--text);
             border-color: var(--border);
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table td,
+        .table th {
+            padding: .86rem .95rem;
+            vertical-align: middle;
         }
 
         .table-striped tbody tr:nth-of-type(odd) {
@@ -294,6 +430,8 @@
             background: var(--surface);
             border-color: var(--border);
             color: var(--text);
+            border-radius: 10px;
+            min-height: 40px;
         }
 
         .form-control:focus,
@@ -325,6 +463,7 @@
             font-weight: 600;
             border-width: 1px;
             box-shadow: none !important;
+            min-height: 36px;
         }
 
         .btn-primary {
@@ -408,6 +547,24 @@
         .badge-secondary { background: #718097; color: #fff; }
         .badge-dark { background: #374558; color: #fff; }
 
+        .bg-primary,
+        .bg-info,
+        .bg-success,
+        .bg-warning,
+        .bg-danger,
+        .bg-secondary,
+        .bg-dark {
+            color: #fff !important;
+        }
+
+        .bg-primary { background-color: #3f6fea !important; }
+        .bg-info { background-color: #249393 !important; }
+        .bg-success { background-color: #2b9a67 !important; }
+        .bg-warning { background-color: #e0a025 !important; }
+        .bg-danger { background-color: #d45d45 !important; }
+        .bg-secondary { background-color: #718097 !important; }
+        .bg-dark { background-color: #263449 !important; }
+
         .table thead.thead-dark th {
             background: #1d4f91;
             border-color: #315f98;
@@ -453,36 +610,143 @@
             color: #fff;
         }
 
-        .small-box {
-            border-radius: 14px;
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) > .d-flex:first-child,
+        .content-wrapper .content > .d-flex:first-child,
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) > h1:first-child,
+        .content-wrapper .content > h1:first-child,
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) > h2:first-child,
+        .content-wrapper .content > h2:first-child,
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) > h4:first-child,
+        .content-wrapper .content > h4:first-child {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            margin-bottom: 22px !important;
+            padding: 20px 22px;
+        }
+
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) > .d-flex:first-child h1,
+        .content-wrapper .content > .d-flex:first-child h1,
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) > .d-flex:first-child h4,
+        .content-wrapper .content > .d-flex:first-child h4,
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) > h1:first-child,
+        .content-wrapper .content > h1:first-child,
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) > h2:first-child,
+        .content-wrapper .content > h2:first-child,
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) > h4:first-child,
+        .content-wrapper .content > h4:first-child {
+            color: var(--text);
+            font-size: 1.45rem;
+            font-weight: 800;
+            line-height: 1.25;
+        }
+
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) > .d-flex:first-child .btn-group,
+        .content-wrapper .content > .d-flex:first-child .btn-group,
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) > .d-flex:first-child > a,
+        .content-wrapper .content > .d-flex:first-child > a,
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) > .d-flex:first-child > div:last-child,
+        .content-wrapper .content > .d-flex:first-child > div:last-child {
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) > .card,
+        .content-wrapper .content > .card,
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) > form > .card,
+        .content-wrapper .content > form > .card,
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) .card.shadow-sm,
+        .content-wrapper .content > .row .card {
+            border-radius: 16px;
             overflow: hidden;
-            margin-bottom: 1rem;
         }
 
-        .small-box .small-box-footer {
-            background: rgba(255, 255, 255, .16);
-            color: rgba(255, 255, 255, .95);
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) .card-header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
         }
 
-        .small-box .small-box-footer:hover {
-            background: rgba(255, 255, 255, .24);
-            color: #fff;
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) .card-header h3,
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) .card-header h5,
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) .card-header h6,
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) .card-title {
+            color: var(--text);
+            font-size: 1.02rem;
+            font-weight: 800;
         }
 
-        .small-box.bg-primary { background: linear-gradient(135deg, #3d66a4 0%, #30558b 100%); }
-        .small-box.bg-info { background: linear-gradient(135deg, #2f6fb3 0%, #23588f 100%); }
-        .small-box.bg-success { background: linear-gradient(135deg, #2f8f5f 0%, #23734b 100%); }
-        .small-box.bg-warning { background: linear-gradient(135deg, #d7952b 0%, #b6781a 100%); }
-        .small-box.bg-danger { background: linear-gradient(135deg, #cd5f3d 0%, #af4d31 100%); }
-        .small-box.bg-secondary { background: linear-gradient(135deg, #6b7a91 0%, #56657d 100%); }
-        .small-box.bg-dark { background: linear-gradient(135deg, #334155 0%, #1f2b3d 100%); }
-        .small-box.bg-teal { background: linear-gradient(135deg, #217f86 0%, #16666c 100%); }
-
-        .small-box[class*='bg-'],
-        .small-box[class*='bg-'] p,
-        .small-box[class*='bg-'] h3 {
-            color: #fff !important;
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) .table {
+            font-size: .92rem;
         }
+
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) .table thead th {
+            background: var(--surface-2) !important;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: .78rem;
+            font-weight: 800;
+            letter-spacing: 0;
+        }
+
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) .table tbody td {
+            border-color: var(--border);
+            color: var(--text);
+        }
+
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) .form-group label,
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) label {
+            color: var(--text);
+            font-weight: 700;
+        }
+
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) .small-box {
+            background: var(--surface) !important;
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--accent);
+            border-radius: 14px;
+            box-shadow: var(--shadow);
+            color: var(--text) !important;
+            min-height: 128px;
+            overflow: hidden;
+        }
+
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) .small-box .inner {
+            padding: 18px;
+        }
+
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) .small-box h3 {
+            color: var(--text) !important;
+            font-size: 1.85rem;
+            font-weight: 800;
+        }
+
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) .small-box p {
+            color: var(--text-muted) !important;
+            font-weight: 700;
+            margin-bottom: 0;
+        }
+
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) .small-box .icon {
+            color: var(--text-muted);
+            opacity: .16;
+        }
+
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) .small-box .small-box-footer {
+            background: var(--surface-2);
+            border-top: 1px solid var(--border);
+            color: var(--accent-strong) !important;
+            font-weight: 700;
+        }
+
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) .small-box.bg-info,
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) .small-box.bg-primary { border-left-color: #3f6fea; }
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) .small-box.bg-success { border-left-color: #2b9a67; }
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) .small-box.bg-warning { border-left-color: #e0a025; }
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) .small-box.bg-danger { border-left-color: #d45d45; }
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) .small-box.bg-secondary,
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) .small-box.bg-dark { border-left-color: #718097; }
+        .content-wrapper .container-fluid:not(.dashboard-pro):not(.user-management-modern) .small-box.bg-teal { border-left-color: #249393; }
 
         :root[data-theme='dark'] .btn-light {
             background: #243144;
@@ -571,7 +835,7 @@
                                 ->get()
                                 ->map(function ($item) {
                                     return [
-                                        'title' => 'Submission Baru',
+                                        'title' => 'Pengajuan Baru',
                                         'meta' => ($item->user->name ?? 'Karyawan') . ' mengirim pengajuan',
                                         'time' => optional($item->created_at)->diffForHumans(),
                                         'url' => route('admin.submission.index'),
@@ -618,7 +882,7 @@
                         <li class="nav-item mr-2 d-flex align-items-center">
                             <a class="navbar-noti-btn"
                                 href="{{ route('chatify') }}"
-                                title="Chat">
+                                title="Percakapan">
                                 <i class="fas fa-comments"></i>
                             </a>
                         </li>
@@ -684,7 +948,7 @@
                         <div class="dropdown-menu dropdown-menu-right">
                             <a class="dropdown-item" href="{{ route('logout') }}"
                                 onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                                <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                                <i class="fas fa-sign-out-alt mr-2"></i> Keluar
                             </a>
                         </div>
                     </li>
@@ -695,7 +959,7 @@
         {{-- ================= SIDEBAR ================= --}}
         <aside class="main-sidebar sidebar-dark-primary elevation-4">
             <a href="{{ route('admin.dashboard') }}" class="brand-link text-center sidebar-brand-stack">
-                <img src="{{ asset('images/logosm.svg') }}" alt="Logo SM">
+                <span class="app-logo-text">SIHR</span>
                 <span class="app-version">v{{ config('app.app_version', '1.0.0') }}</span>
             </a>
 
@@ -703,217 +967,252 @@
                 <nav class="mt-2">
                     <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu"
                         data-accordion="false">
-                        @php($menuUser = Auth::user())
+                        @php
+                            $menuUser = Auth::user();
 
-                        {{-- Dashboard --}}
+                            $showKepegawaian = $menuUser->hasAdminPermission('karyawan')
+                                || $menuUser->hasAdminPermission('jobs')
+                                || $menuUser->hasAdminPermission('job_todos');
+
+                            $showKehadiran = $menuUser->hasAdminPermission('absensi')
+                                || $menuUser->hasAdminPermission('lembur')
+                                || $menuUser->hasAdminPermission('jadwal')
+                                || $menuUser->hasAdminPermission('submission')
+                                || $menuUser->hasAdminPermission('submission_types')
+                                || $menuUser->hasAdminPermission('announcements');
+
+                            $showKeuangan = $menuUser->hasAdminPermission('gaji')
+                                || $menuUser->hasAdminPermission('potongan')
+                                || $menuUser->hasAdminPermission('laporan');
+
+                            $showKedisiplinan = $menuUser->hasAdminPermission('pelanggaran');
+
+                            $showPengaturan = $menuUser->hasAdminPermission('users')
+                                || $menuUser->hasAdminPermission('manage_admin_access')
+                                || $menuUser->hasAdminPermission('integrations');
+                        @endphp
+
+                        {{-- Dasbor --}}
                         @if($menuUser->hasAdminPermission('dashboard'))
                             <li class="nav-item">
                                 <a href="{{ route('admin.dashboard') }}"
                                     class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
                                     <i class="nav-icon fas fa-home"></i>
-                                    <p>Dashboard</p>
+                                    <p>Dasbor</p>
                                 </a>
                             </li>
                         @endif
 
-                        {{-- Manajemen User --}}
-                        @if($menuUser->hasAdminPermission('users') || $menuUser->hasAdminPermission('manage_admin_access'))
-                            <li class="nav-item has-treeview {{ request()->is('admin/users*') || request()->is('admin/admin-access*') ? 'menu-open' : '' }}">
-                                <a href="#" class="nav-link {{ request()->is('admin/users*') || request()->is('admin/admin-access*') ? 'active' : '' }}">
-                                    <i class="nav-icon fas fa-user-cog"></i>
-                                    <p>Manajemen User<i class="right fas fa-angle-left"></i></p>
-                                </a>
-                                <ul class="nav nav-treeview">
-                                    @if($menuUser->hasAdminPermission('users'))
+                        {{-- ============================ KEPEGAWAIAN ============================ --}}
+                        @if($showKepegawaian)
+                            <li class="nav-header">Kepegawaian</li>
+
+                            {{-- Karyawan --}}
+                            @if($menuUser->hasAdminPermission('karyawan'))
+                                <li class="nav-item">
+                                    <a href="{{ route('admin.karyawan.index') }}"
+                                        class="nav-link {{ request()->routeIs('admin.karyawan*') ? 'active' : '' }}">
+                                        <i class="nav-icon fas fa-users"></i>
+                                        <p>Karyawan</p>
+                                    </a>
+                                </li>
+                            @endif
+
+                            {{-- Tugas Kerja --}}
+                            @if($menuUser->hasAdminPermission('job_todos'))
+                                <li class="nav-item">
+                                    <a href="{{ route('admin.job-todos.index') }}"
+                                        class="nav-link {{ request()->routeIs('admin.job-todos*') ? 'active' : '' }}">
+                                        <i class="nav-icon fas fa-tasks"></i>
+                                        <p>Tugas Kerja</p>
+                                    </a>
+                                </li>
+                            @endif
+
+                            {{-- Lowongan & Pelamar --}}
+                            @if($menuUser->hasAdminPermission('jobs'))
+                                <li class="nav-item has-treeview {{ request()->is('admin/jobs*') ? 'menu-open' : '' }}">
+                                    <a href="#" class="nav-link {{ request()->is('admin/jobs*') ? 'active' : '' }}">
+                                        <i class="nav-icon fas fa-briefcase"></i>
+                                        <p>Lowongan &amp; Pelamar<i class="right fas fa-angle-left"></i></p>
+                                    </a>
+                                    <ul class="nav nav-treeview">
                                         <li class="nav-item">
-                                            <a href="{{ route('admin.users.index') }}"
-                                                class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                                            <a href="{{ route('admin.jobs.index') }}" class="nav-link">
                                                 <i class="far fa-circle nav-icon"></i>
-                                                <p>Daftar User</p>
+                                                <p>Data Lowongan</p>
                                             </a>
                                         </li>
-                                    @endif
-                                    @if($menuUser->hasAdminPermission('manage_admin_access'))
                                         <li class="nav-item">
-                                            <a href="{{ route('admin.admin-access.index') }}"
-                                                class="nav-link {{ request()->routeIs('admin.admin-access.*') ? 'active' : '' }}">
+                                            <a href="{{ route('admin.jobs.applicants.all') }}" class="nav-link">
                                                 <i class="far fa-circle nav-icon"></i>
-                                                <p>Akses Admin</p>
+                                                <p>Pelamar Pekerjaan</p>
                                             </a>
                                         </li>
-                                    @endif
-                                </ul>
-                            </li>
+                                    </ul>
+                                </li>
+                            @endif
                         @endif
 
-                        {{-- Integrasi API --}}
-                        @if($menuUser->hasAdminPermission('integrations'))
-                            <li class="nav-item has-treeview {{ request()->is('admin/integration-tokens*') ? 'menu-open' : '' }}">
-                                <a href="#" class="nav-link {{ request()->is('admin/integration-tokens*') ? 'active' : '' }}">
-                                    <i class="nav-icon fas fa-key"></i>
-                                    <p>Integrasi API<i class="right fas fa-angle-left"></i></p>
-                                </a>
-                                <ul class="nav nav-treeview">
-                                    <li class="nav-item">
-                                        <a href="{{ route('admin.integration-tokens.index') }}"
-                                            class="nav-link {{ request()->routeIs('admin.integration-tokens.index') ? 'active' : '' }}">
-                                            <i class="far fa-circle nav-icon"></i>
-                                            <p>Token API</p>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="{{ route('admin.integration-tokens.docs') }}"
-                                            class="nav-link {{ request()->routeIs('admin.integration-tokens.docs') ? 'active' : '' }}">
-                                            <i class="far fa-circle nav-icon"></i>
-                                            <p>Dokumentasi API</p>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="{{ route('admin.integration-webhooks.index') }}"
-                                            class="nav-link {{ request()->routeIs('admin.integration-webhooks.*') ? 'active' : '' }}">
-                                            <i class="far fa-circle nav-icon"></i>
-                                            <p>Webhook (Notifikasi)</p>
-                                        </a>
-                                    </li>
-                                </ul>
-                            </li>
+                        {{-- ============================ KEHADIRAN ============================ --}}
+                        @if($showKehadiran)
+                            <li class="nav-header">Kehadiran</li>
+
+                            {{-- Absensi --}}
+                            @if($menuUser->hasAdminPermission('absensi'))
+                                <li class="nav-item">
+                                    <a href="{{ route('admin.absensi') }}" class="nav-link {{ request()->routeIs('admin.absensi*') ? 'active' : '' }}">
+                                        <i class="nav-icon fas fa-user-check"></i>
+                                        <p>Absensi</p>
+                                    </a>
+                                </li>
+                            @endif
+
+                            {{-- Lembur --}}
+                            @if($menuUser->hasAdminPermission('lembur'))
+                                <li class="nav-item">
+                                    <a href="{{ route('admin.lembur') }}" class="nav-link {{ request()->routeIs('admin.lembur*') ? 'active' : '' }}">
+                                        <i class="nav-icon fas fa-clock"></i>
+                                        <p>Lembur</p>
+                                    </a>
+                                </li>
+                            @endif
+
+                            {{-- Jadwal Kerja --}}
+                            @if($menuUser->hasAdminPermission('jadwal'))
+                                <li class="nav-item">
+                                    <a href="{{ route('admin.jadwal') }}" class="nav-link {{ request()->routeIs('admin.jadwal*') ? 'active' : '' }}">
+                                        <i class="nav-icon fas fa-calendar-alt"></i>
+                                        <p>Jadwal Kerja</p>
+                                    </a>
+                                </li>
+                            @endif
+
+                            {{-- Lokasi Absensi (Geofence) --}}
+                            @if($menuUser->hasAdminPermission('absensi'))
+                                <li class="nav-item">
+                                    <a href="{{ route('admin.lokasi-absensi.index') }}" class="nav-link {{ request()->routeIs('admin.lokasi-absensi.*') ? 'active' : '' }}">
+                                        <i class="nav-icon fas fa-map-marker-alt"></i>
+                                        <p>Lokasi Absensi</p>
+                                    </a>
+                                </li>
+                            @endif
+
+                            {{-- Pengajuan --}}
+                            @if($menuUser->hasAdminPermission('submission') || $menuUser->hasAdminPermission('submission_types'))
+                                <li class="nav-item has-treeview {{ request()->is('admin/submission*') ? 'menu-open' : '' }}">
+                                    <a href="#" class="nav-link {{ request()->is('admin/submission*') ? 'active' : '' }}">
+                                        <i class="nav-icon fas fa-file-signature"></i>
+                                        <p>Pengajuan<i class="right fas fa-angle-left"></i></p>
+                                    </a>
+                                    <ul class="nav nav-treeview">
+                                        @if($menuUser->hasAdminPermission('submission'))
+                                            <li class="nav-item">
+                                                <a href="{{ route('admin.submission.index') }}" class="nav-link">
+                                                    <i class="far fa-circle nav-icon"></i>
+                                                    <p>Pengajuan Masuk</p>
+                                                </a>
+                                            </li>
+                                        @endif
+                                        @if($menuUser->hasAdminPermission('submission_types'))
+                                            <li class="nav-item">
+                                                <a href="{{ route('admin.submission-types.index') }}" class="nav-link">
+                                                    <i class="far fa-circle nav-icon"></i>
+                                                    <p>Jenis Pengajuan</p>
+                                                </a>
+                                            </li>
+                                        @endif
+                                    </ul>
+                                </li>
+                            @endif
+
+                            {{-- Pengumuman --}}
+                            @if($menuUser->hasAdminPermission('announcements'))
+                                <li class="nav-item">
+                                    <a href="{{ route('admin.announcements.index') }}"
+                                        class="nav-link {{ request()->is('admin/announcements*') ? 'active' : '' }}">
+                                        <i class="nav-icon fas fa-bullhorn"></i>
+                                        <p>Pengumuman</p>
+                                    </a>
+                                </li>
+                            @endif
                         @endif
 
-                        {{-- Karyawan --}}
-                        @if($menuUser->hasAdminPermission('karyawan'))
+                        {{-- ============================ KEUANGAN ============================ --}}
+                        @if($showKeuangan)
+                            <li class="nav-header">Keuangan</li>
+
+                            {{-- Gaji --}}
+                            @if($menuUser->hasAdminPermission('gaji'))
+                                <li class="nav-item">
+                                    <a href="{{ route('admin.gaji') }}" class="nav-link {{ request()->routeIs('admin.gaji*') ? 'active' : '' }}">
+                                        <i class="nav-icon fas fa-money-bill-wave"></i>
+                                        <p>Gaji</p>
+                                    </a>
+                                </li>
+                            @endif
+
+                            {{-- Aturan Potongan Gaji --}}
+                            @if($menuUser->hasAdminPermission('potongan'))
+                                <li class="nav-item">
+                                    <a href="{{ route('admin.salary-deduction-rules.index') }}"
+                                        class="nav-link {{ request()->routeIs('admin.salary-deduction-rules*') || request()->routeIs('admin.potongan-gaji*') ? 'active' : '' }}">
+                                        <i class="fas fa-hand-holding-usd nav-icon"></i>
+                                        <p>Aturan Potongan Gaji</p>
+                                    </a>
+                                </li>
+                            @endif
+
+                            {{-- Laporan --}}
+                            @if($menuUser->hasAdminPermission('laporan'))
+                                <li class="nav-item">
+                                    <a href="{{ route('admin.laporan') }}" class="nav-link {{ request()->routeIs('admin.laporan*') ? 'active' : '' }}">
+                                        <i class="nav-icon fas fa-file-alt"></i>
+                                        <p>Laporan</p>
+                                    </a>
+                                </li>
+                            @endif
+                        @endif
+
+                        {{-- ============================ KEDISIPLINAN ============================ --}}
+                        @if($showKedisiplinan)
+                            <li class="nav-header">Kedisiplinan</li>
+
+                            {{-- Log Pelanggaran --}}
                             <li class="nav-item">
-                                <a href="{{ route('admin.karyawan.index') }}"
-                                    class="nav-link {{ request()->routeIs('admin.karyawan*') ? 'active' : '' }}">
-                                    <i class="nav-icon fas fa-users"></i>
-                                    <p>Karyawan</p>
-                                </a>
-                            </li>
-                        @endif
-
-                        {{-- Lowongan & Pelamar --}}
-                        @if($menuUser->hasAdminPermission('jobs'))
-                            <li class="nav-item has-treeview {{ request()->is('admin/jobs*') ? 'menu-open' : '' }}">
-                                <a href="#" class="nav-link {{ request()->is('admin/jobs*') ? 'active' : '' }}">
-                                    <i class="nav-icon fas fa-briefcase"></i>
-                                    <p>Lowongan & Pelamar<i class="right fas fa-angle-left"></i></p>
-                                </a>
-                                <ul class="nav nav-treeview">
-                                    <li class="nav-item">
-                                        <a href="{{ route('admin.jobs.index') }}" class="nav-link">
-                                            <i class="far fa-circle nav-icon"></i>
-                                            <p>Data Lowongan</p>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="{{ route('admin.jobs.applicants.all') }}" class="nav-link">
-                                            <i class="far fa-circle nav-icon"></i>
-                                            <p>Pelamar Pekerjaan</p>
-                                        </a>
-                                    </li>
-                                </ul>
-                            </li>
-                        @endif
-
-                        {{-- Job Todo --}}
-                        @if($menuUser->hasAdminPermission('job_todos'))
-                            <li class="nav-item">
-                                <a href="{{ route('admin.job-todos.index') }}"
-                                    class="nav-link {{ request()->routeIs('admin.job-todos*') ? 'active' : '' }}">
-                                    <i class="nav-icon fas fa-tasks"></i>
-                                    <p>Job Todo</p>
-                                </a>
-                            </li>
-                        @endif
-
-                        {{-- Absensi --}}
-                        @if($menuUser->hasAdminPermission('absensi'))
-                            <li class="nav-item">
-                                <a href="{{ route('admin.absensi') }}" class="nav-link {{ request()->routeIs('admin.absensi*') ? 'active' : '' }}">
-                                    <i class="nav-icon fas fa-user-check"></i>
-                                    <p>Absensi</p>
-                                </a>
-                            </li>
-                        @endif
-
-                        {{-- Lembur --}}
-                        @if($menuUser->hasAdminPermission('lembur'))
-                            <li class="nav-item">
-                                <a href="{{ route('admin.lembur') }}" class="nav-link {{ request()->routeIs('admin.lembur*') ? 'active' : '' }}">
-                                    <i class="nav-icon fas fa-clock"></i>
-                                    <p>Lembur</p>
-                                </a>
-                            </li>
-                        @endif
-
-                        {{-- Jadwal --}}
-                        @if($menuUser->hasAdminPermission('jadwal'))
-                            <li class="nav-item">
-                                <a href="{{ route('admin.jadwal') }}" class="nav-link {{ request()->routeIs('admin.jadwal*') ? 'active' : '' }}">
-                                    <i class="nav-icon fas fa-calendar-alt"></i>
-                                    <p>Jadwal Kerja</p>
-                                </a>
-                            </li>
-                        @endif
-
-                        {{-- Gaji --}}
-                        @if($menuUser->hasAdminPermission('gaji'))
-                            <li class="nav-item">
-                                <a href="{{ route('admin.gaji') }}" class="nav-link {{ request()->routeIs('admin.gaji*') ? 'active' : '' }}">
-                                    <i class="nav-icon fas fa-money-bill-wave"></i>
-                                    <p>Gaji</p>
-                                </a>
-                            </li>
-                        @endif
-
-                        {{-- Laporan --}}
-                        @if($menuUser->hasAdminPermission('laporan'))
-                            <li class="nav-item">
-                                <a href="{{ route('admin.laporan') }}" class="nav-link {{ request()->routeIs('admin.laporan*') ? 'active' : '' }}">
-                                    <i class="nav-icon fas fa-file-alt"></i>
-                                    <p>Laporan</p>
-                                </a>
-                            </li>
-                        @endif
-
-                        {{-- Pelanggaran --}}
-                        @if($menuUser->hasAdminPermission('pelanggaran'))
-                            <li class="nav-item has-treeview {{ request()->is('admin/pelanggaran*') ? 'menu-open' : '' }}">
-                                <a href="#" class="nav-link {{ request()->is('admin/pelanggaran*') ? 'active' : '' }}">
+                                <a href="{{ route('admin.pelanggaran.index') }}"
+                                    class="nav-link {{ request()->routeIs('admin.pelanggaran.index') || request()->routeIs('admin.pelanggaran.riwayat') ? 'active' : '' }}">
                                     <i class="nav-icon fas fa-exclamation-triangle"></i>
-                                    <p>Pelanggaran<i class="right fas fa-angle-left"></i></p>
+                                    <p>Log Pelanggaran</p>
                                 </a>
-                                <ul class="nav nav-treeview">
-                                    <li class="nav-item">
-                                        <a href="{{ route('admin.pelanggaran.index') }}" class="nav-link">
-                                            <i class="far fa-circle nav-icon"></i>
-                                            <p>Log Pelanggaran</p>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="{{ route('admin.pelanggaran.create') }}" class="nav-link">
-                                            <i class="far fa-circle nav-icon"></i>
-                                            <p>Tambah Pelanggaran</p>
-                                        </a>
-                                    </li>
-                                </ul>
                             </li>
-                        @endif
-                        {{-- 🔥 PENGUMUMAN (ANNOUNCEMENTS) --}}
-                        @if($menuUser->hasAdminPermission('announcements'))
+
+                            {{-- Laporan Rekan --}}
                             <li class="nav-item">
-                                <a href="{{ route('admin.announcements.index') }}"
-                                    class="nav-link {{ request()->is('admin/announcements*') ? 'active' : '' }}">
-                                    <i class="nav-icon fas fa-bullhorn"></i>
-                                    <p>Pengumuman</p>
+                                <a href="{{ route('admin.peer-reports.index') }}"
+                                    class="nav-link {{ request()->routeIs('admin.peer-reports.*') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-user-friends"></i>
+                                    <p>
+                                        Laporan Rekan
+                                        @php $pendingPeer = \App\Models\PeerReport::where('status','pending')->count(); @endphp
+                                        @if($pendingPeer > 0)
+                                            <span class="badge badge-warning right">{{ $pendingPeer }}</span>
+                                        @endif
+                                    </p>
                                 </a>
                             </li>
-                        @endif
 
+                            {{-- Input Pelanggaran --}}
+                            <li class="nav-item">
+                                <a href="{{ route('admin.pelanggaran.create') }}"
+                                    class="nav-link {{ request()->routeIs('admin.pelanggaran.create') ? 'active' : '' }}">
+                                    <i class="nav-icon fas fa-plus-circle"></i>
+                                    <p>Input Pelanggaran</p>
+                                </a>
+                            </li>
 
-                        {{-- Master Data --}}
-                        @if($menuUser->hasAdminPermission('pelanggaran'))
-                            <li
-                                class="nav-item has-treeview {{ request()->is('admin/pelanggaran/master*') ? 'menu-open' : '' }}">
+                            {{-- Master Data --}}
+                            <li class="nav-item has-treeview {{ request()->is('admin/pelanggaran/master*') ? 'menu-open' : '' }}">
                                 <a href="#"
                                     class="nav-link {{ request()->is('admin/pelanggaran/master*') ? 'active' : '' }}">
                                     <i class="nav-icon fas fa-database"></i>
@@ -942,52 +1241,80 @@
                             </li>
                         @endif
 
-                        {{-- Aturan Potongan Gaji --}}
-                        @if($menuUser->hasAdminPermission('potongan'))
-                            <li class="nav-item">
-                                <a href="{{ route('admin.salary-deduction-rules.index') }}"
-                                    class="nav-link {{ request()->routeIs('admin.salary-deduction-rules*') || request()->routeIs('admin.potongan-gaji*') ? 'active' : '' }}">
-                                    <i class="fas fa-hand-holding-usd nav-icon"></i>
-                                    <p>Aturan Potongan Gaji</p>
-                                </a>
-                            </li>
-                        @endif
+                        {{-- ============================ PENGATURAN ============================ --}}
+                        @if($showPengaturan)
+                            <li class="nav-header">Pengaturan</li>
 
-                        {{-- 🔥 SUBMISSION (BARU) --}}
-                        @if($menuUser->hasAdminPermission('submission') || $menuUser->hasAdminPermission('submission_types'))
-                            <li class="nav-item has-treeview {{ request()->is('admin/submission*') ? 'menu-open' : '' }}">
-                                <a href="#" class="nav-link {{ request()->is('admin/submission*') ? 'active' : '' }}">
-                                    <i class="nav-icon fas fa-file-signature"></i>
-                                    <p>Submission<i class="right fas fa-angle-left"></i></p>
-                                </a>
-                                <ul class="nav nav-treeview">
-                                    @if($menuUser->hasAdminPermission('submission'))
+                            {{-- Manajemen Pengguna --}}
+                            @if($menuUser->hasAdminPermission('users') || $menuUser->hasAdminPermission('manage_admin_access'))
+                                <li class="nav-item has-treeview {{ request()->is('admin/users*') || request()->is('admin/admin-access*') ? 'menu-open' : '' }}">
+                                    <a href="#" class="nav-link {{ request()->is('admin/users*') || request()->is('admin/admin-access*') ? 'active' : '' }}">
+                                        <i class="nav-icon fas fa-user-cog"></i>
+                                        <p>Manajemen Pengguna<i class="right fas fa-angle-left"></i></p>
+                                    </a>
+                                    <ul class="nav nav-treeview">
+                                        @if($menuUser->hasAdminPermission('users'))
+                                            <li class="nav-item">
+                                                <a href="{{ route('admin.users.index') }}"
+                                                    class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
+                                                    <i class="far fa-circle nav-icon"></i>
+                                                    <p>Daftar Pengguna</p>
+                                                </a>
+                                            </li>
+                                        @endif
+                                        @if($menuUser->hasAdminPermission('manage_admin_access'))
+                                            <li class="nav-item">
+                                                <a href="{{ route('admin.admin-access.index') }}"
+                                                    class="nav-link {{ request()->routeIs('admin.admin-access.*') ? 'active' : '' }}">
+                                                    <i class="far fa-circle nav-icon"></i>
+                                                    <p>Akses Admin</p>
+                                                </a>
+                                            </li>
+                                        @endif
+                                    </ul>
+                                </li>
+                            @endif
+
+                            {{-- Integrasi API --}}
+                            @if($menuUser->hasAdminPermission('integrations'))
+                                <li class="nav-item has-treeview {{ request()->is('admin/integration-tokens*') || request()->is('admin/integration-webhooks*') ? 'menu-open' : '' }}">
+                                    <a href="#" class="nav-link {{ request()->is('admin/integration-tokens*') || request()->is('admin/integration-webhooks*') ? 'active' : '' }}">
+                                        <i class="nav-icon fas fa-key"></i>
+                                        <p>Integrasi API<i class="right fas fa-angle-left"></i></p>
+                                    </a>
+                                    <ul class="nav nav-treeview">
                                         <li class="nav-item">
-                                            <a href="{{ route('admin.submission.index') }}" class="nav-link">
+                                            <a href="{{ route('admin.integration-tokens.index') }}"
+                                                class="nav-link {{ request()->routeIs('admin.integration-tokens.index') ? 'active' : '' }}">
                                                 <i class="far fa-circle nav-icon"></i>
-                                                <p>Pengajuan Masuk</p>
+                                                <p>Token API</p>
                                             </a>
                                         </li>
-                                    @endif
-                                    @if($menuUser->hasAdminPermission('submission_types'))
                                         <li class="nav-item">
-                                            <a href="{{ route('admin.submission-types.index') }}" class="nav-link">
+                                            <a href="{{ route('admin.integration-tokens.docs') }}"
+                                                class="nav-link {{ request()->routeIs('admin.integration-tokens.docs') ? 'active' : '' }}">
                                                 <i class="far fa-circle nav-icon"></i>
-                                                <p>Jenis Pengajuan</p>
+                                                <p>Dokumentasi API</p>
                                             </a>
                                         </li>
-                                    @endif
-                                </ul>
-                            </li>
+                                        <li class="nav-item">
+                                            <a href="{{ route('admin.integration-webhooks.index') }}"
+                                                class="nav-link {{ request()->routeIs('admin.integration-webhooks.*') ? 'active' : '' }}">
+                                                <i class="far fa-circle nav-icon"></i>
+                                                <p>Webhook (Notifikasi)</p>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </li>
+                            @endif
                         @endif
 
-
-                        {{-- Logout --}}
-                        <li class="nav-item mt-3">
+                        {{-- Keluar --}}
+                        <li class="nav-item nav-divider-top mt-2">
                             <a href="{{ route('logout') }}" class="nav-link text-danger"
                                 onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                                 <i class="nav-icon fas fa-sign-out-alt"></i>
-                                <p>Logout</p>
+                                <p>Keluar</p>
                             </a>
                         </li>
 
@@ -1012,7 +1339,6 @@
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     (function () {
         var root = document.documentElement;

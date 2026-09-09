@@ -1,12 +1,13 @@
 @extends('layouts.app')
 
-@section('title', 'API Integration Tokens')
+@section('title', 'Token Integrasi API')
 
 @section('content')
+<div class="container-fluid">
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
         <div>
-            <h1 class="mb-1">API Integration Tokens</h1>
-            <p class="text-muted mb-0">Generate token Sanctum untuk aplikasi eksternal yang ingin terhubung ke endpoint integrasi.</p>
+            <h1 class="mb-1">Token Integrasi API</h1>
+            <p class="text-muted mb-0">Buat token Sanctum untuk aplikasi eksternal yang ingin terhubung ke endpoint integrasi.</p>
         </div>
         <a href="{{ route('admin.integration-tokens.docs') }}" class="btn btn-light">
             <i class="fas fa-book mr-1"></i> Lihat Dokumentasi API
@@ -39,7 +40,7 @@
         <div class="col-lg-5">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title mb-0">Generate Token</h3>
+                    <h3 class="card-title mb-0">Buat Token</h3>
                 </div>
                 <div class="card-body">
                     <form action="{{ route('admin.integration-tokens.store') }}" method="POST">
@@ -53,7 +54,7 @@
                                 id="name"
                                 class="form-control"
                                 value="{{ old('name') }}"
-                                placeholder="Contoh: Mobile Payroll SMPO"
+                                placeholder="Contoh: Payroll Seluler SMPO"
                                 required>
                         </div>
 
@@ -73,7 +74,7 @@
                                     </label>
                                 </div>
                             @endforeach
-                            <small class="text-muted d-block mt-2">Izin write otomatis mencakup izin read payroll.</small>
+                            <small class="text-muted d-block mt-2">Izin tulis otomatis mencakup izin baca payroll.</small>
                         </div>
 
                         <div class="form-group">
@@ -88,7 +89,7 @@
                         </div>
 
                         <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-key mr-1"></i> Generate Token
+                            <i class="fas fa-key mr-1"></i> Buat Token
                         </button>
                     </form>
                 </div>
@@ -179,4 +180,5 @@ Accept: application/json</code></pre>
             </div>
         </div>
     </div>
+</div>
 @endsection

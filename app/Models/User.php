@@ -76,6 +76,10 @@ class User extends Authenticatable
 
         // Schedule
         'schedule_mode',
+
+        // Produksi (broadcast job helper)
+        'erp_outlet_id',
+        'can_close_production',
     ];
 
     /*
@@ -97,6 +101,8 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed', // Laravel 10+
         'admin_permissions' => 'array',
+        'erp_outlet_id' => 'integer',
+        'can_close_production' => 'boolean',
     ];
 
     /*
@@ -127,6 +133,15 @@ class User extends Authenticatable
     public function workScheduleDates(): HasMany
     {
         return $this->hasMany(WorkScheduleDate::class, 'user_id');
+    }
+
+    /**
+     * 📍 LOKASI ABSENSI YANG DIIZINKAN (GEOFENCE)
+     */
+    public function attendanceLocations(): BelongsToMany
+    {
+        return $this->belongsToMany(AttendanceLocation::class, 'attendance_location_user')
+            ->withTimestamps();
     }
 
     /**

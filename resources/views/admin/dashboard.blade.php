@@ -1,626 +1,706 @@
 @extends('layouts.app')
 
-@section('title', 'Dashboard')
+@section('title', 'Dasbor')
 
 @section('content')
-<div class="container-fluid dashboard-modern">
-
-{{-- ================= HEADER MODERN ================= --}}
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card shadow-sm border-0 dashboard-hero">
-            <div class="card-body text-white">
-
-                <h3 class="mb-1 font-weight-bold">
-                    Dashboard
-                </h3>
-
-                <small>
-                    Selamat datang,
-                    <strong>{{ auth()->user()->name }}</strong>
-                </small>
-
-            </div>
-        </div>
-    </div>
-</div>
-
-{{-- ================= KPI OVERVIEW ================= --}}
-<h5 class="mb-3 font-weight-bold section-title">
-    <i class="fas fa-chart-bar mr-2"></i> KPI Overview
-</h5>
-
-<div class="row">
-
-<div class="col-lg-3 col-6">
-<div class="small-box bg-info shadow">
-<div class="inner">
-<h3>{{ $totalAbsensi }}</h3>
-<p>Total Absensi</p>
-</div>
-<div class="icon"><i class="fas fa-user-check"></i></div>
-<a href="{{ route('admin.absensi') }}" class="small-box-footer">
-Detail <i class="fas fa-arrow-circle-right"></i>
-</a>
-</div>
-</div>
-
-<div class="col-lg-3 col-6">
-<div class="small-box bg-warning shadow">
-<div class="inner">
-<h3>{{ $totalLembur }}</h3>
-<p>Total Lembur</p>
-</div>
-<div class="icon"><i class="fas fa-clock"></i></div>
-<a href="{{ route('admin.lembur') }}" class="small-box-footer">
-Detail <i class="fas fa-arrow-circle-right"></i>
-</a>
-</div>
-</div>
-
-<div class="col-lg-3 col-6">
-<div class="small-box bg-success shadow">
-<div class="inner">
-<h3>{{ $totalGaji }}</h3>
-<p>Karyawan Bergaji</p>
-</div>
-<div class="icon"><i class="fas fa-money-bill-wave"></i></div>
-<a href="{{ route('admin.gaji') }}" class="small-box-footer">
-Detail <i class="fas fa-arrow-circle-right"></i>
-</a>
-</div>
-</div>
-
-<div class="col-lg-3 col-6">
-<div class="small-box bg-secondary shadow">
-<div class="inner">
-<h3>{{ $totalUser }}</h3>
-<p>Total Karyawan</p>
-</div>
-<div class="icon"><i class="fas fa-users"></i></div>
-<a href="{{ route('admin.karyawan.index') }}" class="small-box-footer">
-Detail <i class="fas fa-arrow-circle-right"></i>
-</a>
-</div>
-</div>
-
-</div>
-
-{{-- ================= DISIPLIN KARYAWAN ================= --}}
-<div class="d-flex flex-wrap justify-content-between align-items-end mt-4 mb-3">
-<h5 class="mb-2 mb-md-0 font-weight-bold section-title">
-<i class="fas fa-user-clock mr-2"></i> Disiplin Karyawan ({{ ucfirst($periodeAbsensiLabel) }})
-</h5>
-
-<form method="GET" action="{{ route('admin.dashboard') }}" class="d-flex align-items-end dashboard-filter-form">
-<div class="mr-2">
-<label for="bulan" class="small text-muted mb-1 d-block">Filter Bulan</label>
-<input type="month"
-       id="bulan"
-       name="bulan"
-       value="{{ $selectedBulan }}"
-       class="form-control form-control-sm">
-</div>
-<button type="submit" class="btn btn-sm btn-primary btn-filter mr-2 mb-1">
-<i class="fas fa-filter mr-1"></i> Tampilkan
-</button>
-<a href="{{ route('admin.dashboard') }}" class="btn btn-sm btn-light btn-reset border mb-1">
-Reset
-</a>
-</form>
-</div>
-
-<div class="row">
-
-<div class="col-lg-3 col-sm-6">
-<div class="card discipline-card card-late border-0 shadow-sm h-100">
-<div class="card-body">
-<div class="d-flex justify-content-between align-items-start">
-<div>
-<small class="text-uppercase text-muted font-weight-bold">Karyawan Terlambat</small>
-<h3 class="mb-0">{{ $karyawanTerlambat }}</h3>
-<small class="text-muted">Pernah telat minimal 1x</small>
-</div>
-<span class="badge badge-warning">Telat</span>
-</div>
-</div>
-</div>
-</div>
-
-<div class="col-lg-3 col-sm-6">
-<div class="card discipline-card card-late-total border-0 shadow-sm h-100">
-<div class="card-body">
-<small class="text-uppercase text-muted font-weight-bold">Total Keterlambatan</small>
-<h3 class="mb-0">{{ $totalKeterlambatan }}x</h3>
-<small class="text-muted">Akumulasi {{ number_format((float) $totalMenitTerlambat, 0, ',', '.') }} menit telat</small>
-</div>
-</div>
-</div>
-
-<div class="col-lg-3 col-sm-6">
-<div class="card discipline-card card-ontime border-0 shadow-sm h-100">
-<div class="card-body">
-<small class="text-uppercase text-muted font-weight-bold">Tidak Pernah Terlambat</small>
-<h3 class="mb-0">{{ $karyawanTidakPernahTerlambat }}</h3>
-<small class="text-muted">Dari total {{ $totalUser }} karyawan</small>
-</div>
-</div>
-</div>
-
-<div class="col-lg-3 col-sm-6">
-<div class="card discipline-card card-absent border-0 shadow-sm h-100">
-<div class="card-body">
-<small class="text-uppercase text-muted font-weight-bold">Karyawan Tidak Masuk</small>
-<h3 class="mb-0">{{ $karyawanTidakMasuk }}</h3>
-<small class="text-muted">Total hari tidak masuk {{ $totalTidakMasuk }} hari (basis 26 hari kerja)</small>
-</div>
-</div>
-</div>
-
-</div>
-
-<div class="row mt-2">
-
-<div class="col-lg-6">
-<div class="card shadow-sm border-0">
-<div class="card-header bg-white border-0 pb-0">
-<h6 class="mb-0 font-weight-bold">Perbandingan Karyawan</h6>
-<small class="text-muted">Terlambat vs Tidak Pernah Terlambat</small>
-</div>
-<div class="card-body">
-<canvas id="disciplineComparisonChart" height="220"></canvas>
-</div>
-</div>
-</div>
-
-<div class="col-lg-6">
-<div class="card shadow-sm border-0">
-<div class="card-header bg-white border-0 pb-0">
-<h6 class="mb-0 font-weight-bold">Kejadian Absensi</h6>
-<small class="text-muted">Hadir, Terlambat, Tidak Masuk ({{ ucfirst($periodeAbsensiLabel) }})</small>
-</div>
-<div class="card-body">
-<canvas id="attendanceEventChart" height="220"></canvas>
-</div>
-</div>
-</div>
-
-</div>
-
-<div class="row mt-2">
-<div class="col-12">
-<div class="card shadow-sm border-0">
-<div class="card-header bg-white">
-<h6 class="mb-0 font-weight-bold">
-<i class="fas fa-trophy text-warning mr-1"></i>
-Top 5 Karyawan Paling Sering Terlambat
-</h6>
-</div>
-<div class="card-body p-0">
-<table class="table table-hover mb-0">
-<thead class="thead-light">
-<tr>
-<th style="width:80px;">No</th>
-<th>Nama</th>
-<th style="width:200px;">Jumlah Telat</th>
-<th style="width:220px;">Akumulasi Menit</th>
-</tr>
-</thead>
-<tbody>
-@forelse($topKaryawanTerlambat as $index => $item)
-<tr>
-<td>{{ $index + 1 }}</td>
-<td>{{ $item->user->name ?? '-' }}</td>
-<td><span class="badge badge-warning">{{ (int) $item->total_terlambat }}x</span></td>
-<td>{{ number_format((float) $item->total_menit, 0, ',', '.') }} menit</td>
-</tr>
-@empty
-<tr>
-<td colspan="4" class="text-center text-muted py-4">
-Belum ada data keterlambatan pada periode ini
-</td>
-</tr>
-@endforelse
-</tbody>
-</table>
-</div>
-</div>
-</div>
-</div>
-
-{{-- ================= MONITORING REKRUTMEN ================= --}}
-<h5 class="mt-4 mb-3 font-weight-bold section-title">
-<i class="fas fa-briefcase mr-2"></i> Monitoring Rekrutmen
-</h5>
-
-<div class="row text-center">
-
 @php
-$rekrut = [
-['bg'=>'warning','val'=>$pelamarPending,'label'=>'Pending'],
-['bg'=>'info','val'=>$pelamarReview,'label'=>'Review'],
-['bg'=>'primary','val'=>$pelamarInterview,'label'=>'Interview'],
-['bg'=>'teal','val'=>$pelamarTraining,'label'=>'Training'],
-['bg'=>'success','val'=>$pelamarAccepted,'label'=>'Diterima'],
-['bg'=>'danger','val'=>$pelamarRejected,'label'=>'Ditolak'],
-];
+    $tingkatKehadiran = ($totalHadir + $totalKeterlambatan + $totalTidakMasuk) > 0
+        ? round((($totalHadir + $totalKeterlambatan) / max($totalHadir + $totalKeterlambatan + $totalTidakMasuk, 1)) * 100, 1)
+        : 0;
+
+    $kartuUtama = [
+        ['ikon' => 'fa-users', 'warna' => 'biru', 'judul' => 'Total Karyawan', 'nilai' => number_format($totalUser, 0, ',', '.'), 'catatan' => 'Karyawan aktif terdaftar', 'url' => route('admin.karyawan.index')],
+        ['ikon' => 'fa-user-check', 'warna' => 'hijau', 'judul' => 'Total Absensi', 'nilai' => number_format($totalAbsensi, 0, ',', '.'), 'catatan' => 'Seluruh catatan absensi', 'url' => route('admin.absensi')],
+        ['ikon' => 'fa-clock', 'warna' => 'kuning', 'judul' => 'Total Lembur', 'nilai' => number_format($totalLembur, 0, ',', '.'), 'catatan' => 'Pengajuan dan data lembur', 'url' => route('admin.lembur')],
+        ['ikon' => 'fa-wallet', 'warna' => 'ungu', 'judul' => 'Karyawan Bergaji', 'nilai' => number_format($totalGaji, 0, ',', '.'), 'catatan' => 'Master gaji aktif', 'url' => route('admin.gaji')],
+        ['ikon' => 'fa-calendar-check', 'warna' => 'toska', 'judul' => 'Tingkat Kehadiran', 'nilai' => number_format($tingkatKehadiran, 1, ',', '.') . '%', 'catatan' => ucfirst($periodeAbsensiLabel), 'url' => route('admin.laporan')],
+        ['ikon' => 'fa-exclamation-circle', 'warna' => 'merah', 'judul' => 'Keterlambatan', 'nilai' => number_format($totalKeterlambatan, 0, ',', '.'), 'catatan' => number_format((float) $totalMenitTerlambat, 0, ',', '.') . ' menit', 'url' => route('admin.absensi')],
+    ];
+
+    $kartuRekrutmen = [
+        ['label' => 'Menunggu', 'nilai' => $pelamarPending, 'ikon' => 'fa-hourglass-half', 'warna' => 'kuning'],
+        ['label' => 'Ditinjau', 'nilai' => $pelamarReview, 'ikon' => 'fa-search', 'warna' => 'biru'],
+        ['label' => 'Wawancara', 'nilai' => $pelamarInterview, 'ikon' => 'fa-comments', 'warna' => 'ungu'],
+        ['label' => 'Pelatihan', 'nilai' => $pelamarTraining, 'ikon' => 'fa-chalkboard-teacher', 'warna' => 'toska'],
+        ['label' => 'Diterima', 'nilai' => $pelamarAccepted, 'ikon' => 'fa-check-circle', 'warna' => 'hijau'],
+        ['label' => 'Ditolak', 'nilai' => $pelamarRejected, 'ikon' => 'fa-times-circle', 'warna' => 'merah'],
+    ];
+
+    $kartuTugas = [
+        ['label' => 'Total Tugas', 'nilai' => $jobTotal, 'warna' => 'biru'],
+        ['label' => 'Terbuka', 'nilai' => $jobOpen, 'warna' => 'kuning'],
+        ['label' => 'Dikerjakan', 'nilai' => $jobSedangDikerjakan, 'warna' => 'ungu'],
+        ['label' => 'Selesai', 'nilai' => $jobSelesai, 'warna' => 'hijau'],
+        ['label' => 'Ditutup', 'nilai' => $jobClosed, 'warna' => 'merah'],
+    ];
+
+    $distribusiPenempatan = [
+        ['label' => 'SM Lecy', 'nilai' => $karyawanSMLeccy, 'warna' => 'biru'],
+        ['label' => 'Gudang', 'nilai' => $karyawanGudang, 'warna' => 'kuning'],
+        ['label' => 'Percetakan', 'nilai' => $karyawanSMPenempatan, 'warna' => 'toska'],
+    ];
+
+    $labelStatus = fn (?string $status) => match ($status) {
+        'pending', 'requested' => 'Menunggu',
+        'approved' => 'Disetujui',
+        'finished', 'done' => 'Selesai',
+        'closed' => 'Ditutup',
+        'rejected' => 'Ditolak',
+        default => $status ? ucfirst($status) : '-',
+    };
 @endphp
 
-@foreach($rekrut as $r)
-<div class="col-lg-2 col-6">
-<div class="small-box bg-{{ $r['bg'] }} shadow-sm">
-<div class="inner">
-<h3>{{ $r['val'] }}</h3>
-<p>{{ $r['label'] }}</p>
-</div>
-</div>
-</div>
-@endforeach
+<div class="container-fluid dashboard-pro">
+    <div class="panel-atas">
+        <div>
+            <span class="label-halaman">Dasbor</span>
+            <h1>Selamat datang, {{ auth()->user()->name }}</h1>
+            <p>Ringkasan kondisi karyawan, absensi, rekrutmen, tugas kerja, dan payroll pada sistem.</p>
+        </div>
 
-</div>
+        <form method="GET" action="{{ route('admin.dashboard') }}" class="filter-periode">
+            <label for="bulan">Periode</label>
+            <div class="input-filter">
+                <input type="month" id="bulan" name="bulan" value="{{ $selectedBulan }}" class="form-control">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter mr-1"></i> Terapkan
+                </button>
+                <a href="{{ route('admin.dashboard') }}" class="btn btn-light">Atur Ulang</a>
+            </div>
+        </form>
+    </div>
 
-{{-- ================= JOB TODO ================= --}}
-<h5 class="mt-4 mb-3 font-weight-bold section-title">
-<i class="fas fa-tasks mr-2"></i> Job Todo
-</h5>
+    <div class="panel-wawasan">
+        <div class="ikon-wawasan">
+            <i class="fas fa-magic"></i>
+        </div>
+        <div class="isi-wawasan">
+            <strong>Ada {{ $karyawanTerlambat + $karyawanTidakMasuk }} catatan yang perlu diperhatikan pada {{ ucfirst($periodeAbsensiLabel) }}</strong>
+            <span>{{ $karyawanTerlambat }} karyawan pernah terlambat, {{ $karyawanTidakMasuk }} karyawan memiliki hari tidak masuk, dan {{ $totalKeterlambatan }} kejadian keterlambatan tercatat.</span>
+        </div>
+        <a href="{{ route('admin.laporan') }}" class="btn btn-light">
+            <i class="fas fa-file-alt mr-1"></i> Lihat Laporan
+        </a>
+    </div>
 
-<div class="row">
+    <div class="grid-metrik">
+        @foreach($kartuUtama as $kartu)
+            <a href="{{ $kartu['url'] }}" class="kartu-metrik aksen-{{ $kartu['warna'] }}">
+                <span class="ikon-metrik"><i class="fas {{ $kartu['ikon'] }}"></i></span>
+                <span class="judul-metrik">{{ $kartu['judul'] }}</span>
+                <strong>{{ $kartu['nilai'] }}</strong>
+                <small>{{ $kartu['catatan'] }}</small>
+            </a>
+        @endforeach
+    </div>
 
-<div class="col-lg-3 col-6">
-<div class="small-box bg-info shadow">
-<div class="inner"><h3>{{ $jobTotal }}</h3><p>Total Job</p></div>
-<div class="icon"><i class="fas fa-clipboard-list"></i></div>
-</div>
-</div>
+    <div class="grid-utama">
+        <section class="panel-data panel-besar">
+            <div class="panel-judul">
+                <div>
+                    <h2>Disiplin Karyawan</h2>
+                    <p>{{ ucfirst($periodeAbsensiLabel) }}</p>
+                </div>
+            </div>
+            <div class="grid-disiplin">
+                <div class="kartu-ringkas aksen-kuning">
+                    <span>Karyawan Terlambat</span>
+                    <strong>{{ $karyawanTerlambat }}</strong>
+                    <small>Pernah telat minimal 1 kali</small>
+                </div>
+                <div class="kartu-ringkas aksen-merah">
+                    <span>Total Keterlambatan</span>
+                    <strong>{{ $totalKeterlambatan }}x</strong>
+                    <small>{{ number_format((float) $totalMenitTerlambat, 0, ',', '.') }} menit</small>
+                </div>
+                <div class="kartu-ringkas aksen-hijau">
+                    <span>Tidak Pernah Terlambat</span>
+                    <strong>{{ $karyawanTidakPernahTerlambat }}</strong>
+                    <small>Dari {{ $totalUser }} karyawan</small>
+                </div>
+                <div class="kartu-ringkas aksen-biru">
+                    <span>Karyawan Tidak Masuk</span>
+                    <strong>{{ $karyawanTidakMasuk }}</strong>
+                    <small>{{ $totalTidakMasuk }} total hari</small>
+                </div>
+            </div>
 
-<div class="col-lg-3 col-6">
-<div class="small-box bg-warning shadow">
-<div class="inner"><h3>{{ $jobOpen }}</h3><p>Job Open</p></div>
-<div class="icon"><i class="fas fa-folder-open"></i></div>
-</div>
-</div>
+            <div class="grafik-dua-kolom">
+                <div class="kanvas-grafik">
+                    <canvas id="disciplineComparisonChart"></canvas>
+                </div>
+                <div class="kanvas-grafik">
+                    <canvas id="attendanceEventChart"></canvas>
+                </div>
+            </div>
+        </section>
 
-<div class="col-lg-3 col-6">
-<div class="small-box bg-primary shadow">
-<div class="inner"><h3>{{ $jobSedangDikerjakan }}</h3><p>Dikerjakan</p></div>
-<div class="icon"><i class="fas fa-spinner"></i></div>
-</div>
-</div>
+        <section class="panel-data">
+            <div class="panel-judul">
+                <div>
+                    <h2>Distribusi Penempatan</h2>
+                    <p>Karyawan berdasarkan lokasi kerja</p>
+                </div>
+            </div>
+            <div class="daftar-distribusi">
+                @foreach($distribusiPenempatan as $item)
+                    @php($persen = $totalUser > 0 ? round(($item['nilai'] / max($totalUser, 1)) * 100) : 0)
+                    <div class="baris-distribusi aksen-{{ $item['warna'] }}">
+                        <div>
+                            <span>{{ $item['label'] }}</span>
+                            <strong>{{ $item['nilai'] }} karyawan</strong>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar" style="width: {{ $persen }}%"></div>
+                        </div>
+                        <small>{{ $persen }}%</small>
+                    </div>
+                @endforeach
+            </div>
+        </section>
+    </div>
 
-<div class="col-lg-3 col-6">
-<div class="small-box bg-success shadow">
-<div class="inner"><h3>{{ $jobSelesai }}</h3><p>Selesai</p></div>
-<div class="icon"><i class="fas fa-check-circle"></i></div>
-</div>
-</div>
+    <div class="grid-utama">
+        <section class="panel-data panel-besar">
+            <div class="panel-judul">
+                <div>
+                    <h2>Pengawasan Keterlambatan</h2>
+                    <p>5 karyawan dengan keterlambatan terbanyak</p>
+                </div>
+                <a href="{{ route('admin.absensi') }}" class="btn btn-light btn-sm">Lihat Absensi</a>
+            </div>
 
-<div class="col-12 mt-3">
-<div class="small-box bg-secondary shadow text-center">
-<div class="inner">
-<h4>{{ $jobClosed }}</h4>
-<p>Job Closed</p>
-</div>
-</div>
-</div>
+            <div class="table-responsive">
+                <table class="table tabel-modern mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width:70px;">No</th>
+                            <th>Nama</th>
+                            <th style="width:180px;">Jumlah Telat</th>
+                            <th style="width:200px;">Akumulasi Menit</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($topKaryawanTerlambat as $index => $item)
+                            <tr>
+                                <td>{{ $index + 1 }}</td>
+                                <td><strong>{{ $item->user->name ?? '-' }}</strong></td>
+                                <td><span class="badge badge-warning">{{ (int) $item->total_terlambat }}x</span></td>
+                                <td>{{ number_format((float) $item->total_menit, 0, ',', '.') }} menit</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">
+                                    Belum ada data keterlambatan pada periode ini
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </section>
 
-</div>
+        <section class="panel-data">
+            <div class="panel-judul">
+                <div>
+                    <h2>Status Rekrutmen</h2>
+                    <p>Perkembangan pelamar pekerjaan</p>
+                </div>
+            </div>
+            <div class="grid-mini">
+                @foreach($kartuRekrutmen as $item)
+                    <div class="kartu-mini aksen-{{ $item['warna'] }}">
+                        <i class="fas {{ $item['ikon'] }}"></i>
+                        <span>{{ $item['label'] }}</span>
+                        <strong>{{ $item['nilai'] }}</strong>
+                    </div>
+                @endforeach
+            </div>
+        </section>
+    </div>
 
-{{-- ================= PENEMPATAN ================= --}}
-<h5 class="mt-4 mb-3 font-weight-bold section-title">
-<i class="fas fa-building mr-2"></i> Distribusi Karyawan
-</h5>
+    <div class="grid-utama">
+        <section class="panel-data panel-besar">
+            <div class="panel-judul">
+                <div>
+                    <h2>Aktivitas Terbaru</h2>
+                    <p>Absensi dan lembur pada {{ ucfirst($periodeAbsensiLabel) }}</p>
+                </div>
+            </div>
 
-<div class="row">
+            <div class="grid-aktivitas">
+                <div class="table-responsive">
+                    <table class="table tabel-modern mb-0">
+                        <thead>
+                            <tr>
+                                <th colspan="4">Absensi Terbaru</th>
+                            </tr>
+                            <tr>
+                                <th>Nama</th>
+                                <th>Jam</th>
+                                <th>Aksi</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($absensiTerbaru as $item)
+                                <tr>
+                                    <td>{{ $item->user->name ?? '-' }}</td>
+                                    <td>{{ $item->jam_tampil }}</td>
+                                    <td><span class="badge badge-{{ $item->aksi_badge }}">{{ $item->aksi_label }}</span></td>
+                                    <td><span class="badge badge-{{ $item->status_badge }}">{{ $item->status_label }}</span></td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="4" class="text-center text-muted py-4">Belum ada data</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
 
-<div class="col-lg-4">
-<div class="small-box bg-primary shadow">
-<div class="inner"><h3>{{ $karyawanSMLeccy }}</h3><p>SM Lecy</p></div>
-<div class="icon"><i class="fas fa-industry"></i></div>
-</div>
-</div>
+                <div class="table-responsive">
+                    <table class="table tabel-modern mb-0">
+                        <thead>
+                            <tr>
+                                <th colspan="3">Lembur Terbaru</th>
+                            </tr>
+                            <tr>
+                                <th>Nama</th>
+                                <th>Tanggal</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($lemburTerbaru as $item)
+                                <tr>
+                                    <td>{{ $item->user->name ?? '-' }}</td>
+                                    <td>{{ $item->tanggal }}</td>
+                                    <td><span class="badge badge-warning">{{ $labelStatus($item->status) }}</span></td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="3" class="text-center text-muted py-4">Belum ada data</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
 
-<div class="col-lg-4">
-<div class="small-box bg-dark shadow">
-<div class="inner"><h3>{{ $karyawanGudang }}</h3><p>Gudang</p></div>
-<div class="icon"><i class="fas fa-warehouse"></i></div>
-</div>
-</div>
-
-<div class="col-lg-4">
-<div class="small-box bg-teal shadow">
-<div class="inner"><h3>{{ $karyawanSMPenempatan }}</h3><p>Percetakan</p></div>
-<div class="icon"><i class="fas fa-print"></i></div>
-</div>
-</div>
-
-</div>
-
-{{-- ================= DATA TERBARU ================= --}}
-<div class="row mt-4">
-
-{{-- ABSENSI --}}
-<div class="col-md-6">
-<div class="card shadow-sm">
-<div class="card-header bg-info text-white">
-Absensi Terbaru ({{ ucfirst($periodeAbsensiLabel) }})
-</div>
-<div class="card-body p-0">
-<table class="table table-striped mb-0">
-<thead>
-<tr><th>Nama</th><th>Jam</th><th>Aksi</th><th>Status</th></tr>
-</thead>
-<tbody>
-@forelse ($absensiTerbaru as $item)
-<tr>
-<td>{{ $item->user->name ?? '-' }}</td>
-<td>{{ $item->jam_tampil }}</td>
-<td><span class="badge badge-{{ $item->aksi_badge }}">{{ $item->aksi_label }}</span></td>
-<td><span class="badge badge-{{ $item->status_badge }}">{{ $item->status_label }}</span></td>
-</tr>
-@empty
-<tr><td colspan="4" class="text-center text-muted">Kosong</td></tr>
-@endforelse
-</tbody>
-</table>
-</div>
-</div>
-</div>
-
-{{-- LEMBUR --}}
-<div class="col-md-6">
-<div class="card shadow-sm">
-<div class="card-header bg-warning">
-Lembur Terbaru ({{ ucfirst($periodeAbsensiLabel) }})
-</div>
-<div class="card-body p-0">
-<table class="table table-striped mb-0">
-<thead>
-<tr><th>Nama</th><th>Tanggal</th><th>Status</th></tr>
-</thead>
-<tbody>
-@forelse ($lemburTerbaru as $item)
-<tr>
-<td>{{ $item->user->name ?? '-' }}</td>
-<td>{{ $item->tanggal }}</td>
-<td><span class="badge badge-warning">{{ ucfirst($item->status) }}</span></td>
-</tr>
-@empty
-<tr><td colspan="3" class="text-center text-muted">Kosong</td></tr>
-@endforelse
-</tbody>
-</table>
-</div>
-</div>
-</div>
-
-</div>
-
+        <section class="panel-data">
+            <div class="panel-judul">
+                <div>
+                    <h2>Tugas Kerja</h2>
+                    <p>Ringkasan status tugas karyawan</p>
+                </div>
+            </div>
+            <div class="daftar-tugas">
+                @foreach($kartuTugas as $item)
+                    <div class="baris-tugas aksen-{{ $item['warna'] }}">
+                        <span>{{ $item['label'] }}</span>
+                        <strong>{{ $item['nilai'] }}</strong>
+                    </div>
+                @endforeach
+            </div>
+        </section>
+    </div>
 </div>
 @endsection
 
 @push('styles')
 <style>
-.dashboard-modern {
-    --line: #e4ebf4;
-    --text-main: #1f2a44;
-    --text-sub: #5f6f8c;
+.dashboard-pro {
+    --panel-border: #e5ebf3;
+    --panel-shadow: 0 14px 36px rgba(20, 35, 60, .08);
+    --soft-blue: #eef5ff;
+    --soft-green: #ecf8f3;
+    --soft-yellow: #fff7e7;
+    --soft-red: #fff0ee;
+    --soft-purple: #f4f0ff;
+    --soft-teal: #edfafa;
 }
 
-.dashboard-modern .section-title {
-    color: var(--text-main);
-    letter-spacing: .2px;
+.dashboard-pro .panel-atas {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 18px;
 }
 
-.dashboard-modern .dashboard-hero {
-    border-radius: 16px;
-    overflow: hidden;
-    background: linear-gradient(120deg, #1d4f91 0%, #1e7b7f 100%);
-    position: relative;
+.dashboard-pro .label-halaman {
+    color: #426083;
+    display: inline-flex;
+    font-size: .88rem;
+    font-weight: 700;
+    margin-bottom: 8px;
 }
 
-.dashboard-modern .dashboard-hero::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(circle at 85% 15%, rgba(255, 255, 255, .18), transparent 40%);
+.dashboard-pro h1 {
+    font-size: 1.55rem;
+    font-weight: 800;
+    margin: 0 0 4px;
 }
 
-.dashboard-modern .dashboard-hero .card-body {
-    position: relative;
-    z-index: 1;
+.dashboard-pro p {
+    color: var(--text-muted);
+    margin: 0;
 }
 
-.dashboard-modern .card {
+.dashboard-pro .filter-periode,
+.dashboard-pro .kartu-metrik,
+.dashboard-pro .panel-data,
+.dashboard-pro .kartu-ringkas,
+.dashboard-pro .kartu-mini,
+.dashboard-pro .baris-tugas {
+    background: var(--surface);
+    border: 1px solid var(--panel-border);
     border-radius: 14px;
-    border: 1px solid var(--line);
+    box-shadow: var(--panel-shadow);
 }
 
-.dashboard-modern .card-header {
-    border-bottom: 1px solid #edf2f8;
-    color: var(--text-main);
+.dashboard-pro .filter-periode {
+    padding: 12px;
 }
 
-.dashboard-modern .card-header.bg-info,
-.dashboard-modern .card-header.bg-warning {
-    background: #f6f9fe !important;
-    color: #1e3a5f !important;
-}
-
-.dashboard-modern input[type="month"].form-control {
-    border-color: #d6e0ef;
-    border-radius: 10px;
-    min-width: 170px;
-}
-
-.dashboard-modern .btn-filter {
-    border-radius: 10px;
-    background: linear-gradient(120deg, #1d4f91 0%, #1e7b7f 100%);
-    border: none;
-}
-
-.dashboard-modern .btn-reset {
-    border-radius: 10px;
-    border-color: #d6e0ef !important;
-    color: #39537e;
-}
-
-.dashboard-modern .small-box {
-    border-radius: 14px;
-    overflow: hidden;
-    margin-bottom: 1rem;
-    box-shadow: 0 10px 20px rgba(16, 39, 74, .10);
-    transition: transform .2s ease, box-shadow .2s ease;
-}
-
-.dashboard-modern .small-box:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 14px 24px rgba(16, 39, 74, .16);
-}
-
-.dashboard-modern .small-box .inner {
-    padding: 18px;
-}
-
-.dashboard-modern .small-box h3 {
+.dashboard-pro .filter-periode label {
+    color: var(--text-muted);
+    display: block;
+    font-size: .78rem;
     font-weight: 700;
     margin-bottom: 6px;
 }
 
-.dashboard-modern .small-box .icon {
-    top: 10px;
-    right: 12px;
-    font-size: 52px;
-    opacity: .22;
+.dashboard-pro .input-filter {
+    display: flex;
+    gap: 8px;
 }
 
-.dashboard-modern .small-box .small-box-footer {
-    background: rgba(255, 255, 255, .16);
-    color: rgba(255, 255, 255, .96);
-    backdrop-filter: blur(1px);
+.dashboard-pro .input-filter input {
+    min-width: 155px;
 }
 
-.dashboard-modern .small-box .small-box-footer:hover {
-    background: rgba(255, 255, 255, .24);
+.dashboard-pro .panel-wawasan {
+    align-items: center;
+    background: linear-gradient(120deg, #f3f7ff 0%, #f8f4ff 60%, #fff4fa 100%);
+    border: 1px solid #d9e4ff;
+    border-radius: 16px;
+    box-shadow: var(--panel-shadow);
+    display: flex;
+    gap: 14px;
+    margin-bottom: 18px;
+    padding: 16px;
+}
+
+.dashboard-pro .ikon-wawasan {
+    align-items: center;
+    background: linear-gradient(135deg, #4b6fe8 0%, #a45bd8 100%);
+    border-radius: 12px;
     color: #fff;
+    display: inline-flex;
+    height: 44px;
+    justify-content: center;
+    width: 44px;
 }
 
-.dashboard-modern .small-box.bg-info {
-    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+.dashboard-pro .isi-wawasan {
+    flex: 1;
 }
 
-.dashboard-modern .small-box.bg-warning {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+.dashboard-pro .isi-wawasan strong,
+.dashboard-pro .isi-wawasan span {
+    display: block;
 }
 
-.dashboard-modern .small-box.bg-success {
-    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+.dashboard-pro .isi-wawasan strong {
+    color: #263858;
+    margin-bottom: 3px;
 }
 
-.dashboard-modern .small-box.bg-secondary {
-    background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+.dashboard-pro .isi-wawasan span {
+    color: #5b6982;
 }
 
-.dashboard-modern .small-box.bg-primary {
-    background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+.dashboard-pro .grid-metrik {
+    display: grid;
+    gap: 14px;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    margin-bottom: 18px;
 }
 
-.dashboard-modern .small-box.bg-danger {
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+.dashboard-pro .kartu-metrik {
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    min-height: 142px;
+    padding: 15px;
+    text-decoration: none;
+    transition: transform .18s ease, box-shadow .18s ease;
 }
 
-.dashboard-modern .small-box.bg-dark {
-    background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+.dashboard-pro .kartu-metrik:hover {
+    color: var(--text);
+    transform: translateY(-2px);
 }
 
-.dashboard-modern .small-box.bg-teal {
-    background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+.dashboard-pro .ikon-metrik {
+    align-items: center;
+    border-radius: 10px;
+    display: inline-flex;
+    height: 38px;
+    justify-content: center;
+    margin-bottom: 14px;
+    width: 38px;
 }
 
-.dashboard-modern .small-box[class*='bg-'],
-.dashboard-modern .small-box[class*='bg-'] p,
-.dashboard-modern .small-box[class*='bg-'] h3 {
-    color: #fff !important;
-}
-
-.dashboard-modern .discipline-card {
-    border-radius: 14px;
-    border: 1px solid var(--line);
-}
-
-.dashboard-modern .discipline-card h3 {
+.dashboard-pro .judul-metrik,
+.dashboard-pro .kartu-ringkas span,
+.dashboard-pro .kartu-mini span,
+.dashboard-pro .baris-tugas span {
+    color: var(--text-muted);
+    font-size: .84rem;
     font-weight: 700;
-    color: var(--text-main);
 }
 
-.dashboard-modern .card-late {
-    background: linear-gradient(145deg, #fff8ef 0%, #ffe9cc 100%);
+.dashboard-pro .kartu-metrik strong {
+    font-size: 1.45rem;
+    line-height: 1;
+    margin-bottom: 8px;
 }
 
-.dashboard-modern .card-late-total {
-    background: linear-gradient(145deg, #fff5ec 0%, #ffe1cd 100%);
+.dashboard-pro .kartu-metrik small {
+    color: var(--text-muted);
 }
 
-.dashboard-modern .card-ontime {
-    background: linear-gradient(145deg, #f2fcf5 0%, #def7e7 100%);
+.dashboard-pro .grid-utama {
+    display: grid;
+    gap: 18px;
+    grid-template-columns: minmax(0, 2.1fr) minmax(300px, .9fr);
+    margin-bottom: 18px;
 }
 
-.dashboard-modern .card-absent {
-    background: linear-gradient(145deg, #fff3f2 0%, #ffdedd 100%);
+.dashboard-pro .panel-data {
+    overflow: hidden;
 }
 
-.dashboard-modern .table thead.thead-light th {
-    background: #f3f7fd;
-    color: #334b73;
-    border-bottom: 1px solid #d9e3f1;
+.dashboard-pro .panel-judul {
+    align-items: center;
+    border-bottom: 1px solid var(--panel-border);
+    display: flex;
+    gap: 12px;
+    justify-content: space-between;
+    padding: 16px 18px;
 }
 
-.dashboard-modern .table tbody tr:hover {
-    background: #f9fbff;
+.dashboard-pro .panel-judul h2 {
+    border-left: 4px solid #3b6eea;
+    font-size: 1.05rem;
+    font-weight: 800;
+    margin: 0 0 3px;
+    padding-left: 10px;
+}
+
+.dashboard-pro .panel-judul p {
+    font-size: .9rem;
+    padding-left: 14px;
+}
+
+.dashboard-pro .grid-disiplin,
+.dashboard-pro .grid-mini {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 16px 18px;
+}
+
+.dashboard-pro .kartu-ringkas,
+.dashboard-pro .kartu-mini,
+.dashboard-pro .baris-tugas {
+    box-shadow: none;
+}
+
+.dashboard-pro .kartu-ringkas {
+    padding: 14px;
+}
+
+.dashboard-pro .kartu-ringkas strong {
+    display: block;
+    font-size: 1.4rem;
+    margin: 7px 0 4px;
+}
+
+.dashboard-pro .grafik-dua-kolom {
+    display: grid;
+    gap: 14px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 0 18px 18px;
+}
+
+.dashboard-pro .kanvas-grafik {
+    border: 1px solid var(--panel-border);
+    border-radius: 14px;
+    height: 260px;
+    padding: 12px;
+}
+
+.dashboard-pro .daftar-distribusi,
+.dashboard-pro .daftar-tugas {
+    display: grid;
+    gap: 12px;
+    padding: 16px 18px 18px;
+}
+
+.dashboard-pro .baris-distribusi {
+    display: grid;
+    gap: 8px;
+}
+
+.dashboard-pro .baris-distribusi > div:first-child {
+    display: flex;
+    gap: 8px;
+    justify-content: space-between;
+}
+
+.dashboard-pro .baris-distribusi span {
+    color: var(--text);
+    font-weight: 800;
+}
+
+.dashboard-pro .baris-distribusi strong,
+.dashboard-pro .baris-distribusi small {
+    color: var(--text-muted);
+    font-size: .84rem;
+}
+
+.dashboard-pro .progress {
+    background: #edf2f8;
+    border-radius: 999px;
+    height: 9px;
+}
+
+.dashboard-pro .progress-bar {
+    border-radius: 999px;
+}
+
+.dashboard-pro .tabel-modern thead th {
+    background: #f6f8fb;
+    border-bottom: 1px solid var(--panel-border);
+    color: #53657f;
+    font-size: .78rem;
+    text-transform: uppercase;
+}
+
+.dashboard-pro .tabel-modern td,
+.dashboard-pro .tabel-modern th {
+    padding: 13px 16px;
+    vertical-align: middle;
+}
+
+.dashboard-pro .grid-aktivitas {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 16px 18px 18px;
+}
+
+.dashboard-pro .kartu-mini {
+    min-height: 92px;
+    padding: 12px;
+}
+
+.dashboard-pro .kartu-mini i {
+    margin-bottom: 8px;
+}
+
+.dashboard-pro .kartu-mini strong {
+    display: block;
+    font-size: 1.25rem;
+    margin-top: 3px;
+}
+
+.dashboard-pro .baris-tugas {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    padding: 13px 14px;
+}
+
+.dashboard-pro .baris-tugas strong {
+    font-size: 1.2rem;
+}
+
+.dashboard-pro .aksen-biru .ikon-metrik,
+.dashboard-pro .aksen-biru.kartu-ringkas,
+.dashboard-pro .aksen-biru.kartu-mini { background: var(--soft-blue); color: #315fce; }
+.dashboard-pro .aksen-hijau .ikon-metrik,
+.dashboard-pro .aksen-hijau.kartu-ringkas,
+.dashboard-pro .aksen-hijau.kartu-mini { background: var(--soft-green); color: #24865d; }
+.dashboard-pro .aksen-kuning .ikon-metrik,
+.dashboard-pro .aksen-kuning.kartu-ringkas,
+.dashboard-pro .aksen-kuning.kartu-mini { background: var(--soft-yellow); color: #bb7a17; }
+.dashboard-pro .aksen-merah .ikon-metrik,
+.dashboard-pro .aksen-merah.kartu-ringkas,
+.dashboard-pro .aksen-merah.kartu-mini { background: var(--soft-red); color: #bf563c; }
+.dashboard-pro .aksen-ungu .ikon-metrik,
+.dashboard-pro .aksen-ungu.kartu-ringkas,
+.dashboard-pro .aksen-ungu.kartu-mini { background: var(--soft-purple); color: #6654cf; }
+.dashboard-pro .aksen-toska .ikon-metrik,
+.dashboard-pro .aksen-toska.kartu-ringkas,
+.dashboard-pro .aksen-toska.kartu-mini { background: var(--soft-teal); color: #1f7c7c; }
+
+.dashboard-pro .aksen-biru .progress-bar,
+.dashboard-pro .aksen-biru.baris-tugas { background: #3f6fea; color: #fff; }
+.dashboard-pro .aksen-hijau .progress-bar,
+.dashboard-pro .aksen-hijau.baris-tugas { background: #2b9a67; color: #fff; }
+.dashboard-pro .aksen-kuning .progress-bar,
+.dashboard-pro .aksen-kuning.baris-tugas { background: #e0a025; color: #fff; }
+.dashboard-pro .aksen-merah .progress-bar,
+.dashboard-pro .aksen-merah.baris-tugas { background: #d45d45; color: #fff; }
+.dashboard-pro .aksen-ungu .progress-bar,
+.dashboard-pro .aksen-ungu.baris-tugas { background: #6a5ce0; color: #fff; }
+.dashboard-pro .aksen-toska .progress-bar,
+.dashboard-pro .aksen-toska.baris-tugas { background: #249393; color: #fff; }
+.dashboard-pro .baris-tugas span { color: rgba(255, 255, 255, .86); }
+
+:root[data-theme='dark'] .dashboard-pro {
+    --panel-border: #2c3b52;
+    --panel-shadow: 0 14px 36px rgba(0, 0, 0, .28);
+    --soft-blue: #1b315d;
+    --soft-green: #1d3a30;
+    --soft-yellow: #3c3020;
+    --soft-red: #3b2928;
+    --soft-purple: #2d284f;
+    --soft-teal: #173c3e;
+}
+
+:root[data-theme='dark'] .dashboard-pro .panel-wawasan {
+    background: linear-gradient(120deg, #1c2a42 0%, #282747 55%, #3a2537 100%);
+    border-color: #334464;
+}
+
+:root[data-theme='dark'] .dashboard-pro .isi-wawasan strong { color: #eef4ff; }
+:root[data-theme='dark'] .dashboard-pro .isi-wawasan span,
+:root[data-theme='dark'] .dashboard-pro .label-halaman { color: #afbdd4; }
+:root[data-theme='dark'] .dashboard-pro .tabel-modern thead th { background: #202c3d; color: #b8c7de; }
+:root[data-theme='dark'] .dashboard-pro .progress { background: #263449; }
+
+@media (max-width: 1199.98px) {
+    .dashboard-pro .grid-metrik { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .dashboard-pro .grid-utama { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 767.98px) {
-    .dashboard-modern .dashboard-filter-form {
-        width: 100%;
-        justify-content: flex-start;
+    .dashboard-pro .panel-atas,
+    .dashboard-pro .panel-wawasan,
+    .dashboard-pro .input-filter {
+        align-items: stretch;
+        flex-direction: column;
     }
-}
 
-:root[data-theme='dark'] .dashboard-modern {
-    --line: #2c3a50;
-    --text-main: #e2e9f5;
-    --text-sub: #9fb0cc;
-}
-
-:root[data-theme='dark'] .dashboard-modern .card-header.bg-info,
-:root[data-theme='dark'] .dashboard-modern .card-header.bg-warning {
-    background: #1b2738 !important;
-    color: #dce6f7 !important;
-}
-
-:root[data-theme='dark'] .dashboard-modern .table thead.thead-light th {
-    background: #1b2738;
-    color: #d9e4f6;
-    border-bottom-color: #2f3f57;
-}
-
-:root[data-theme='dark'] .dashboard-modern .table tbody tr:hover {
-    background: #1f2d40;
-}
-
-:root[data-theme='dark'] .dashboard-modern .card-late {
-    background: linear-gradient(145deg, #3a2f1f 0%, #4a3923 100%);
-}
-
-:root[data-theme='dark'] .dashboard-modern .card-late-total {
-    background: linear-gradient(145deg, #3d3026 0%, #4c372b 100%);
-}
-
-:root[data-theme='dark'] .dashboard-modern .card-ontime {
-    background: linear-gradient(145deg, #1f3a2e 0%, #284535 100%);
-}
-
-:root[data-theme='dark'] .dashboard-modern .card-absent {
-    background: linear-gradient(145deg, #3d2627 0%, #4f3131 100%);
+    .dashboard-pro .grid-metrik,
+    .dashboard-pro .grid-disiplin,
+    .dashboard-pro .grafik-dua-kolom,
+    .dashboard-pro .grid-aktivitas {
+        grid-template-columns: 1fr;
+    }
 }
 </style>
 @endpush
@@ -630,6 +710,8 @@ Lembur Terbaru ({{ ucfirst($periodeAbsensiLabel) }})
 <script>
 const disciplineCtx = document.getElementById('disciplineComparisonChart');
 const attendanceCtx = document.getElementById('attendanceEventChart');
+const chartTextColor = getComputedStyle(document.documentElement).getPropertyValue('--text-muted').trim() || '#6b7280';
+const chartGridColor = getComputedStyle(document.documentElement).getPropertyValue('--border').trim() || '#e5e7eb';
 
 if (disciplineCtx) {
     new Chart(disciplineCtx, {
@@ -638,7 +720,7 @@ if (disciplineCtx) {
             labels: ['Karyawan Terlambat', 'Tidak Pernah Terlambat'],
             datasets: [{
                 data: @json([$karyawanTerlambat, $karyawanTidakPernahTerlambat]),
-                backgroundColor: ['#e78a1f', '#2f8f5f'],
+                backgroundColor: ['#e0a025', '#2b9a67'],
                 borderWidth: 0
             }]
         },
@@ -647,7 +729,12 @@ if (disciplineCtx) {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    position: 'bottom'
+                    position: 'bottom',
+                    labels: {
+                        color: chartTextColor,
+                        usePointStyle: true,
+                        boxWidth: 8
+                    }
                 }
             },
             cutout: '68%'
@@ -663,7 +750,7 @@ if (attendanceCtx) {
             datasets: [{
                 label: 'Jumlah Kejadian',
                 data: @json([$totalHadir, $totalKeterlambatan, $totalTidakMasuk]),
-                backgroundColor: ['#2f6fb3', '#e78a1f', '#cd5f3d'],
+                backgroundColor: ['#3f6fea', '#e0a025', '#d45d45'],
                 borderRadius: 10,
                 maxBarThickness: 56
             }]
@@ -672,9 +759,15 @@ if (attendanceCtx) {
             responsive: true,
             maintainAspectRatio: false,
             scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { color: chartTextColor }
+                },
                 y: {
                     beginAtZero: true,
+                    grid: { color: chartGridColor },
                     ticks: {
+                        color: chartTextColor,
                         precision: 0
                     }
                 }

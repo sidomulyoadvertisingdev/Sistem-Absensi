@@ -17,7 +17,7 @@ class LemburController extends Controller
     {
         $data = Lembur::with('user')
             ->orderBy('tanggal', 'desc')
-            ->get();
+            ->paginate(20);
 
         return view('admin.lembur.index', compact('data'));
     }
@@ -86,5 +86,17 @@ class LemburController extends Controller
         ]);
 
         return back()->with('success', 'Lembur disetujui');
+    }
+
+    /**
+     * HAPUS LEMBUR
+     */
+    public function destroy($id)
+    {
+        Lembur::findOrFail($id)->delete();
+
+        return redirect()
+            ->route('admin.lembur')
+            ->with('success', 'Lembur berhasil dihapus');
     }
 }

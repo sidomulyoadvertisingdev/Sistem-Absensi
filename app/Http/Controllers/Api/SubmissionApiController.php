@@ -13,9 +13,9 @@ class SubmissionApiController extends Controller
 {
     public function types(Request $request)
     {
-        $typesQuery = SubmissionType::where('aktif', true)
+        $types = SubmissionType::where('aktif', true)
             ->orderBy('nama')
-            ->select([
+            ->get([
                 'id',
                 'kode',
                 'nama',
@@ -24,13 +24,6 @@ class SubmissionApiController extends Controller
                 'butuh_lampiran',
                 'is_izin_pulang_awal',
             ]);
-
-        // sidomulyo-app saat ini belum mendukung upload lampiran pada submission.
-        if (strtolower((string) $request->header('X-Client-Type')) === 'mobile') {
-            $typesQuery->where('butuh_lampiran', false);
-        }
-
-        $types = $typesQuery->get();
 
         return response()->json([
             'status' => true,
@@ -99,7 +92,7 @@ class SubmissionApiController extends Controller
             $today = Carbon::today()->toDateString();
 
             $absensiToday = Absensi::where('user_id', $user->id)
-                ->where('tanggal', $today)
+                ->whereDate('tanggal', $today)
                 ->first();
 
             if (!$absensiToday || empty($absensiToday->jam_masuk)) {

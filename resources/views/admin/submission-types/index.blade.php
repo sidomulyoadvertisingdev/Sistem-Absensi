@@ -3,6 +3,7 @@
 @section('title', 'Jenis Pengajuan')
 
 @section('content')
+<div class="container-fluid">
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h4 class="mb-0">Jenis Pengajuan</h4>
 
@@ -88,5 +89,6 @@
             </tbody>
         </table>
     </div>
+</div>
 </div>
 @endsection

@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\MasterPelanggaran;
 use App\Models\MasterLokasi;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class PelanggaranController extends Controller
 {
@@ -15,7 +16,7 @@ class PelanggaranController extends Controller
     {
         $data = PelanggaranLog::with('user')
             ->orderBy('tanggal','desc')
-            ->get();
+            ->paginate(20);
 
         return view('admin.pelanggaran.index', compact('data'));
     }
@@ -42,7 +43,7 @@ class PelanggaranController extends Controller
         ]);
 
         $user = User::findOrFail($request->user_id);
-        $pelanggaran = MasterPelanggaran::where('kode', $request->kode_pelanggaran)->first();
+        $pelanggaran = MasterPelanggaran::where('kode', $request->kode_pelanggaran)->firstOrFail();
 
         $buktiPath = null;
         if ($request->hasFile('bukti')) {
@@ -73,5 +74,18 @@ class PelanggaranController extends Controller
     {
         $data = PelanggaranLog::where('user_id',$user->id)->get();
         return view('admin.pelanggaran.riwayat', compact('user','data'));
+    }
+
+    public function destroy(PelanggaranLog $pelanggaran)
+    {
+        if ($pelanggaran->bukti && Storage::disk('public')->exists($pelanggaran->bukti)) {
+            Storage::disk('public')->delete($pelanggaran->bukti);
+        }
+
+        $pelanggaran->delete();
+
+        return redirect()
+            ->route('admin.pelanggaran.index')
+            ->with('success','Pelanggaran berhasil dihapus');
     }
 }

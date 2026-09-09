@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Chat')
+@section('title', 'Percakapan')
 
 @section('content')
 <div class="container-fluid">
@@ -29,9 +29,9 @@
                         <div class="p-3">
                             <div class="form-group">
                                 <label>Nama Grup</label>
-                                <input type="text" name="name" class="form-control" placeholder="Mis. Tim Marketing" required>
+                                <input type="text" name="name" class="form-control" placeholder="Mis. Tim Pemasaran" required>
                             </div>
-                            <small class="text-muted d-block mb-2">Pilih member (checkbox):</small>
+                            <small class="text-muted d-block mb-2">Pilih anggota:</small>
                         </div>
                         @include('admin.chat.partials.user-list', ['users' => $users])
                         <div class="p-3">
@@ -45,7 +45,7 @@
 
             <div class="card shadow-sm border-0 mt-3">
                 <div class="card-header">
-                    <strong>Mulai Chat Langsung</strong>
+                    <strong>Mulai Percakapan Langsung</strong>
                 </div>
                 <div class="card-body">
                     <form method="POST" action="{{ route('admin.chat.direct') }}">
@@ -53,16 +53,18 @@
                         <div class="form-group">
                             <label>Pilih Kontak</label>
                             <select name="user_id" class="form-control" required>
-                                <option value="">-- pilih user --</option>
+                                <option value="">-- pilih pengguna --</option>
                                 @foreach($users as $user)
                                     @if($user->id !== auth()->id())
-                                        <option value="{{ $user->id }}">{{ $user->name }} ({{ $user->role }})</option>
+                                        <option value="{{ $user->id }}">
+                                            {{ $user->name }} ({{ ['owner' => 'Pemilik', 'admin' => 'Admin', 'karyawan' => 'Karyawan', 'user' => 'Pengguna'][$user->role] ?? ucfirst($user->role) }})
+                                        </option>
                                     @endif
                                 @endforeach
                             </select>
                         </div>
                         <button class="btn btn-outline-primary btn-block" type="submit">
-                            <i class="fas fa-paper-plane mr-1"></i> Mulai Chat
+                            <i class="fas fa-paper-plane mr-1"></i> Mulai Percakapan
                         </button>
                     </form>
                 </div>
@@ -73,10 +75,10 @@
             <div class="card shadow-sm border-0 mb-3">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <div>
-                        <strong>Daftar Room</strong>
-                        <small class="text-muted d-block">Semua room yang Anda punya akses</small>
+                        <strong>Daftar Ruang</strong>
+                        <small class="text-muted d-block">Semua ruang yang dapat Anda akses</small>
                     </div>
-                    <span class="badge badge-primary">{{ $rooms->count() }} room</span>
+                    <span class="badge badge-primary">{{ $rooms->count() }} ruang</span>
                 </div>
                 <div class="list-group list-group-flush">
                     @forelse($rooms as $room)
@@ -85,9 +87,9 @@
                                 <div class="d-flex align-items-center">
                                     <strong class="mr-2">{{ $room->name }}</strong>
                                     @if($room->is_group)
-                                        <span class="badge badge-info">Group</span>
+                                        <span class="badge badge-info">Grup</span>
                                     @else
-                                        <span class="badge badge-secondary">Direct</span>
+                                        <span class="badge badge-secondary">Langsung</span>
                                     @endif
                                 </div>
                                 <small class="text-muted">
@@ -103,15 +105,15 @@
                             @endif
                         </div>
                     @empty
-                        <div class="list-group-item text-muted">Belum ada room.</div>
+                        <div class="list-group-item text-muted">Belum ada ruang.</div>
                     @endforelse
                 </div>
             </div>
 
             <div class="card shadow-sm border-0">
                 <div class="card-header">
-                    <strong>Web Chat Client</strong>
-                    <small class="text-muted d-block">Bundle JS front-end bisa di-mount ke elemen berikut:</small>
+                    <strong>Panel Percakapan Web</strong>
+                    <small class="text-muted d-block">Paket JS antarmuka dapat dipasang ke elemen berikut:</small>
                 </div>
                 <div class="card-body p-0">
                     <div id="chat-panel-app" class="p-3" style="min-height: 480px;">
@@ -119,9 +121,9 @@
                             <i class="fas fa-bolt fa-2x mb-3 text-primary"></i>
                             <div class="h5 font-weight-bold">Siap dipakai</div>
                             <p class="mb-0">
-                                Hubungkan ke REST <code>/api/chat/*</code> & Socket.IO auth Bearer.
+                                Hubungkan ke REST <code>/api/chat/*</code> dan autentikasi Bearer Socket.IO.
                             </p>
-                            <p class="mb-0">Elemen ini menunggu bundle React/Vue/Alpine.</p>
+                            <p class="mb-0">Elemen ini menunggu paket React/Vue/Alpine.</p>
                         </div>
                     </div>
                 </div>

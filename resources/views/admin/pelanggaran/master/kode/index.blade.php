@@ -31,6 +31,7 @@
                         <th>Nama Pelanggaran</th>
                         <th>Kategori</th>
                         <th>Keterangan</th>
+                        <th width="120" class="text-center">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -48,10 +49,27 @@
                             </span>
                         </td>
                         <td>{{ $row->keterangan ?? '-' }}</td>
+                        <td class="text-center">
+                            <a href="{{ route('admin.pelanggaran.master.kode.edit', $row) }}"
+                               class="btn btn-warning btn-sm"
+                               title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </a>
+
+                            <form action="{{ route('admin.pelanggaran.master.kode.destroy', $row) }}"
+                                  method="POST" class="d-inline"
+                                  onsubmit="return confirm('Hapus kode pelanggaran \"{{ $row->nama }}\"?')">
+                                @csrf
+                                @method('DELETE')
+                                <button class="btn btn-danger btn-sm" title="Hapus">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="4" class="text-center text-muted">
+                        <td colspan="5" class="text-center text-muted">
                             Belum ada master kode pelanggaran
                         </td>
                     </tr>

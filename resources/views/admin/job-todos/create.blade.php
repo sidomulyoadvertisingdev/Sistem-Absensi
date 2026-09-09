@@ -1,11 +1,11 @@
 @extends('layouts.app')
 
-@section('title','Buat Job Todo')
+@section('title','Buat Tugas Kerja')
 
 @section('content')
 <div class="container-fluid">
 
-    <h1 class="mb-4">Buat Job Todo</h1>
+    <h1 class="mb-4">Buat Tugas Kerja</h1>
 
     <div class="card">
         <div class="card-body">
@@ -14,7 +14,7 @@
 
                 {{-- JUDUL --}}
                 <div class="form-group">
-                    <label>Judul Job</label>
+                    <label>Judul Tugas</label>
                     <input type="text"
                            name="title"
                            class="form-control"
@@ -41,13 +41,13 @@
 
                 {{-- BROADCAST --}}
                 <div class="form-group">
-                    <label>Tipe Job</label>
+                    <label>Tipe Tugas</label>
                     <select name="broadcast"
                             class="form-control"
                             id="broadcastSelect"
                             required>
                         <option value="1">Broadcast (Semua Karyawan)</option>
-                        <option value="0">Direct ke User</option>
+                        <option value="0">Langsung ke Pengguna</option>
                     </select>
                 </div>
 
@@ -69,7 +69,7 @@
                 </div>
 
                 <button class="btn btn-primary">
-                    <i class="fas fa-save"></i> Simpan Job
+                    <i class="fas fa-save"></i> Simpan Tugas
                 </button>
                 <a href="{{ route('admin.job-todos.index') }}"
                    class="btn btn-secondary">

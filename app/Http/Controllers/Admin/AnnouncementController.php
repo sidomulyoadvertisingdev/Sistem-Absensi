@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Announcement;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class AnnouncementController extends Controller
@@ -16,7 +17,7 @@ class AnnouncementController extends Controller
      */
     public function index()
     {
-        $announcements = Announcement::orderByDesc('published_at')->get();
+        $announcements = Announcement::orderByDesc('published_at')->paginate(15);
 
         return view('admin.announcements.index', compact('announcements'));
     }
@@ -91,5 +92,23 @@ class AnnouncementController extends Controller
         ]);
 
         return back()->with('success', 'Status pengumuman berhasil diubah');
+    }
+
+    /**
+     * =========================
+     * HAPUS PENGUMUMAN + GAMBAR
+     * =========================
+     */
+    public function destroy(Announcement $announcement)
+    {
+        if ($announcement->image && Storage::disk('public')->exists('announcements/' . $announcement->image)) {
+            Storage::disk('public')->delete('announcements/' . $announcement->image);
+        }
+
+        $announcement->delete();
+
+        return redirect()
+            ->route('admin.announcements.index')
+            ->with('success', 'Pengumuman berhasil dihapus');
     }
 }

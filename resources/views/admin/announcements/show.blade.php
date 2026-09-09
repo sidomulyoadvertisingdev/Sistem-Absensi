@@ -3,6 +3,7 @@
 @section('title', 'Detail Pengumuman')
 
 @section('content')
+<div class="container-fluid">
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h4>Detail Pengumuman</h4>
     <a href="{{ route('admin.announcements.index') }}" class="btn btn-secondary">
@@ -27,5 +28,6 @@
             {!! nl2br(e($announcement->content)) !!}
         </div>
     </div>
+</div>
 </div>
 @endsection

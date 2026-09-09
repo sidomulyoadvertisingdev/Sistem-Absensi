@@ -70,6 +70,17 @@
                                class="btn btn-warning btn-sm">
                                 <i class="fas fa-edit"></i>
                             </a>
+
+                            <form action="{{ route('admin.karyawan.destroy', $user->id) }}"
+                                  method="POST"
+                                  class="d-inline"
+                                  onsubmit="return confirm('Hapus karyawan \"{{ $user->name }}\"? Semua data terkait juga akan terpengaruh.')">
+                                @csrf
+                                @method('DELETE')
+                                <button class="btn btn-danger btn-sm">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
                         </td>
                     </tr>
                 @empty

@@ -124,9 +124,9 @@ class="btn btn-danger">
 <th>Gaji Master</th>
 
 <th>Lembur</th>
-<th>Bonus Job</th>
+<th>Bonus Tugas</th>
 
-<th>Pot. Training</th>
+<th>Pot. Pelatihan</th>
 <th>Potongan</th>
 <th>Salary Kotor</th>
 <th>Gaji Diterima</th>

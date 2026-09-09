@@ -1,0 +1,5 @@
+# Deteksi badan penuh untuk absensi kios.
+# Install di server:  pip install -r scripts/pose/requirements.txt
+mediapipe>=0.10.9
+opencv-python-headless>=4.8
+numpy>=1.24

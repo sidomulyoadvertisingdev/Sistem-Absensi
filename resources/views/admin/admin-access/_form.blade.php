@@ -43,7 +43,7 @@
 <div class="row">
     <div class="col-md-6">
         <div class="form-group">
-            <label>{{ $isEdit ? 'Password Baru (opsional)' : 'Password' }}</label>
+            <label>{{ $isEdit ? 'Kata Sandi Baru (opsional)' : 'Kata Sandi' }}</label>
             <input type="password"
                 name="password"
                 class="form-control @error('password') is-invalid @enderror"
@@ -56,7 +56,7 @@
 
     <div class="col-md-6">
         <div class="form-group">
-            <label>Role Admin</label>
+            <label>Peran Admin</label>
             <select name="role"
                 id="roleSelect"
                 class="form-control @error('role') is-invalid @enderror"
@@ -82,7 +82,7 @@
     </div>
     <div class="card-body">
         <div id="ownerInfo" class="alert alert-info d-none mb-3">
-            Role Owner otomatis memiliki akses penuh ke semua menu.
+            Peran Pemilik otomatis memiliki akses penuh ke semua menu.
         </div>
 
         <div class="row">
@@ -149,4 +149,3 @@
     })();
 </script>
 @endpush
-

@@ -3,7 +3,16 @@
 @section('title', 'Pengajuan Masuk')
 
 @section('content')
+<div class="container-fluid">
 <h4 class="mb-3">Pengajuan Masuk</h4>
+
+@php
+    $labelStatus = [
+        'pending' => 'Menunggu',
+        'approved' => 'Disetujui',
+        'rejected' => 'Ditolak',
+    ];
+@endphp
 
 <div class="card">
     <div class="card-body p-0">
@@ -28,7 +37,7 @@
                             {{ $s->status === 'pending' ? 'bg-warning' : '' }}
                             {{ $s->status === 'approved' ? 'bg-success' : '' }}
                             {{ $s->status === 'rejected' ? 'bg-danger' : '' }}">
-                            {{ strtoupper($s->status) }}
+                            {{ $labelStatus[$s->status] ?? ucfirst($s->status) }}
                         </span>
                     </td>
                     <td>
@@ -48,5 +57,10 @@
             </tbody>
         </table>
     </div>
+</div>
+
+<div class="mt-3">
+    {{ $submissions->links() }}
+</div>
 </div>
 @endsection

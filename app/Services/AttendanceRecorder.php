@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Absensi;
+use App\Models\AttendanceLocation;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
@@ -53,6 +54,9 @@ class AttendanceRecorder
      * @param  string|null     $jam        Waktu aksi (bisa berupa time saja atau datetime).
      * @param  UploadedFile|null $foto      Foto opsional.
      * @param  bool            $requireFoto true untuk endpoint mobile, false untuk integrasi.
+     * @param  float|null      $latitude    Koordinat GPS aplikasi (untuk geofence).
+     * @param  float|null      $longitude   Koordinat GPS aplikasi (untuk geofence).
+     * @param  bool            $enforceGeofence true untuk endpoint mobile karyawan.
      * @return Absensi
      *
      * @throws \Illuminate\Validation\ValidationException
@@ -64,7 +68,11 @@ class AttendanceRecorder
         string $aksi,
         ?string $jam,
         ?UploadedFile $foto = null,
-        bool $requireFoto = true
+        bool $requireFoto = true,
+        ?float $latitude = null,
+        ?float $longitude = null,
+        bool $enforceGeofence = false,
+        ?float $accuracy = null
     ): Absensi {
         $jamNormalized = $this->normalizeJamInput($jam);
 
@@ -73,6 +81,14 @@ class AttendanceRecorder
                 'jam' => 'Format jam tidak valid',
             ]);
         }
+
+        // ============================================================
+        // GEOFENCE — absensi hanya boleh dari dalam radius lokasi
+        // yang sudah ditentukan admin (khusus aplikasi karyawan).
+        // ============================================================
+        $matchedLocation = $enforceGeofence
+            ? $this->resolveGeofenceLocation($user, $latitude, $longitude, $accuracy)
+            : null;
 
         $absensi = Absensi::firstOrCreate(
             [
@@ -113,6 +129,18 @@ class AttendanceRecorder
             'istirahat_selesai' => $absensi->istirahat_selesai = $jamNormalized,
             'pulang' => $absensi->jam_pulang = $jamNormalized,
         };
+
+        if ($matchedLocation) {
+            $absensi->attendance_location_id = $matchedLocation->id;
+
+            if ($aksi === 'masuk') {
+                $absensi->lat_masuk = $latitude;
+                $absensi->lng_masuk = $longitude;
+            } elseif ($aksi === 'pulang') {
+                $absensi->lat_pulang = $latitude;
+                $absensi->lng_pulang = $longitude;
+            }
+        }
 
         $jadwal = $user->resolveWorkSchedule($tanggal);
 
@@ -156,5 +184,67 @@ class AttendanceRecorder
         $absensi->save();
 
         return $absensi;
+    }
+
+    /**
+     * Pastikan koordinat GPS berada dalam radius salah satu lokasi
+     * absensi yang di-assign ke user. Melempar ValidationException
+     * bila GPS kosong, user belum punya lokasi, atau di luar radius.
+     */
+    private function resolveGeofenceLocation(
+        User $user,
+        ?float $latitude,
+        ?float $longitude,
+        ?float $accuracy = null
+    ): AttendanceLocation {
+        if ($latitude === null || $longitude === null) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'lokasi' => 'Lokasi GPS tidak terbaca. Aktifkan izin lokasi di HP lalu coba lagi.',
+            ]);
+        }
+
+        $locations = $user->attendanceLocations()
+            ->where('aktif', true)
+            ->get();
+
+        if ($locations->isEmpty()) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'lokasi' => 'Anda belum ditugaskan ke lokasi absensi manapun. Hubungi admin.',
+            ]);
+        }
+
+        /** @var AttendanceLocation|null $nearest */
+        $nearest = null;
+        $nearestDistance = null;
+
+        foreach ($locations as $location) {
+            $distance = $location->distanceFrom($latitude, $longitude);
+
+            if ($nearestDistance === null || $distance < $nearestDistance) {
+                $nearestDistance = $distance;
+                $nearest = $location;
+            }
+        }
+
+        // Toleransi akurasi GPS (maks 50 m) supaya pembacaan GPS yang kurang
+        // presisi — umum di perangkat desktop / dalam ruangan — tidak menolak
+        // karyawan yang benar-benar berada di lokasi.
+        $accuracyAllowance = 0.0;
+        if ($accuracy !== null && $accuracy > 0) {
+            $accuracyAllowance = min($accuracy, 50);
+        }
+
+        if ($nearestDistance > $nearest->radius + $accuracyAllowance) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'lokasi' => sprintf(
+                    'Anda berada %s m dari lokasi "%s". Absensi hanya bisa dalam radius %d m.',
+                    number_format($nearestDistance, 0, ',', '.'),
+                    $nearest->nama,
+                    $nearest->radius
+                ),
+            ]);
+        }
+
+        return $nearest;
     }
 }

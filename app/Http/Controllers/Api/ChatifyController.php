@@ -8,9 +8,11 @@ use App\Events\Chatify\ChatTyping;
 use App\Http\Controllers\Controller;
 use App\Models\ChGroup;
 use App\Models\ChMessage;
+use App\Models\PushToken;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -359,6 +361,101 @@ class ChatifyController extends Controller
         ));
 
         return response()->json(['status' => 'ok']);
+    }
+
+    /**
+     * Kirim push notification (Expo) ke satu/beberapa user.
+     * Dipanggil app (fire-and-forget) setelah pesan ditulis ke Firestore:
+     * POST /api/chat/push
+     */
+    public function sendPush(Request $request)
+    {
+        $request->validate([
+            'to_user_ids' => ['nullable', 'array'],
+            'to_user_ids.*' => ['integer'],
+            'to_user_id' => ['nullable', 'integer'],
+            'title' => ['nullable', 'string', 'max:255'],
+            'body' => ['required', 'string', 'max:1000'],
+            'room_id' => ['nullable', 'integer'],
+            'room_type' => ['nullable', 'string', 'in:direct,group'],
+        ]);
+
+        if ($request->filled('to_user_ids')) {
+            $ids = array_unique(array_map('intval', $request->input('to_user_ids')));
+        } elseif ($request->filled('to_user_id')) {
+            $ids = [(int) $request->input('to_user_id')];
+        } else {
+            return response()->json(['message' => 'Missing recipient'], 422);
+        }
+
+        $tokens = PushToken::query()
+            ->whereIn('user_id', $ids)
+            ->pluck('token')
+            ->unique()
+            ->values();
+
+        if ($tokens->isEmpty()) {
+            return response()->json(['status' => 'ok', 'sent' => 0]);
+        }
+
+        $screen = $request->input('room_id') !== null
+            ? '/chat/'.$request->input('room_id').'?type='.($request->input('room_type', 'direct'))
+            : null;
+
+        $sent = 0;
+
+        foreach ($tokens->chunk(100) as $chunk) {
+            $payload = $chunk->map(function ($token) use ($request, $screen) {
+                return [
+                    'to' => $token,
+                    'sound' => 'default',
+                    'title' => $request->input('title', 'Pesan baru'),
+                    'body' => $request->input('body'),
+                    'data' => $screen !== null ? ['screen' => $screen] : new \stdClass(),
+                ];
+            })->values()->all();
+
+            try {
+                $response = Http::timeout(15)
+                    ->withHeaders([
+                        'Accept' => 'application/json',
+                        'Content-Type' => 'application/json',
+                    ])
+                    ->post('https://exp.host/--/api/v2/push/send', $payload);
+
+                if ($response->successful()) {
+                    foreach ($response->json('data', []) as $receipt) {
+                        if (($receipt['status'] ?? '') === 'ok') {
+                            $sent++;
+                        }
+                    }
+                }
+            } catch (\Throwable) {
+                // jangan sampai push menggagalkan alur kirim pesan
+            }
+        }
+
+        return response()->json(['status' => 'ok', 'sent' => $sent]);
+    }
+
+    /**
+     * Simpan file lampiran chat dan kembalikan URL publik.
+     * Dipanggil app via POST /api/chat/upload (multipart).
+     * Catatan: jalankan `php artisan storage:link` sekali di server.
+     */
+    public function upload(Request $request)
+    {
+        $request->validate([
+            'file' => ['required', 'file', 'max:20480'],
+        ]);
+
+        $path = $request->file('file')->store('chat/attachments', 'public');
+
+        if (! $path) {
+            return response()->json(['message' => 'Upload failed'], 422);
+        }
+
+        return response()->json(['url' => Storage::url($path)]);
     }
 
     private function assertGroupMember(int $groupId, int $userId): void

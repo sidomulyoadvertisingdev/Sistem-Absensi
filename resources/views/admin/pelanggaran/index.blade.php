@@ -25,6 +25,7 @@
 <th>Kategori</th>
 <th>Tindakan</th>
 <th>Penanggung Jawab</th>
+<th width="80" class="text-center">Aksi</th>
 </tr>
 </thead>
 <tbody>
@@ -40,11 +41,27 @@
 <td>{{ $row->kategori }}</td>
 <td>{{ $row->tindakan }}</td>
 <td>{{ $row->penanggung_jawab }}</td>
+<td class="text-center">
+    <form action="{{ route('admin.pelanggaran.destroy', $row) }}"
+          method="POST"
+          class="d-inline"
+          onsubmit="return confirm('Hapus catatan pelanggaran ini?')">
+        @csrf
+        @method('DELETE')
+        <button class="btn btn-sm btn-danger" title="Hapus">
+            <i class="fas fa-trash"></i>
+        </button>
+    </form>
+</td>
 </tr>
 @endforeach
 </tbody>
 </table>
 </div>
+</div>
+
+<div class="mt-3">
+    {{ $data->links() }}
 </div>
 
 </div>

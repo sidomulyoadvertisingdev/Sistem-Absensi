@@ -18,3 +18,14 @@ Schedule::command('absensi:backup-foto')->dailyAt('01:00');
 |
 */
 Schedule::command('absensi:cleanup-old-foto')->cron('0 2 1 * *');
+
+/*
+|--------------------------------------------------------------------------
+| Jaring pengaman broadcast job produksi (kalau webhook ERP -> HR terlewat).
+| Jalan tiap 3 menit; idempoten dengan webhook.
+|
+*/
+Schedule::command('production:sync-jobs')
+    ->everyThreeMinutes()
+    ->withoutOverlapping()
+    ->runInBackground();

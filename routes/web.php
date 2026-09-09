@@ -8,6 +8,7 @@ use App\Http\Controllers\Chatify\MessagesController as ChatifyMessagesController
 use App\Http\Controllers\Admin\{
     DashboardController,
     AbsensiController,
+    AttendanceLocationController,
     LemburController,
     LaporanController,
     IntegrationTokenController,
@@ -15,6 +16,7 @@ use App\Http\Controllers\Admin\{
     UserSalaryController,
     UserController,
     PelanggaranController,
+    PeerReportController,
     MasterJabatanController,
     MasterLokasiController,
     MasterPelanggaranController,
@@ -152,9 +154,23 @@ Route::post('/absensi', [AbsensiController::class, 'store'])
 Route::post('/absensi/import/csv', [AbsensiController::class, 'importCsv'])
     ->name('absensi.import.csv');
 
+/* 🔥 HAPUS ABSENSI */
+Route::delete('/absensi/{absensi}', [AbsensiController::class, 'destroy'])
+    ->name('absensi.destroy');
+
 /* 🔥 EXPORT TEMPLATE ABSENSI CSV */
 Route::get('/absensi/template/csv', [AbsensiController::class, 'exportTemplateCsv'])
     ->name('absensi.template.csv');
+
+/* ================= LOKASI ABSENSI (GEOFENCE) ================= */
+Route::prefix('lokasi-absensi')->name('lokasi-absensi.')->group(function () {
+    Route::get('/', [AttendanceLocationController::class, 'index'])->name('index');
+    Route::get('/create', [AttendanceLocationController::class, 'create'])->name('create');
+    Route::post('/', [AttendanceLocationController::class, 'store'])->name('store');
+    Route::get('/{lokasi_absensi}/edit', [AttendanceLocationController::class, 'edit'])->name('edit');
+    Route::put('/{lokasi_absensi}', [AttendanceLocationController::class, 'update'])->name('update');
+    Route::delete('/{lokasi_absensi}', [AttendanceLocationController::class, 'destroy'])->name('destroy');
+});
 
 
 
@@ -163,6 +179,7 @@ Route::get('/absensi/template/csv', [AbsensiController::class, 'exportTemplateCs
         Route::get('/lembur/create', [LemburController::class, 'create'])->name('lembur.create');
         Route::post('/lembur', [LemburController::class, 'store'])->name('lembur.store');
         Route::post('/lembur/{id}/approve', [LemburController::class, 'approve'])->name('lembur.approve');
+        Route::delete('/lembur/{id}', [LemburController::class, 'destroy'])->name('lembur.destroy');
 
         /* ================= GAJI ================= */
         Route::get('/gaji', [UserSalaryController::class, 'index'])->name('gaji');
@@ -256,6 +273,12 @@ Route::prefix('karyawan')->name('karyawan.')->group(function () {
 
             Route::get('/{job}/applicants', [JobApplicantController::class, 'index'])
                 ->name('applicants.index');
+
+            Route::put('/applicants/{applicant}/status', [JobApplicantController::class, 'updateStatus'])
+                ->name('applicants.updateStatus');
+
+            Route::get('/applicants/{applicant}/download/{field}', [JobApplicantController::class, 'downloadFile'])
+                ->name('applicants.download');
         });
 
         Route::get('/jobs/applicants', [JobApplicantController::class, 'indexAll'])
@@ -268,6 +291,15 @@ Route::prefix('karyawan')->name('karyawan.')->group(function () {
             Route::post('/', [JobTodoController::class, 'store'])->name('store');
             Route::get('/{jobTodo}', [JobTodoController::class, 'show'])->name('show');
             Route::put('/{jobTodo}/close', [JobTodoController::class, 'close'])->name('close');
+            Route::delete('/{jobTodo}', [JobTodoController::class, 'destroy'])->name('destroy');
+        });
+
+        /* ================= LAPOR REKAN (PEER REPORT) ================= */
+        Route::prefix('peer-reports')->name('peer-reports.')->group(function () {
+            Route::get('/', [PeerReportController::class, 'index'])->name('index');
+            Route::put('/{peerReport}/approve', [PeerReportController::class, 'approve'])->name('approve');
+            Route::put('/{peerReport}/reject', [PeerReportController::class, 'reject'])->name('reject');
+            Route::delete('/{peerReport}', [PeerReportController::class, 'destroy'])->name('destroy');
         });
 
         /* ================= PELANGGARAN ================= */
@@ -276,19 +308,29 @@ Route::prefix('karyawan')->name('karyawan.')->group(function () {
             Route::get('/create', [PelanggaranController::class, 'create'])->name('create');
             Route::post('/', [PelanggaranController::class, 'store'])->name('store');
             Route::get('/user/{user}', [PelanggaranController::class, 'show'])->name('riwayat');
+            Route::delete('/{pelanggaran}', [PelanggaranController::class, 'destroy'])->name('destroy');
 
             Route::prefix('master')->name('master.')->group(function () {
                 Route::get('/jabatan', [MasterJabatanController::class, 'index'])->name('jabatan.index');
                 Route::get('/jabatan/create', [MasterJabatanController::class, 'create'])->name('jabatan.create');
                 Route::post('/jabatan', [MasterJabatanController::class, 'store'])->name('jabatan.store');
+                Route::get('/jabatan/{jabatan}/edit', [MasterJabatanController::class, 'edit'])->name('jabatan.edit');
+                Route::put('/jabatan/{jabatan}', [MasterJabatanController::class, 'update'])->name('jabatan.update');
+                Route::delete('/jabatan/{jabatan}', [MasterJabatanController::class, 'destroy'])->name('jabatan.destroy');
 
                 Route::get('/lokasi', [MasterLokasiController::class, 'index'])->name('lokasi.index');
                 Route::get('/lokasi/create', [MasterLokasiController::class, 'create'])->name('lokasi.create');
                 Route::post('/lokasi', [MasterLokasiController::class, 'store'])->name('lokasi.store');
+                Route::get('/lokasi/{lokasi}/edit', [MasterLokasiController::class, 'edit'])->name('lokasi.edit');
+                Route::put('/lokasi/{lokasi}', [MasterLokasiController::class, 'update'])->name('lokasi.update');
+                Route::delete('/lokasi/{lokasi}', [MasterLokasiController::class, 'destroy'])->name('lokasi.destroy');
 
                 Route::get('/kode', [MasterPelanggaranController::class, 'index'])->name('kode.index');
                 Route::get('/kode/create', [MasterPelanggaranController::class, 'create'])->name('kode.create');
                 Route::post('/kode', [MasterPelanggaranController::class, 'store'])->name('kode.store');
+                Route::get('/kode/{kode}/edit', [MasterPelanggaranController::class, 'edit'])->name('kode.edit');
+                Route::put('/kode/{kode}', [MasterPelanggaranController::class, 'update'])->name('kode.update');
+                Route::delete('/kode/{kode}', [MasterPelanggaranController::class, 'destroy'])->name('kode.destroy');
             });
         });
 
@@ -319,5 +361,6 @@ Route::prefix('karyawan')->name('karyawan.')->group(function () {
             Route::post('/', [\App\Http\Controllers\Admin\AnnouncementController::class, 'store'])->name('store');
             Route::get('/{announcement}', [\App\Http\Controllers\Admin\AnnouncementController::class, 'show'])->name('show');
             Route::post('/{announcement}/toggle', [\App\Http\Controllers\Admin\AnnouncementController::class, 'toggle'])->name('toggle');
+            Route::delete('/{announcement}', [\App\Http\Controllers\Admin\AnnouncementController::class, 'destroy'])->name('destroy');
         });
     });

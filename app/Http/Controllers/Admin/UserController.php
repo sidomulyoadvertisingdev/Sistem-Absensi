@@ -48,6 +48,8 @@ class UserController extends Controller
             'address'    => 'required|string',
             'jabatan'    => 'required|string|max:100',
             'penempatan' => 'required|string|max:100',
+            'erp_outlet_id'        => 'nullable|integer|min:1',
+            'can_close_production' => 'nullable|boolean',
             'password'   => 'required|string|min:6',
         ]);
 
@@ -59,6 +61,8 @@ class UserController extends Controller
             'address'    => $validated['address'],
             'jabatan'    => $validated['jabatan'],
             'penempatan' => $validated['penempatan'],
+            'erp_outlet_id'        => $validated['erp_outlet_id'] ?? null,
+            'can_close_production' => $request->boolean('can_close_production'),
             'role'       => User::ROLE_KARYAWAN,
             'password'   => Hash::make($validated['password']),
         ]);
@@ -86,10 +90,14 @@ class UserController extends Controller
             'address'    => 'required|string',
             'jabatan'    => 'required|string|max:100',
             'penempatan' => 'required|string|max:100',
+            'erp_outlet_id'        => 'nullable|integer|min:1',
+            'can_close_production' => 'nullable|boolean',
             'password'   => 'nullable|string|min:6',
         ]);
 
         $data = collect($validated)->except('password')->toArray();
+        $data['erp_outlet_id'] = $validated['erp_outlet_id'] ?? null;
+        $data['can_close_production'] = $request->boolean('can_close_production');
 
         if (!empty($validated['password'])) {
             $data['password'] = Hash::make($validated['password']);

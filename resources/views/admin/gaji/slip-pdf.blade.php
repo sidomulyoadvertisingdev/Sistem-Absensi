@@ -198,7 +198,7 @@ SLIP GAJI — {{ $periode }}
 </tr>
 
 <tr>
-<td>Bonus Job</td>
+<td>Bonus Tugas</td>
 <td class="right">Rp {{ number_format($totalBonusJob,0,',','.') }}</td>
 </tr>
 
@@ -232,7 +232,7 @@ SLIP GAJI — {{ $periode }}
 </tr>
 
 <tr>
-<td>Potongan Training</td>
+<td>Potongan Pelatihan</td>
 <td class="right">Rp {{ number_format($potonganTrainingNominal,0,',','.') }}</td>
 </tr>
 
@@ -269,7 +269,7 @@ Rp {{ number_format($totalGaji,0,',','.') }}
 <table>
 
 <tr>
-<th>Job</th>
+<th>Tugas</th>
 <th class="right">Bonus</th>
 </tr>
 

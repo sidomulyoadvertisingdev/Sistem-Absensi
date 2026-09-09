@@ -9,7 +9,7 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1 class="mb-0">
             @isset($job)
-                Pelamar – {{ $job->title }}
+                Pelamar - {{ $job->title }}
             @else
                 Semua Pelamar Pekerjaan
             @endisset
@@ -17,12 +17,12 @@
 
         @isset($job)
             <a href="{{ route('admin.jobs.index') }}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> Kembali ke Job
+                <i class="fas fa-arrow-left"></i> Kembali ke Lowongan
             </a>
         @endisset
     </div>
 
-    {{-- FILTER & SEARCH --}}
+    {{-- Filter dan pencarian --}}
     <div class="card mb-3">
         <div class="card-body">
             <form method="GET">
@@ -38,10 +38,10 @@
                     <div class="col-md-3">
                         <select name="status" class="form-control">
                             <option value="">-- Semua Status --</option>
-                            <option value="pending" {{ request('status')=='pending'?'selected':'' }}>Pending</option>
-                            <option value="review" {{ request('status')=='review'?'selected':'' }}>Review</option>
-                            <option value="interview" {{ request('status')=='interview'?'selected':'' }}>Interview</option>
-                            <option value="training" {{ request('status')=='training'?'selected':'' }}>Training</option>
+                            <option value="pending" {{ request('status')=='pending'?'selected':'' }}>Menunggu</option>
+                            <option value="review" {{ request('status')=='review'?'selected':'' }}>Ditinjau</option>
+                            <option value="interview" {{ request('status')=='interview'?'selected':'' }}>Wawancara</option>
+                            <option value="training" {{ request('status')=='training'?'selected':'' }}>Pelatihan</option>
                             <option value="accepted" {{ request('status')=='accepted'?'selected':'' }}>Diterima</option>
                             <option value="rejected" {{ request('status')=='rejected'?'selected':'' }}>Ditolak</option>
                         </select>
@@ -49,10 +49,10 @@
 
                     <div class="col-md-3">
                         <button class="btn btn-primary">
-                            <i class="fas fa-search"></i> Filter
+                            <i class="fas fa-search"></i> Saring
                         </button>
                         <a href="{{ url()->current() }}" class="btn btn-secondary">
-                            Reset
+                            Atur Ulang
                         </a>
                     </div>
                 </div>
@@ -96,16 +96,16 @@
                                     <span class="badge badge-danger">Ditolak</span>
                                     @break
                                 @case('review')
-                                    <span class="badge badge-info">Review</span>
+                                    <span class="badge badge-info">Ditinjau</span>
                                     @break
                                 @case('interview')
-                                    <span class="badge badge-primary">Interview</span>
+                                    <span class="badge badge-primary">Wawancara</span>
                                     @break
                                 @case('training')
-                                    <span class="badge badge-warning">Training</span>
+                                    <span class="badge badge-warning">Pelatihan</span>
                                     @break
                                 @default
-                                    <span class="badge badge-secondary">Pending</span>
+                                    <span class="badge badge-secondary">Menunggu</span>
                             @endswitch
                         </td>
                         <td>{{ $applicant->created_at->format('d-m-Y') }}</td>
@@ -117,42 +117,42 @@
                                     @if(\Illuminate\Support\Str::startsWith($value, 'job-applicants'))
                                         <a href="{{ route('admin.jobs.applicants.download', [$applicant, $key]) }}"
                                            class="btn btn-info btn-sm mb-1"
-                                           title="Download {{ ucfirst($key) }}">
+                                           title="Unduh {{ ucfirst($key) }}">
                                             <i class="fas fa-download"></i>
                                         </a>
                                     @endif
                                 @endforeach
                             @endif
 
-                            {{-- REVIEW --}}
+                            {{-- Ditinjau --}}
                             <form action="{{ route('admin.jobs.applicants.updateStatus', $applicant) }}"
                                   method="POST" class="d-inline">
                                 @csrf
                                 @method('PUT')
                                 <input type="hidden" name="status" value="review">
-                                <button class="btn btn-secondary btn-sm" title="Review">
+                                <button class="btn btn-secondary btn-sm" title="Ditinjau">
                                     <i class="fas fa-eye"></i>
                                 </button>
                             </form>
 
-                            {{-- INTERVIEW --}}
+                            {{-- Wawancara --}}
                             <form action="{{ route('admin.jobs.applicants.updateStatus', $applicant) }}"
                                   method="POST" class="d-inline">
                                 @csrf
                                 @method('PUT')
                                 <input type="hidden" name="status" value="interview">
-                                <button class="btn btn-primary btn-sm" title="Interview">
+                                <button class="btn btn-primary btn-sm" title="Wawancara">
                                     <i class="fas fa-comments"></i>
                                 </button>
                             </form>
 
-                            {{-- TRAINING --}}
+                            {{-- Pelatihan --}}
                             <form action="{{ route('admin.jobs.applicants.updateStatus', $applicant) }}"
                                   method="POST" class="d-inline">
                                 @csrf
                                 @method('PUT')
                                 <input type="hidden" name="status" value="training">
-                                <button class="btn btn-warning btn-sm" title="Training">
+                                <button class="btn btn-warning btn-sm" title="Pelatihan">
                                     <i class="fas fa-chalkboard-teacher"></i>
                                 </button>
                             </form>

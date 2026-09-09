@@ -107,7 +107,7 @@ value="{{ old('lembur_per_jam', $salary->lembur_per_jam ?? 0) }}">
 
 <hr>
 
-<h5>Masa Training</h5>
+<h5>Masa Pelatihan</h5>
 
 <div class="form-check mb-3">
 <input type="checkbox"
@@ -125,7 +125,7 @@ Aktifkan potongan masa training
 <div class="row">
 
 <div class="col-md-4 mb-3">
-<label>Tanggal Mulai Training</label>
+<label>Tanggal Mulai Pelatihan</label>
 <input type="date"
 name="training_start_date"
 id="training_start_date"
@@ -134,7 +134,7 @@ value="{{ old('training_start_date', optional($salary?->training_start_date)->fo
 </div>
 
 <div class="col-md-4 mb-3">
-<label>Durasi Training (Hari)</label>
+<label>Durasi Pelatihan (Hari)</label>
 <input type="number"
 name="training_duration_days"
 id="training_duration_days"
@@ -145,7 +145,7 @@ value="{{ old('training_duration_days', $salary->training_duration_days ?? 0) }}
 </div>
 
 <div class="col-md-4 mb-3">
-<label>Jenis Potongan Training</label>
+<label>Jenis Potongan Pelatihan</label>
 <select name="training_deduction_type"
 id="training_deduction_type"
 class="form-control">
@@ -161,7 +161,7 @@ Nominal per Hari (Rp)
 </div>
 
 <div class="col-md-6 mb-0">
-<label>Nilai Potongan Training</label>
+<label>Nilai Potongan Pelatihan</label>
 <input type="number"
 name="training_deduction_value"
 id="training_deduction_value"

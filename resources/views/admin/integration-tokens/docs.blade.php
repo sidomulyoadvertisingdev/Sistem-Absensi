@@ -3,6 +3,7 @@
 @section('title', 'Dokumentasi API Integrasi')
 
 @section('content')
+<div class="container-fluid">
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
         <div>
             <h1 class="mb-1">Dokumentasi API Integrasi</h1>
@@ -20,7 +21,7 @@
         <div class="card-body">
             <div class="row">
                 <div class="col-lg-6">
-                    <h5>Base URL</h5>
+                    <h5>URL Dasar</h5>
                     <pre class="p-3 rounded border bg-light"><code>{{ $baseUrl }}</code></pre>
 
                     <h5>Header Wajib</h5>
@@ -56,7 +57,7 @@ Content-Type: application/json</code></pre>
                 </div>
 
                 <div class="mb-3">
-                    <div class="font-weight-bold mb-1">Ability Token</div>
+                    <div class="font-weight-bold mb-1">Hak Akses Token</div>
                     <code>{{ $endpoint['ability'] }}</code>
                 </div>
 
@@ -87,12 +88,12 @@ Content-Type: application/json</code></pre>
                 </div>
 
                 <div class="mb-3">
-                    <div class="font-weight-bold mb-1">Contoh Request</div>
+                    <div class="font-weight-bold mb-1">Contoh Permintaan</div>
                     <pre class="p-3 rounded border bg-dark text-white mb-0"><code>{{ $endpoint['curl'] }}</code></pre>
                 </div>
 
                 <div>
-                    <div class="font-weight-bold mb-1">Contoh Response</div>
+                    <div class="font-weight-bold mb-1">Contoh Respons</div>
                     <pre class="p-3 rounded border bg-light mb-0"><code>{{ $endpoint['response'] }}</code></pre>
                 </div>
             </div>
@@ -104,8 +105,8 @@ Content-Type: application/json</code></pre>
             <h3 class="card-title mb-0">Webhook Keluar (Sistem → Aplikasi Eksternal)</h3>
         </div>
         <div class="card-body">
-            <p>Sistem akan mengirim <strong>POST JSON</strong> ke URL webhook yang kamu daftarkan
-                (menu <em>Webhook (Notifikasi)</em>) setiap kali ada user yang melakukan absen di aplikasi.</p>
+                <p>Sistem akan mengirim <strong>POST JSON</strong> ke URL webhook yang didaftarkan
+	                (menu <em>Webhook Notifikasi</em>) setiap kali ada pengguna yang melakukan absen di aplikasi.</p>
 
             <div class="mb-3">
                 <div class="font-weight-bold mb-1">Header</div>
@@ -137,8 +138,9 @@ User-Agent: SidoMulyo-Webhook</code></pre>
 }</code></pre>
             </div>
 
-            <p class="mb-0">Verifikasi signature di sisi penerima dengan <code>hash_hmac('sha256', $rawBody, $secret)</code>
-                dan bandingkan dengan header <code>X-Integration-Signature</code> (tanpa prefix <code>sha256=</code>).</p>
+            <p class="mb-0">Verifikasi tanda tangan di sisi penerima dengan <code>hash_hmac('sha256', $rawBody, $secret)</code>
+                dan bandingkan dengan header <code>X-Integration-Signature</code> (tanpa awalan <code>sha256=</code>).</p>
         </div>
     </div>
+</div>
 @endsection

@@ -60,9 +60,9 @@
 
                         <td>
                             @if($item->status === 'approved')
-                                <span class="badge badge-success">Approved</span>
+                                <span class="badge badge-success">Disetujui</span>
                             @elseif($item->status === 'pending')
-                                <span class="badge badge-warning">Pending</span>
+                                <span class="badge badge-warning">Menunggu</span>
                             @else
                                 <span class="badge badge-secondary">
                                     {{ ucfirst($item->status) }}
@@ -74,15 +74,25 @@
                             @if($item->status !== 'approved')
                                 <form action="{{ route('admin.lembur.approve', $item->id) }}"
                                       method="POST"
+                                      class="d-inline"
                                       onsubmit="return confirm('Setujui lembur ini?')">
                                     @csrf
                                     <button class="btn btn-sm btn-success">
-                                        <i class="fas fa-check"></i> Approve
+                                        <i class="fas fa-check"></i> Setujui
                                     </button>
                                 </form>
-                            @else
-                                <span class="text-muted">-</span>
                             @endif
+
+                            <form action="{{ route('admin.lembur.destroy', $item->id) }}"
+                                  method="POST"
+                                  class="d-inline"
+                                  onsubmit="return confirm('Hapus lembur ini?')">
+                                @csrf
+                                @method('DELETE')
+                                <button class="btn btn-sm btn-danger" title="Hapus">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
                         </td>
                     </tr>
                 @empty
@@ -95,6 +105,11 @@
                 </tbody>
             </table>
         </div>
+    </div>
+
+    {{-- PAGINATION --}}
+    <div class="mt-3">
+        {{ $data->links() }}
     </div>
 
 </div>

@@ -33,4 +33,9 @@ class ChatRead implements ShouldBroadcast
     {
         return 'chatify.read';
     }
+
+    public function broadcastWith(): array
+    {
+        return $this->payload;
+    }
 }

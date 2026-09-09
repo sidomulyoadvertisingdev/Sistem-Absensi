@@ -38,4 +38,38 @@ class MasterPelanggaranController extends Controller
             ->route('admin.pelanggaran.master.kode.index')
             ->with('success', 'Kode pelanggaran berhasil ditambahkan');
     }
+
+    public function edit(MasterPelanggaran $kode)
+    {
+        return view('admin.pelanggaran.master.kode.edit', compact('kode'));
+    }
+
+    public function update(Request $request, MasterPelanggaran $kode)
+    {
+        $request->validate([
+            'kode'     => 'required|unique:master_pelanggarans,kode,' . $kode->id,
+            'kategori' => 'required|in:Ringan,Sedang,Berat',
+            'nama'     => 'required',
+        ]);
+
+        $kode->update([
+            'kode'     => $request->kode,
+            'kategori' => $request->kategori,
+            'nama'     => $request->nama,
+            'keterangan' => $request->keterangan,
+        ]);
+
+        return redirect()
+            ->route('admin.pelanggaran.master.kode.index')
+            ->with('success', 'Kode pelanggaran berhasil diperbarui');
+    }
+
+    public function destroy(MasterPelanggaran $kode)
+    {
+        $kode->delete();
+
+        return redirect()
+            ->route('admin.pelanggaran.master.kode.index')
+            ->with('success', 'Kode pelanggaran berhasil dihapus');
+    }
 }

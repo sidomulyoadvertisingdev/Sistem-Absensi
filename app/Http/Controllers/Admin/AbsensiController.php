@@ -17,7 +17,7 @@ class AbsensiController extends Controller
         $data = Absensi::with('user')
             ->orderBy('tanggal', 'desc')
             ->orderBy('id', 'desc')
-            ->get();
+            ->paginate(20);
 
         return view('admin.absensi.index', compact('data'));
     }
@@ -26,6 +26,24 @@ class AbsensiController extends Controller
     {
         $users = User::orderBy('name')->get();
         return view('admin.absensi.create', compact('users'));
+    }
+
+    /**
+     * =================================================
+     * HAPUS ABSENSI + FILE FOTO
+     * =================================================
+     */
+    public function destroy(Absensi $absensi)
+    {
+        if ($absensi->foto && \Illuminate\Support\Facades\Storage::disk('public')->exists($absensi->foto)) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($absensi->foto);
+        }
+
+        $absensi->delete();
+
+        return redirect()
+            ->route('admin.absensi')
+            ->with('success', 'Data absensi berhasil dihapus');
     }
 
     /**

@@ -122,7 +122,7 @@ Rp {{ number_format($uangLembur ?? 0,0,',','.') }}
 </tr>
 
 <tr>
-<th>Bonus Job</th>
+<th>Bonus Tugas</th>
 <td class="text-right">
 Rp {{ number_format($totalBonusJob ?? 0,0,',','.') }}
 </td>
@@ -154,12 +154,12 @@ Rp {{ number_format($totalGaji ?? 0,0,',','.') }}
 </table>
 
 {{-- BONUS DETAIL --}}
-<h5 class="mt-4">Rincian Bonus Job</h5>
+<h5 class="mt-4">Rincian Bonus Tugas</h5>
 
 <table class="table table-sm table-bordered">
 <thead>
 <tr>
-<th>Job</th>
+<th>Tugas</th>
 <th class="text-right">Bonus</th>
 </tr>
 </thead>

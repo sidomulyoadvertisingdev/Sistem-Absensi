@@ -9,7 +9,7 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1 class="mb-0">Lowongan Pekerjaan</h1>
         <a href="{{ route('admin.jobs.create') }}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Tambah Job
+            <i class="fas fa-plus"></i> Tambah Lowongan
         </a>
     </div>
 
@@ -32,7 +32,7 @@
                             <i class="fas fa-search"></i> Cari
                         </button>
                         <a href="{{ route('admin.jobs.index') }}" class="btn btn-secondary">
-                            Reset
+                            Atur Ulang
                         </a>
                     </div>
                 </div>
@@ -76,24 +76,24 @@
                             @endif
                         </td>
 
-                        {{-- TITLE --}}
+                        {{-- Judul --}}
                         <td>
                             <strong>{{ $job->title }}</strong>
                         </td>
 
-                        {{-- LOCATION --}}
+                        {{-- Lokasi --}}
                         <td>
                             {{ $job->location ?? '-' }}
                         </td>
 
-                        {{-- TYPE --}}
+                        {{-- Tipe --}}
                         <td>
                             <span class="badge badge-info">
                                 {{ $job->job_type ?? '-' }}
                             </span>
                         </td>
 
-                        {{-- STATUS --}}
+                        {{-- Status --}}
                         <td>
                             @if($job->is_active)
                                 <span class="badge badge-success">Aktif</span>
@@ -102,22 +102,22 @@
                             @endif
                         </td>
 
-                        {{-- DATE --}}
+                        {{-- Tanggal --}}
                         <td>
                             {{ $job->created_at?->format('d-m-Y') ?? '-' }}
                         </td>
 
-                        {{-- ACTION --}}
+                        {{-- Aksi --}}
                         <td class="text-center">
 
-                            {{-- EDIT --}}
+                            {{-- Ubah --}}
                             <a href="{{ route('admin.jobs.edit', $job) }}"
                                class="btn btn-warning btn-sm"
                                title="Edit">
                                 <i class="fas fa-edit"></i>
                             </a>
 
-                            {{-- DELETE --}}
+                            {{-- Hapus --}}
                             <form action="{{ route('admin.jobs.destroy', $job) }}"
                                   method="POST"
                                   class="d-inline"

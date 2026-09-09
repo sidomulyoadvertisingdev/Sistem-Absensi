@@ -116,9 +116,38 @@
             </select>
         </div>
 
+        {{-- PRODUKSI (BROADCAST JOB) --}}
+        <div class="mb-3">
+            <label>Outlet ERP (Produksi)</label>
+            <input
+                type="number"
+                name="erp_outlet_id"
+                class="form-control"
+                min="1"
+                value="{{ old('erp_outlet_id', $user->erp_outlet_id) }}"
+                placeholder="ID outlet di ERP, mis. 2"
+            >
+            <small class="text-muted">Wajib diisi jika karyawan ini menutup produksi dari aplikasi absensi.</small>
+        </div>
+
+        <div class="mb-4 form-check">
+            <input type="hidden" name="can_close_production" value="0">
+            <input
+                type="checkbox"
+                class="form-check-input"
+                id="can_close_production"
+                name="can_close_production"
+                value="1"
+                {{ old('can_close_production', $user->can_close_production) ? 'checked' : '' }}
+            >
+            <label class="form-check-label" for="can_close_production">
+                Boleh mengambil &amp; menutup job produksi (helper produksi)
+            </label>
+        </div>
+
         {{-- PASSWORD --}}
         <div class="mb-4">
-            <label>Password Akun <small class="text-muted">(Kosongkan jika tidak diubah)</small></label>
+            <label>Kata Sandi Akun <small class="text-muted">(Kosongkan jika tidak diubah)</small></label>
             <input
                 type="password"
                 name="password"

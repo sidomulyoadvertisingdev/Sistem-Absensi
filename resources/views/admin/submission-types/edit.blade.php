@@ -3,6 +3,7 @@
 @section('title', 'Edit Jenis Pengajuan')
 
 @section('content')
+<div class="container-fluid">
 <h4>Edit Jenis Pengajuan</h4>
 
 @if ($errors->any())
@@ -15,9 +16,11 @@
     </div>
 @endif
 
-<form action="{{ route('admin.submission-types.update', $type) }}" method="POST">
-    @csrf
-    @method('PUT')
+<div class="card">
+    <div class="card-body">
+        <form action="{{ route('admin.submission-types.update', $type) }}" method="POST">
+            @csrf
+            @method('PUT')
 
     <div class="mb-3">
         <label>Kode</label>
@@ -54,9 +57,12 @@
         </label>
     </div>
 
-    <div class="mt-3 d-flex gap-2">
-        <button class="btn btn-primary">Simpan Perubahan</button>
-        <a href="{{ route('admin.submission-types.index') }}" class="btn btn-light">Batal</a>
+            <div class="mt-3 d-flex gap-2">
+                <button class="btn btn-primary">Simpan Perubahan</button>
+                <a href="{{ route('admin.submission-types.index') }}" class="btn btn-light">Batal</a>
+            </div>
+        </form>
     </div>
-</form>
+</div>
+</div>
 @endsection

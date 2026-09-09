@@ -3,6 +3,15 @@
 @section('title', 'Detail Pengajuan')
 
 @section('content')
+<div class="container-fluid">
+
+@php
+    $labelStatus = [
+        'pending' => 'Menunggu',
+        'approved' => 'Disetujui',
+        'rejected' => 'Ditolak',
+    ];
+@endphp
 
 <h4 class="mb-3">Detail Pengajuan</h4>
 
@@ -27,7 +36,7 @@
             @if($submission->user)
                 {{ $submission->user->name }}
             @else
-                <span class="text-danger">User tidak ditemukan</span>
+                <span class="text-danger">Pengguna tidak ditemukan</span>
             @endif
         </p>
 
@@ -55,7 +64,7 @@
                 @elseif($submission->status === 'rejected') bg-danger
                 @else bg-secondary
                 @endif">
-                {{ strtoupper($submission->status) }}
+                {{ $labelStatus[$submission->status] ?? ucfirst($submission->status) }}
             </span>
         </p>
 
@@ -101,7 +110,7 @@
 <div class="card">
     <div class="card-body">
 
-        {{-- APPROVE --}}
+        {{-- SETUJUI --}}
         <form method="POST"
               action="{{ route('admin.submission.approve', $submission) }}"
               class="mb-3">
@@ -117,13 +126,13 @@
 
             <button class="btn btn-success"
                     onclick="return confirm('Setujui pengajuan ini?')">
-                <i class="fas fa-check"></i> Approve
+                <i class="fas fa-check"></i> Setujui
             </button>
         </form>
 
         <hr>
 
-        {{-- REJECT --}}
+        {{-- TOLAK --}}
         <form method="POST"
               action="{{ route('admin.submission.reject', $submission) }}">
             @csrf
@@ -139,7 +148,7 @@
 
             <button class="btn btn-danger"
                     onclick="return confirm('Tolak pengajuan ini?')">
-                <i class="fas fa-times"></i> Reject
+                <i class="fas fa-times"></i> Tolak
             </button>
         </form>
 
@@ -153,10 +162,11 @@
 
         <button class="btn btn-outline-secondary"
                 onclick="return confirm('Kembalikan status ke pending?')">
-            <i class="fas fa-undo"></i> Cancel / Reset Status
+            <i class="fas fa-undo"></i> Batalkan / Atur Ulang Status
         </button>
     </form>
+	</div>
+	@endif
+	
 </div>
-@endif
-
-@endsection
+	@endsection

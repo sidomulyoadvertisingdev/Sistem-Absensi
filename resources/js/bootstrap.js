@@ -1,4 +1,9 @@
-import 'bootstrap';
+/**
+ * Catatan: Bootstrap 5 (npm) TIDAK di-import di sini.
+ * Layout web memakai AdminLTE 3 + Bootstrap 4.6.2 via CDN,
+ * dan seluruh view memakai API Bootstrap 4 (data-toggle/data-target).
+ * Import BS5 di sini hanya menimbulkan konflik JS ganda.
+ */
 
 /**
  * We'll load the axios HTTP library which allows us to easily issue requests

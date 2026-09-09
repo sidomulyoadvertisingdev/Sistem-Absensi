@@ -182,4 +182,19 @@ class JobTodoController extends Controller
             'Job Todo berhasil ditutup'
         );
     }
+
+    /**
+     * =====================================================
+     * HAPUS JOB TODO (BESERTA PIVOT USER)
+     * =====================================================
+     */
+    public function destroy(JobTodo $jobTodo)
+    {
+        $jobTodo->users()->detach();
+        $jobTodo->delete();
+
+        return redirect()
+            ->route('admin.job-todos.index')
+            ->with('success', 'Job Todo berhasil dihapus');
+    }
 }

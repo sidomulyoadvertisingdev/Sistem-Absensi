@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Manajemen User')
+@section('title', 'Manajemen Pengguna')
 
 @section('content')
 <div class="container-fluid user-management-modern">
@@ -10,18 +10,22 @@
         $totalAdmin = $users->filter(fn ($u) => $u->isAdmin())->count();
         $totalKaryawan = $users->filter(fn ($u) => $u->isKaryawan())->count();
         $totalUserBiasa = $users->filter(fn ($u) => $u->isUser())->count();
+        $labelPeran = [
+            'owner' => 'Pemilik',
+            'admin' => 'Admin',
+            'karyawan' => 'Karyawan',
+            'user' => 'Pengguna',
+        ];
     @endphp
 
-    {{-- HERO --}}
-    <div class="card user-hero border-0 shadow-sm mb-4">
-        <div class="card-body text-white d-flex justify-content-between align-items-center flex-wrap">
-            <div>
-                <h3 class="mb-1 font-weight-bold">Manajemen User</h3>
-                <small>Kelola role user, promosi ke karyawan, dan penurunan role.</small>
-            </div>
-            <div class="hero-icon mt-2 mt-md-0">
-                <i class="fas fa-user-shield"></i>
-            </div>
+    <div class="panel-halaman">
+        <div>
+            <span class="label-halaman">Manajemen Akses</span>
+            <h1>Manajemen Pengguna</h1>
+            <p>Kelola peran pengguna, promosi karyawan, dan perubahan akses akun dari satu tempat.</p>
+        </div>
+        <div class="ikon-halaman">
+            <i class="fas fa-user-shield"></i>
         </div>
     </div>
 
@@ -34,60 +38,49 @@
         @endif
     @endforeach
 
-    {{-- RINGKASAN --}}
-    <div class="row mb-3">
-        <div class="col-lg-3 col-6">
-            <div class="small-box um-box um-box-total">
-                <div class="inner">
-                    <h3>{{ $totalUsers }}</h3>
-                    <p>Total User</p>
-                </div>
-                <div class="icon"><i class="fas fa-users"></i></div>
-            </div>
+    <div class="grid-ringkasan">
+        <div class="kartu-ringkasan aksen-biru">
+            <span class="ikon-ringkasan"><i class="fas fa-users"></i></span>
+            <span>Total Pengguna</span>
+            <strong>{{ $totalUsers }}</strong>
+            <small>Semua akun terdaftar</small>
         </div>
-        <div class="col-lg-3 col-6">
-            <div class="small-box um-box um-box-admin">
-                <div class="inner">
-                    <h3>{{ $totalAdmin }}</h3>
-                    <p>Admin</p>
-                </div>
-                <div class="icon"><i class="fas fa-user-lock"></i></div>
-            </div>
+        <div class="kartu-ringkasan aksen-merah">
+            <span class="ikon-ringkasan"><i class="fas fa-user-lock"></i></span>
+            <span>Admin</span>
+            <strong>{{ $totalAdmin }}</strong>
+            <small>Akun pengelola sistem</small>
         </div>
-        <div class="col-lg-3 col-6">
-            <div class="small-box um-box um-box-karyawan">
-                <div class="inner">
-                    <h3>{{ $totalKaryawan }}</h3>
-                    <p>Karyawan</p>
-                </div>
-                <div class="icon"><i class="fas fa-user-tie"></i></div>
-            </div>
+        <div class="kartu-ringkasan aksen-hijau">
+            <span class="ikon-ringkasan"><i class="fas fa-user-tie"></i></span>
+            <span>Karyawan</span>
+            <strong>{{ $totalKaryawan }}</strong>
+            <small>Akun karyawan aktif</small>
         </div>
-        <div class="col-lg-3 col-6">
-            <div class="small-box um-box um-box-user">
-                <div class="inner">
-                    <h3>{{ $totalUserBiasa }}</h3>
-                    <p>User Biasa</p>
-                </div>
-                <div class="icon"><i class="fas fa-user"></i></div>
-            </div>
+        <div class="kartu-ringkasan aksen-abu">
+            <span class="ikon-ringkasan"><i class="fas fa-user"></i></span>
+            <span>Pengguna Biasa</span>
+            <strong>{{ $totalUserBiasa }}</strong>
+            <small>Akun belum menjadi karyawan</small>
         </div>
     </div>
 
-    <div class="card border-0 shadow-sm">
-        <div class="card-header bg-white border-0 pb-0">
-            <h5 class="mb-1 font-weight-bold">Daftar User</h5>
-            <small class="text-muted">Promote atau demote role langsung dari tabel.</small>
+    <section class="panel-data">
+        <div class="panel-judul">
+            <div>
+                <h2>Daftar Pengguna</h2>
+                <p>Promosi atau turunkan peran langsung dari tabel.</p>
+            </div>
         </div>
-        <div class="card-body table-responsive p-0">
+        <div class="table-responsive">
             <table class="table table-hover mb-0 user-table">
-                <thead class="thead-light">
+                <thead>
                     <tr>
                         <th width="6%">#</th>
                         <th>Nama</th>
                         <th>Email</th>
                         <th>NIK</th>
-                        <th width="14%">Role</th>
+                        <th width="14%">Peran</th>
                         <th width="32%">Aksi</th>
                     </tr>
                 </thead>
@@ -95,7 +88,12 @@
                     @forelse ($users as $user)
                         <tr>
                             <td>{{ $loop->iteration }}</td>
-                            <td>{{ $user->name }}</td>
+                            <td>
+                                <div class="identitas-pengguna">
+                                    <span class="avatar-pengguna">{{ strtoupper(substr($user->name, 0, 1)) }}</span>
+                                    <strong>{{ $user->name }}</strong>
+                                </div>
+                            </td>
                             <td>{{ $user->email }}</td>
                             <td>{{ $user->nik ?? '-' }}</td>
                             <td>
@@ -104,151 +102,251 @@
                                     @elseif($user->isKaryawan()) um-role-karyawan
                                     @else um-role-user
                                     @endif">
-                                    {{ strtoupper($user->role) }}
+                                    {{ $labelPeran[$user->role] ?? ucfirst($user->role) }}
                                 </span>
                             </td>
                             <td>
+                                <div class="aksi-pengguna">
 
-                                {{-- PROMOTE --}}
-                                @if($user->isUser())
-                                    <form action="{{ route('admin.users.promote', $user) }}"
-                                          method="POST"
-                                          class="d-inline-block mb-1"
-                                          onsubmit="return confirm('Jadikan user ini sebagai karyawan?')">
-                                        @csrf
-                                        <button type="submit" class="btn btn-sm btn-success um-action-btn">
-                                            <i class="fas fa-arrow-up"></i>
-                                            Promote -> Karyawan
-                                        </button>
-                                    </form>
-                                @endif
+                                    {{-- PROMOTE --}}
+                                    @if($user->isUser())
+                                        <form action="{{ route('admin.users.promote', $user) }}"
+                                              method="POST"
+                                              onsubmit="return confirm('Jadikan pengguna ini sebagai karyawan?')">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-success um-action-btn">
+                                                <i class="fas fa-arrow-up"></i>
+                                                Jadikan Karyawan
+                                            </button>
+                                        </form>
+                                    @endif
 
-                                {{-- DEMOTE --}}
-                                @if($user->isKaryawan())
-                                    <form action="{{ route('admin.users.demote', $user) }}"
-                                          method="POST"
-                                          class="d-inline-block mb-1"
-                                          onsubmit="return confirm('Yakin turunkan jadi user biasa?')">
-                                        @csrf
-                                        <button type="submit" class="btn btn-sm btn-warning um-action-btn">
-                                            <i class="fas fa-arrow-down"></i>
-                                            Demote -> User
-                                        </button>
-                                    </form>
-                                @endif
+                                    {{-- DEMOTE --}}
+                                    @if($user->isKaryawan())
+                                        <form action="{{ route('admin.users.demote', $user) }}"
+                                              method="POST"
+                                              onsubmit="return confirm('Yakin turunkan jadi pengguna biasa?')">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-warning um-action-btn">
+                                                <i class="fas fa-arrow-down"></i>
+                                                Jadikan Pengguna
+                                            </button>
+                                        </form>
+                                    @endif
 
-                                {{-- ADMIN --}}
-                                @if($user->isAdmin())
-                                    <span class="text-muted font-weight-semibold">
-                                        <i class="fas fa-lock"></i> Admin
-                                    </span>
-                                @endif
+                                    {{-- ADMIN --}}
+                                    @if($user->isAdmin())
+                                        <span class="status-terkunci">
+                                            <i class="fas fa-lock"></i> Admin
+                                        </span>
+                                    @endif
 
+                                </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
                             <td colspan="6" class="text-center text-muted py-4">
-                                Tidak ada user
+                                Tidak ada pengguna
                             </td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
-    </div>
+    </section>
 
 </div>
 @endsection
 
 @push('styles')
 <style>
-.user-management-modern .user-hero {
+.user-management-modern {
+    --panel-border: #e4e9f1;
+    --panel-shadow: 0 14px 34px rgba(22, 34, 51, .08);
+    --soft-blue: #edf4ff;
+    --soft-green: #e8f8ef;
+    --soft-red: #fff0eb;
+    --soft-gray: #f1f5f9;
+}
+
+.user-management-modern .panel-halaman {
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--panel-border);
     border-radius: 16px;
-    overflow: hidden;
-    background: linear-gradient(120deg, #1d4f91 0%, #1e7b7f 100%);
-    position: relative;
+    box-shadow: var(--panel-shadow);
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 22px;
+    padding: 24px;
 }
 
-.user-management-modern .user-hero::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(circle at 88% 15%, rgba(255, 255, 255, .18), transparent 45%);
+.user-management-modern .label-halaman {
+    color: var(--accent-strong);
+    display: block;
+    font-size: .78rem;
+    font-weight: 800;
+    letter-spacing: 0;
+    margin-bottom: 8px;
 }
 
-.user-management-modern .user-hero .card-body {
-    position: relative;
-    z-index: 1;
+.user-management-modern .panel-halaman h1 {
+    color: var(--text);
+    font-size: 1.55rem;
+    font-weight: 800;
+    margin: 0 0 6px;
 }
 
-.user-management-modern .hero-icon i {
-    font-size: 40px;
-    opacity: .9;
+.user-management-modern .panel-halaman p {
+    color: var(--text-muted);
+    font-size: .95rem;
+    margin: 0;
+}
+
+.user-management-modern .ikon-halaman {
+    align-items: center;
+    background: linear-gradient(135deg, #edf4ff, #e8f8ef);
+    border: 1px solid #dce7f8;
+    border-radius: 14px;
+    color: var(--accent-strong);
+    display: inline-flex;
+    font-size: 1.55rem;
+    height: 58px;
+    justify-content: center;
+    width: 58px;
 }
 
 .user-management-modern .user-alert {
     border: 1px solid transparent;
+    border-radius: 12px;
+    box-shadow: none;
 }
 
-.user-management-modern .um-box {
+.user-management-modern .grid-ringkasan {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin-bottom: 22px;
+}
+
+.user-management-modern .kartu-ringkasan {
+    background: var(--surface);
+    border: 1px solid var(--panel-border);
     border-radius: 14px;
-    overflow: hidden;
-    margin-bottom: 0;
-    color: #fff;
-    box-shadow: 0 10px 20px rgba(16, 39, 74, .10);
-}
-
-.user-management-modern .um-box .inner {
+    box-shadow: var(--panel-shadow);
+    min-height: 150px;
     padding: 18px;
 }
 
-.user-management-modern .um-box h3 {
+.user-management-modern .ikon-ringkasan {
+    align-items: center;
+    border-radius: 12px;
+    display: inline-flex;
+    font-size: 1rem;
+    height: 38px;
+    justify-content: center;
+    margin-bottom: 18px;
+    width: 38px;
+}
+
+.user-management-modern .kartu-ringkasan span:not(.ikon-ringkasan) {
+    color: var(--text);
+    display: block;
     font-weight: 700;
+    margin-bottom: 8px;
 }
 
-.user-management-modern .um-box .icon {
-    top: 10px;
-    right: 12px;
-    font-size: 48px;
-    opacity: .22;
+.user-management-modern .kartu-ringkasan strong {
+    color: var(--text);
+    display: block;
+    font-size: 1.9rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 9px;
 }
 
-.user-management-modern .um-box-total {
-    background: linear-gradient(135deg, #2f6fb3 0%, #225b94 100%);
+.user-management-modern .kartu-ringkasan small {
+    color: var(--text-muted);
+    font-weight: 600;
 }
 
-.user-management-modern .um-box-admin {
-    background: linear-gradient(135deg, #cd5f3d 0%, #a84b2e 100%);
+.user-management-modern .aksen-biru .ikon-ringkasan { background: var(--soft-blue); color: #315fce; }
+.user-management-modern .aksen-merah .ikon-ringkasan { background: var(--soft-red); color: #bf563c; }
+.user-management-modern .aksen-hijau .ikon-ringkasan { background: var(--soft-green); color: #24865d; }
+.user-management-modern .aksen-abu .ikon-ringkasan { background: var(--soft-gray); color: #475569; }
+
+.user-management-modern .panel-data {
+    background: var(--surface);
+    border: 1px solid var(--panel-border);
+    border-radius: 16px;
+    box-shadow: var(--panel-shadow);
+    overflow: hidden;
 }
 
-.user-management-modern .um-box-karyawan {
-    background: linear-gradient(135deg, #2f8f5f 0%, #23734b 100%);
+.user-management-modern .panel-judul {
+    align-items: center;
+    border-bottom: 1px solid var(--panel-border);
+    display: flex;
+    justify-content: space-between;
+    padding: 18px 22px;
 }
 
-.user-management-modern .um-box-user {
-    background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+.user-management-modern .panel-judul h2 {
+    color: var(--text);
+    font-size: 1.02rem;
+    font-weight: 800;
+    margin: 0 0 4px;
 }
 
-.user-management-modern .card {
-    border-radius: 14px;
+.user-management-modern .panel-judul p {
+    color: var(--text-muted);
+    margin: 0;
 }
 
-.user-management-modern .user-table thead.thead-light th {
-    background: #f3f7fd;
-    color: #334b73;
-    border-bottom: 1px solid #d9e3f1;
+.user-management-modern .user-table thead th {
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--panel-border);
+    color: var(--text-muted);
+    font-size: .78rem;
+    font-weight: 800;
+}
+
+.user-management-modern .user-table tbody td {
+    border-top: 1px solid var(--panel-border);
+    color: var(--text);
 }
 
 .user-management-modern .user-table tbody tr:hover {
-    background: #f9fbff;
+    background: color-mix(in srgb, var(--surface-2) 72%, transparent);
+}
+
+.user-management-modern .identitas-pengguna {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+}
+
+.user-management-modern .avatar-pengguna {
+    align-items: center;
+    background: var(--soft-blue);
+    border: 1px solid #dce7f8;
+    border-radius: 50%;
+    color: var(--accent-strong);
+    display: inline-flex;
+    flex: 0 0 34px;
+    font-size: .82rem;
+    font-weight: 800;
+    height: 34px;
+    justify-content: center;
+    width: 34px;
 }
 
 .user-management-modern .um-role-badge {
     border-radius: 999px;
-    padding: .4rem .65rem;
-    font-size: .72rem;
-    letter-spacing: .4px;
+    font-size: .74rem;
+    font-weight: 800;
+    padding: .42rem .68rem;
 }
 
 .user-management-modern .um-role-admin {
@@ -266,20 +364,43 @@
     color: #42516d;
 }
 
+.user-management-modern .aksi-pengguna {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.user-management-modern .aksi-pengguna form {
+    margin: 0;
+}
+
 .user-management-modern .um-action-btn {
     border-radius: 10px;
-    font-weight: 600;
-    padding: .35rem .6rem;
+    font-weight: 700;
+    padding: .42rem .7rem;
 }
 
-:root[data-theme='dark'] .user-management-modern .user-table thead.thead-light th {
-    background: #1b2738;
-    color: #d9e4f6;
-    border-bottom-color: #2f3f57;
+.user-management-modern .status-terkunci {
+    align-items: center;
+    color: var(--text-muted);
+    display: inline-flex;
+    font-weight: 700;
+    gap: 7px;
 }
 
-:root[data-theme='dark'] .user-management-modern .user-table tbody tr:hover {
-    background: #1f2d40;
+:root[data-theme='dark'] .user-management-modern {
+    --panel-border: #2c3b52;
+    --panel-shadow: 0 14px 36px rgba(0, 0, 0, .28);
+    --soft-blue: #1b315d;
+    --soft-green: #1d3a30;
+    --soft-red: #3b2928;
+    --soft-gray: #263449;
+}
+
+:root[data-theme='dark'] .user-management-modern .ikon-halaman,
+:root[data-theme='dark'] .user-management-modern .avatar-pengguna {
+    border-color: #334464;
 }
 
 :root[data-theme='dark'] .user-management-modern .um-role-admin {
@@ -295,6 +416,24 @@
 :root[data-theme='dark'] .user-management-modern .um-role-user {
     background: #2d3a4d;
     color: #d2deee;
+}
+
+@media (max-width: 991.98px) {
+    .user-management-modern .grid-ringkasan {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 575.98px) {
+    .user-management-modern .panel-halaman {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .user-management-modern .grid-ringkasan {
+        grid-template-columns: 1fr;
+    }
 }
 </style>
 @endpush

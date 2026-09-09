@@ -30,6 +30,7 @@
                         <th width="5%">#</th>
                         <th>Nama Lokasi</th>
                         <th>Keterangan</th>
+                        <th width="120" class="text-center">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -38,10 +39,27 @@
                         <td>{{ $loop->iteration }}</td>
                         <td>{{ $row->nama }}</td>
                         <td>{{ $row->keterangan ?? '-' }}</td>
+                        <td class="text-center">
+                            <a href="{{ route('admin.pelanggaran.master.lokasi.edit', $row) }}"
+                               class="btn btn-warning btn-sm"
+                               title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </a>
+
+                            <form action="{{ route('admin.pelanggaran.master.lokasi.destroy', $row) }}"
+                                  method="POST" class="d-inline"
+                                  onsubmit="return confirm('Hapus lokasi \"{{ $row->nama }}\"?')">
+                                @csrf
+                                @method('DELETE')
+                                <button class="btn btn-danger btn-sm" title="Hapus">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="3" class="text-center text-muted">
+                        <td colspan="4" class="text-center text-muted">
                             Belum ada data lokasi
                         </td>
                     </tr>

@@ -20,12 +20,14 @@ return new class extends Migration
         /**
          * 2️⃣ Ubah ENUM role (MySQL way – PALING AMAN)
          */
-        DB::statement("
-            ALTER TABLE users
-            MODIFY role ENUM('admin','karyawan','user')
-            NOT NULL
-            DEFAULT 'user'
-        ");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("
+                ALTER TABLE users
+                MODIFY role ENUM('admin','karyawan','user')
+                NOT NULL
+                DEFAULT 'user'
+            ");
+        }
 
         /**
          * 3️⃣ Field khusus karyawan → wajib nullable

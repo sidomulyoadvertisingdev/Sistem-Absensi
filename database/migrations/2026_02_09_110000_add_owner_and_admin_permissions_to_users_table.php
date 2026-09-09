@@ -9,7 +9,11 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (Schema::hasTable('users') && Schema::hasColumn('users', 'role')) {
+        if (
+            DB::getDriverName() === 'mysql'
+            && Schema::hasTable('users')
+            && Schema::hasColumn('users', 'role')
+        ) {
             DB::statement("
                 ALTER TABLE users
                 MODIFY role ENUM(
@@ -63,13 +67,14 @@ return new class extends Migration
                 ->whereIn('role', ['owner', 'admin_staff', 'hrd', 'keuangan'])
                 ->update(['role' => 'admin']);
 
-            DB::statement("
-                ALTER TABLE users
-                MODIFY role ENUM('admin', 'karyawan', 'user')
-                NOT NULL
-                DEFAULT 'user'
-            ");
+            if (DB::getDriverName() === 'mysql') {
+                DB::statement("
+                    ALTER TABLE users
+                    MODIFY role ENUM('admin', 'karyawan', 'user')
+                    NOT NULL
+                    DEFAULT 'user'
+                ");
+            }
         }
     }
 };
-

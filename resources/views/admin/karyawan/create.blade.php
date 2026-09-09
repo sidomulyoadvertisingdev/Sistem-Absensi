@@ -117,7 +117,7 @@
 
         {{-- PASSWORD --}}
         <div class="mb-4">
-            <label>Password Akun</label>
+            <label>Kata Sandi Akun</label>
             <input
                 type="password"
                 name="password"

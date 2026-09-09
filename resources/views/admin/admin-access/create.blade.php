@@ -7,7 +7,7 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
             <h4 class="mb-1 font-weight-bold">Tambah Admin Baru</h4>
-            <small class="text-muted">Owner dapat menentukan role dan hak akses menu.</small>
+            <small class="text-muted">Pemilik dapat menentukan peran dan hak akses menu.</small>
         </div>
         <a href="{{ route('admin.admin-access.index') }}" class="btn btn-light">
             <i class="fas fa-arrow-left mr-1"></i> Kembali
@@ -29,4 +29,3 @@
     </div>
 </div>
 @endsection
-

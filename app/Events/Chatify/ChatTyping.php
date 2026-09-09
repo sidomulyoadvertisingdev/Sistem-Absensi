@@ -36,4 +36,9 @@ class ChatTyping implements ShouldBroadcast
     {
         return 'chatify.typing';
     }
+
+    public function broadcastWith(): array
+    {
+        return $this->payload;
+    }
 }

@@ -7,7 +7,7 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
             <h4 class="mb-1 font-weight-bold">Edit Hak Akses Admin</h4>
-            <small class="text-muted">Atur role dan menu yang dapat diakses oleh {{ $adminUser->name }}.</small>
+            <small class="text-muted">Atur peran dan menu yang dapat diakses oleh {{ $adminUser->name }}.</small>
         </div>
         <a href="{{ route('admin.admin-access.index') }}" class="btn btn-light">
             <i class="fas fa-arrow-left mr-1"></i> Kembali
@@ -30,4 +30,3 @@
     </div>
 </div>
 @endsection
-

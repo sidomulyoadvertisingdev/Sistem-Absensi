@@ -1,6 +1,6 @@
 @extends('layouts.auth')
 
-@section('title', 'Login')
+@section('title', 'Masuk')
 
 @section('content')
 <div class="login-container h-full w-full flex items-center justify-center p-4 overflow-auto">
@@ -12,7 +12,7 @@
             <div class="absolute inset-0">
                 <img
                     src="{{ asset('images/employee.jpg') }}"
-                    alt="Employee Illustration"
+                    alt="Ilustrasi karyawan"
                     class="w-full h-full object-cover"
                 >
                 {{-- Overlay --}}
@@ -46,7 +46,7 @@
                         </svg>
                     </div>
                     <h1 class="text-3xl font-bold mb-2">
-                        Employee Management System
+                        Sistem Manajemen Karyawan
                     </h1>
                     <p class="text-gray-500">
                         Selamat datang kembali
@@ -72,7 +72,7 @@
 
                     <div>
                         <label class="block text-sm font-semibold mb-2">
-                            Password
+                            Kata Sandi
                         </label>
                         <input type="password" name="password"
                                class="input-field w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:border-blue-600"
@@ -88,7 +88,7 @@
                             Ingat saya
                         </label>
                         <a href="#" class="text-blue-600 font-semibold hover:underline">
-                            Lupa password?
+                            Lupa kata sandi?
                         </a>
                     </div>
 

@@ -24,8 +24,8 @@
             {{-- 🔥 IMPORT ABSENSI CSV --}}
             <button type="button"
                     class="btn btn-info"
-                    data-bs-toggle="modal"
-                    data-bs-target="#importAbsensiModal">
+                    data-toggle="modal"
+                    data-target="#importAbsensiModal">
                 <i class="fas fa-file-upload"></i> Import CSV
             </button>
 
@@ -58,6 +58,7 @@
                         <th>Istirahat</th>
                         <th>Foto</th>
                         <th>Status</th>
+                        <th width="80" class="text-center">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -112,9 +113,15 @@
                         {{-- FOTO --}}
                         <td class="text-center">
                             @if($absen->foto)
-                                <a href="{{ asset('storage/'.$absen->foto) }}" target="_blank">
-                                    <img src="{{ asset('storage/'.$absen->foto) }}"
+                                @php
+                                    $fotoSrc = \Illuminate\Support\Str::startsWith($absen->foto, ['http://', 'https://'])
+                                        ? $absen->foto
+                                        : '/storage/' . ltrim(\Illuminate\Support\Str::after($absen->foto, 'storage/'), '/');
+                                @endphp
+                                <a href="{{ $fotoSrc }}" target="_blank">
+                                    <img src="{{ $fotoSrc }}"
                                          width="60"
+                                         loading="lazy"
                                          class="img-thumbnail">
                                 </a>
                             @else
@@ -143,10 +150,24 @@
                                     </span>
                             @endswitch
                         </td>
+
+                        {{-- AKSI --}}
+                        <td class="text-center">
+                            <form action="{{ route('admin.absensi.destroy', $absen) }}"
+                                  method="POST"
+                                  class="d-inline"
+                                  onsubmit="return confirm('Hapus absensi ini?')">
+                                @csrf
+                                @method('DELETE')
+                                <button class="btn btn-danger btn-sm" title="Hapus">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="text-center text-muted">
+                        <td colspan="8" class="text-center text-muted">
                             Belum ada data absensi
                         </td>
                     </tr>
@@ -156,11 +177,14 @@
         </div>
     </div>
 
-</div>
+    {{-- PAGINATION --}}
+    <div class="mt-3">
+        {{ $data->links() }}
+    </div>
 
-{{-- ================= MODAL IMPORT CSV ================= --}}
-<div class="modal fade" id="importAbsensiModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+</div>
+<div class="modal fade" id="importAbsensiModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
         <form method="POST"
               action="{{ route('admin.absensi.import.csv') }}"
               enctype="multipart/form-data"
@@ -170,8 +194,10 @@
             <div class="modal-header">
                 <h5 class="modal-title">Import Absensi (CSV)</h5>
                 <button type="button"
-                        class="btn-close"
-                        data-bs-dismiss="modal"></button>
+                        class="close"
+                        data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
             </div>
 
             <div class="modal-body">
@@ -191,7 +217,7 @@
             </div>
 
             <div class="modal-footer">
-                <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button class="btn btn-secondary" data-dismiss="modal">Batal</button>
                 <button class="btn btn-primary">
                     <i class="fas fa-upload"></i> Import
                 </button>

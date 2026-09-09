@@ -19,7 +19,7 @@ class SubmissionController extends Controller
             'type:id,nama,is_izin_pulang_awal',
         ])
             ->orderByDesc('created_at')
-            ->get();
+            ->paginate(20);
 
         return view('admin.submission.index', compact('submissions'));
     }

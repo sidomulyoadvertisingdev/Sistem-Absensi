@@ -4,10 +4,11 @@
 
 @section('content')
 
-<div class="d-flex justify-content-between mb-3">
+<div class="container-fluid">
+<div class="d-flex justify-content-between align-items-center mb-3">
     <h4>Pengumuman</h4>
     <a href="{{ route('admin.announcements.create') }}" class="btn btn-primary">
-        + Buat Pengumuman
+        <i class="fas fa-plus mr-1"></i> Buat Pengumuman
     </a>
 </div>
 
@@ -37,11 +38,27 @@
                     {{ $a->is_active ? 'Nonaktifkan' : 'Aktifkan' }}
                 </button>
             </form>
+
+            <form method="POST"
+                  action="{{ route('admin.announcements.destroy', $a) }}"
+                  class="d-inline"
+                  onsubmit="return confirm('Hapus pengumuman \"{{ $a->title }}\"?')">
+                @csrf
+                @method('DELETE')
+                <button class="btn btn-sm btn-danger">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </form>
         </div>
     </div>
 </div>
 @empty
 <p class="text-muted">Belum ada pengumuman</p>
 @endforelse
+
+<div class="mt-3">
+    {{ $announcements->links() }}
+</div>
+</div>
 
 @endsection

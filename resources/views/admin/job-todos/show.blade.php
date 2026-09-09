@@ -1,13 +1,13 @@
 @extends('layouts.app')
 
-@section('title', 'Detail Job Todo')
+@section('title', 'Detail Tugas Kerja')
 
 @section('content')
 <div class="container-fluid">
 
     {{-- HEADER --}}
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1 class="mb-0">Detail Job Todo</h1>
+        <h1 class="mb-0">Detail Tugas Kerja</h1>
 
         <a href="{{ route('admin.job-todos.index') }}" class="btn btn-secondary">
             <i class="fas fa-arrow-left"></i> Kembali
@@ -33,16 +33,16 @@
                 @if($jobTodo->broadcast)
                     <span class="badge badge-info">Broadcast</span>
                 @else
-                    <span class="badge badge-primary">Direct Assign</span>
+                    <span class="badge badge-primary">Penugasan Langsung</span>
                 @endif
             </p>
 
             <p>
-                <strong>Status Job:</strong>
+                <strong>Status Tugas:</strong>
                 @if($jobTodo->status === 'open')
-                    <span class="badge badge-success">Open</span>
+                    <span class="badge badge-success">Terbuka</span>
                 @else
-                    <span class="badge badge-secondary">Closed</span>
+                    <span class="badge badge-secondary">Ditutup</span>
                 @endif
             </p>
 
@@ -53,7 +53,7 @@
                     @csrf
                     @method('PUT')
                     <button class="btn btn-danger btn-sm">
-                        <i class="fas fa-lock"></i> Tutup Job
+                        <i class="fas fa-lock"></i> Tutup Tugas
                     </button>
                 </form>
             @endif
@@ -63,7 +63,7 @@
     {{-- LIST USER --}}
     <div class="card">
         <div class="card-header">
-            <h3 class="card-title">Karyawan yang Menerima Job</h3>
+            <h3 class="card-title">Karyawan yang Menerima Tugas</h3>
         </div>
 
         <div class="card-body table-responsive p-0">
@@ -83,7 +83,7 @@
                             @php $status = $user->pivot->status; @endphp
 
                             @if($status === 'pending')
-                                <span class="badge badge-warning">Pending</span>
+                                <span class="badge badge-warning">Menunggu</span>
                             @elseif($status === 'accepted')
                                 <span class="badge badge-info">Dikerjakan</span>
                             @elseif($status === 'completed')

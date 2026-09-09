@@ -42,6 +42,17 @@ return Application::configure(basePath: dirname(__DIR__))
 
         /*
         |--------------------------------------------------------------------------
+        | CSRF EXCEPTIONS
+        |--------------------------------------------------------------------------
+        | /broadcasting/auth dipanggil aplikasi mobile dengan Bearer token
+        | (tanpa cookie/CSRF). Auth tetap wajib lewat middleware broadcast.auth.
+        */
+        $middleware->validateCsrfTokens(except: [
+            'broadcasting/auth',
+        ]);
+
+        /*
+        |--------------------------------------------------------------------------
         | ALIAS MIDDLEWARE
         |--------------------------------------------------------------------------
         */
@@ -70,6 +81,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
             \Illuminate\Session\Middleware\StartSession::class,
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+            \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ]);
 

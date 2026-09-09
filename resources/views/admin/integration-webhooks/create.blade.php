@@ -3,10 +3,11 @@
 @section('title', 'Tambah Webhook Integrasi')
 
 @section('content')
+<div class="container-fluid">
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
         <div>
             <h1 class="mb-1">Tambah Webhook Integrasi</h1>
-            <p class="text-muted mb-0">Sistem akan POST JSON ke URL tujuan saat event terpilih terjadi.</p>
+            <p class="text-muted mb-0">Sistem akan mengirim POST JSON ke URL tujuan saat peristiwa terpilih terjadi.</p>
         </div>
         <a href="{{ route('admin.integration-webhooks.index') }}" class="btn btn-light">
             <i class="fas fa-arrow-left mr-1"></i> Kembali
@@ -34,18 +35,18 @@
                 <div class="form-group">
                     <label for="name">Nama Webhook</label>
                     <input type="text" name="name" id="name" class="form-control"
-                           value="{{ old('name') }}" placeholder="Contoh: Mobile SMPO" required>
+                           value="{{ old('name') }}" placeholder="Contoh: Seluler SMPO" required>
                 </div>
 
                 <div class="form-group">
                     <label for="webhook_url">URL Tujuan</label>
                     <input type="url" name="webhook_url" id="webhook_url" class="form-control"
                            value="{{ old('webhook_url') }}" placeholder="https://app-eksternal.com/webhook/absensi" required>
-                    <small class="text-muted">Harus HTTPS (atau http untuk testing lokal).</small>
+                    <small class="text-muted">Harus HTTPS (atau http untuk pengujian lokal).</small>
                 </div>
 
                 <div class="form-group">
-                    <label class="d-block">Event yang Dikirim</label>
+                    <label class="d-block">Peristiwa yang Dikirim</label>
                     @foreach($eventOptions as $event => $label)
                         <div class="custom-control custom-checkbox mb-2">
                             <input type="checkbox" class="custom-control-input"
@@ -70,4 +71,5 @@
             </form>
         </div>
     </div>
+</div>
 @endsection

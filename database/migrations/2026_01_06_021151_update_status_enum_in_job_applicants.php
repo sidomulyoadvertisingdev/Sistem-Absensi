@@ -7,28 +7,32 @@ use Illuminate\Support\Facades\DB;
 return new class extends Migration {
     public function up()
     {
-        DB::statement("
-            ALTER TABLE job_applicants 
-            MODIFY status ENUM(
-                'pending',
-                'review',
-                'interview',
-                'training',
-                'accepted',
-                'rejected'
-            ) DEFAULT 'pending'
-        ");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("
+                ALTER TABLE job_applicants
+                MODIFY status ENUM(
+                    'pending',
+                    'review',
+                    'interview',
+                    'training',
+                    'accepted',
+                    'rejected'
+                ) DEFAULT 'pending'
+            ");
+        }
     }
 
     public function down()
     {
-        DB::statement("
-            ALTER TABLE job_applicants 
-            MODIFY status ENUM(
-                'pending',
-                'accepted',
-                'rejected'
-            ) DEFAULT 'pending'
-        ");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("
+                ALTER TABLE job_applicants
+                MODIFY status ENUM(
+                    'pending',
+                    'accepted',
+                    'rejected'
+                ) DEFAULT 'pending'
+            ");
+        }
     }
 };

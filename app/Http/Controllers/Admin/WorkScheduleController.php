@@ -19,6 +19,7 @@ class WorkScheduleController extends Controller
     public function index()
     {
         $users = User::with('workSchedules')
+            ->where('role', User::ROLE_KARYAWAN)
             ->orderBy('name')
             ->get();
 
@@ -32,6 +33,8 @@ class WorkScheduleController extends Controller
      */
     public function edit(User $user)
     {
+        abort_if(!$user->isKaryawan(), 404);
+
         $hariList = [
             'senin',
             'selasa',
@@ -82,6 +85,8 @@ class WorkScheduleController extends Controller
      */
     public function update(Request $request, User $user)
     {
+        abort_if(!$user->isKaryawan(), 404);
+
         $request->validate([
             'schedule_mode' => 'required|in:per_hari,per_tanggal',
         ]);

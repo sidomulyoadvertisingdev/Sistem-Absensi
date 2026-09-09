@@ -3,10 +3,11 @@
 @section('title', 'Webhook Integrasi')
 
 @section('content')
+<div class="container-fluid">
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
         <div>
-            <h1 class="mb-1">Webhook Integrasi (Outbound)</h1>
-            <p class="text-muted mb-0">Sistem akan mengirim notifikasi ke aplikasi eksternal setiap kali ada user yang absen di aplikasi.</p>
+            <h1 class="mb-1">Webhook Integrasi Keluar</h1>
+            <p class="text-muted mb-0">Sistem akan mengirim notifikasi ke aplikasi eksternal setiap kali ada pengguna yang absen di aplikasi.</p>
         </div>
         <a href="{{ route('admin.integration-webhooks.create') }}" class="btn btn-primary">
             <i class="fas fa-plus mr-1"></i> Tambah Webhook
@@ -19,10 +20,10 @@
 
     @if($generatedWebhook)
         <div class="alert alert-warning">
-            <div class="font-weight-bold mb-2">Webhook baru dibuat. Secret hanya ditampilkan sekali:</div>
+            <div class="font-weight-bold mb-2">Webhook baru dibuat. Kunci rahasia hanya ditampilkan sekali:</div>
             <label class="mb-1 d-block">Webhook URL</label>
             <input class="form-control mb-2" readonly value="{{ $generatedWebhook['webhook_url'] }}">
-            <label class="mb-1 d-block">Secret (untuk verifikasi signature HMAC)</label>
+            <label class="mb-1 d-block">Kunci Rahasia (untuk verifikasi tanda tangan HMAC)</label>
             <textarea class="form-control" rows="2" readonly>{{ $generatedWebhook['secret'] }}</textarea>
         </div>
     @endif
@@ -37,7 +38,7 @@
                     <tr>
                         <th>Nama</th>
                         <th>URL</th>
-                        <th>Event</th>
+                        <th>Peristiwa</th>
                         <th>Status</th>
                         <th>Error Terakhir</th>
                         <th>Aksi</th>
@@ -86,4 +87,5 @@
             </table>
         </div>
     </div>
+</div>
 @endsection

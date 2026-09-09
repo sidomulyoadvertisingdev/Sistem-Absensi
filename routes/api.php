@@ -11,14 +11,18 @@ use App\Http\Controllers\Api\GajiController;
 use App\Http\Controllers\Api\LemburController;
 use App\Http\Controllers\Api\JobTodoController;
 use App\Http\Controllers\Api\PelanggaranApiController;
+use App\Http\Controllers\Api\PeerReportController;
 use App\Http\Controllers\Api\SubmissionApiController;
 use App\Http\Controllers\Api\NotificationApiController;
+use App\Http\Controllers\Api\PushTokenController;
 use App\Http\Controllers\Api\AnnouncementApiController;
 use App\Http\Controllers\Api\EmployeeApiController;
 use App\Http\Controllers\Api\ChatifyController;
 use App\Http\Controllers\Api\AttendanceIntegrationReportController;
 use App\Http\Controllers\Api\AttendanceIntegrationSubmitController;
 use App\Http\Controllers\Api\AttendancePayrollIntegrationController;
+use App\Http\Controllers\Api\ProductionIntegrationController;
+use App\Http\Controllers\Api\ProductionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -49,6 +53,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::match(['POST', 'PUT'], '/integrations/attendance/salaries/{user}/pay', [AttendancePayrollIntegrationController::class, 'pay'])
         ->whereNumber('user');
     Route::post('/integrations/attendance/submit', [AttendanceIntegrationSubmitController::class, 'submit']);
+    // Ingest ERP -> HR: item produksi masuk/keluar antrean (broadcast job helper)
+    Route::post('/integrations/production/items', [ProductionIntegrationController::class, 'store']);
     Route::get('/attendance/salaries', [AttendancePayrollIntegrationController::class, 'index']);
     Route::match(['PUT', 'PATCH', 'POST'], '/attendance/salaries/{user}', [AttendancePayrollIntegrationController::class, 'update'])
         ->whereNumber('user');
@@ -61,6 +67,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     /* ================= ABSENSI ================= */
     Route::get('/absensi/today', [AbsensiController::class, 'today']);
+    Route::get('/absensi/locations', [AbsensiController::class, 'locations']);
+    Route::post('/absensi/check-fullbody', [AbsensiController::class, 'checkFullBody']);
     Route::post('/absensi', [AbsensiController::class, 'store']);
 
     /* ================= JADWAL ================= */
@@ -85,6 +93,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/job-todos/{id}/done', [JobTodoController::class, 'done'])
         ->whereNumber('id');
 
+    /* ================= PRODUKSI (BROADCAST JOB) ================= */
+    Route::get('/production/jobs', [ProductionController::class, 'index']);
+    Route::get('/production/my-stats', [ProductionController::class, 'myStats']);
+    Route::post('/production/jobs/{jobTodo}/complete', [ProductionController::class, 'complete'])
+        ->whereNumber('jobTodo');
+
+    /* ================= LAPOR REKAN (PEER REPORT) ================= */
+    Route::post('/peer-reports', [PeerReportController::class, 'store']);
+    Route::get('/peer-reports/about-me', [PeerReportController::class, 'aboutMe']);
+
     /* ================= PELANGGARAN ================= */
     Route::get('/violations', [PelanggaranApiController::class, 'index']);
     Route::get('/violations/{id}', [PelanggaranApiController::class, 'show'])
@@ -102,6 +120,7 @@ Route::middleware('auth:sanctum')->group(function () {
     /* ================= NOTIFIKASI ================= */
     Route::get('/notifications', [NotificationApiController::class, 'index']);
     Route::post('/notifications/{id}/read', [NotificationApiController::class, 'markRead']);
+    Route::post('/push-tokens', [PushTokenController::class, 'store']);
 
     /* ================= ANNOUNCEMENTS / PENGUMUMAN ================= */
     Route::get('/announcements', [AnnouncementApiController::class, 'index']);
@@ -129,5 +148,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/rooms/{room}/messages', [ChatifyController::class, 'sendMessage']);
         Route::post('/rooms/{room}/read', [ChatifyController::class, 'read']);
         Route::post('/rooms/{room}/typing', [ChatifyController::class, 'typing']);
+        Route::post('/push', [ChatifyController::class, 'sendPush']);
+        Route::post('/upload', [ChatifyController::class, 'upload']);
     });
 });

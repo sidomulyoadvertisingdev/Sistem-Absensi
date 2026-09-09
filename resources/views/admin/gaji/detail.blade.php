@@ -127,14 +127,14 @@ Tidak ada data
 
 {{-- ================= BONUS ================= --}}
 <div class="card mb-4">
-<div class="card-header"><strong>Bonus Job</strong></div>
+<div class="card-header"><strong>Bonus Tugas</strong></div>
 <div class="card-body table-responsive p-0">
 
 <table class="table table-bordered table-sm mb-0">
 
 <thead>
 <tr>
-<th>Job</th>
+<th>Tugas</th>
 <th>Bonus</th>
 </tr>
 </thead>
@@ -213,7 +213,7 @@ Rp {{ number_format($potonganTelatNominal ?? 0,0,',','.') }}
 </tr>
 
 <tr>
-<th>Potongan Training</th>
+<th>Potongan Pelatihan</th>
 <td class="text-danger">
 Rp {{ number_format($potonganTrainingNominal ?? 0,0,',','.') }}
 @if(($trainingInfo['active'] ?? false))

@@ -5,6 +5,7 @@ return [
     'paths' => [
         'api/*',
         'sanctum/csrf-cookie',
+        'broadcasting/auth',
     ],
 
     'allowed_methods' => ['*'],
