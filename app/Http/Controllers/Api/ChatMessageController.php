@@ -64,7 +64,7 @@ class ChatMessageController extends Controller
                 'sender_id' => $message->user_id,
                 'delivered' => $isOwn ? true : (bool) ($receipt?->delivered_at),
                 'seen' => $isOwn ? true : (bool) ($receipt?->seen_at),
-                'created_at' => $message->created_at?->copy()->utc()->toIso8601String(),
+                'created_at' => $message->created_at?->toIso8601String(),
             ];
         });
 
@@ -146,7 +146,7 @@ class ChatMessageController extends Controller
             'room_id' => $message->room_id,
             'text' => $message->text,
             'sender_id' => $message->user_id,
-            'created_at' => $message->created_at?->copy()->utc()->toIso8601String(),
+            'created_at' => $message->created_at?->toIso8601String(),
             'temp_id' => $tempId,
         ], 201);
     }

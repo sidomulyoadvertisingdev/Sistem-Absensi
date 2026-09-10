@@ -67,6 +67,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     /* ================= ABSENSI ================= */
     Route::get('/absensi/today', [AbsensiController::class, 'today']);
+    Route::get('/absensi/history', [AbsensiController::class, 'history']);
     Route::get('/absensi/locations', [AbsensiController::class, 'locations']);
     Route::post('/absensi/check-fullbody', [AbsensiController::class, 'checkFullBody']);
     Route::post('/absensi', [AbsensiController::class, 'store']);

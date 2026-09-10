@@ -34,7 +34,7 @@ class LoginController extends Controller
             'password' => ['required'],
         ]);
 
-        if (!Auth::attempt($credentials)) {
+        if (!Auth::attempt($credentials, $request->boolean('remember'))) {
             return back()
                 ->withErrors(['email' => 'Email atau password salah'])
                 ->withInput();

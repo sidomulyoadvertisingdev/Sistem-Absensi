@@ -25,21 +25,77 @@ class AbsensiController extends Controller
     public function today(Request $request)
     {
         $user = $request->user();
-        $today = Carbon::today()->toDateString();
+        // Tanggal WIB, bukan UTC — jam 00:00–07:00 WIB masih UTC "kemarin".
+        $today = Carbon::now(config('app.attendance_timezone'))->toDateString();
 
         $absensi = Absensi::where('user_id', $user->id)
-            ->where('tanggal', $today)
+            ->whereDate('tanggal', $today)
             ->first();
+
+        $jadwal = $user->resolveWorkSchedule($today);
 
         return response()->json([
             'tanggal' => $today,
             'status' => $absensi?->status ?? 'belum_absen',
+            // Boolean eksplisit supaya klien tidak perlu menebak dari jam.
+            'is_late' => (bool) ($absensi && ($absensi->status === 'terlambat' || (int) $absensi->menit_terlambat > 0)),
+            'menit_terlambat' => (int) ($absensi?->menit_terlambat ?? 0),
             'jam_masuk' => $absensi?->jam_masuk,
             'istirahat_mulai' => $absensi?->istirahat_mulai,
             'istirahat_selesai' => $absensi?->istirahat_selesai,
             'jam_pulang' => $absensi?->jam_pulang,
+            'schedule_in' => $jadwal->jam_masuk ?? null,
+            'schedule_out' => $jadwal->jam_pulang ?? null,
             'locations' => $this->allowedLocations($user),
         ]);
+    }
+
+    /**
+     * ===============================
+     * RIWAYAT ABSENSI (PER BULAN)
+     * ===============================
+     * GET /absensi/history?bulan=YYYY-MM  (default: bulan berjalan WIB)
+     */
+    public function history(Request $request)
+    {
+        $user = $request->user();
+        $tz = config('app.attendance_timezone');
+
+        $bulan = (string) $request->query('bulan', '');
+        try {
+            $base = preg_match('/^\d{4}-\d{2}$/', $bulan)
+                ? Carbon::createFromFormat('Y-m-d', $bulan . '-01', $tz)->startOfMonth()
+                : Carbon::now($tz);
+        } catch (\Exception $e) {
+            $base = Carbon::now($tz);
+        }
+
+        $items = Absensi::where('user_id', $user->id)
+            ->whereYear('tanggal', $base->year)
+            ->whereMonth('tanggal', $base->month)
+            ->orderByDesc('tanggal')
+            ->get();
+
+        $data = $items->map(function (Absensi $a) {
+            $tanggal = $a->tanggal instanceof \Carbon\CarbonInterface
+                ? $a->tanggal->toDateString()
+                : (string) $a->tanggal;
+
+            return [
+                'id' => $a->id,
+                'tanggal' => $tanggal,
+                'jam_masuk' => $a->jam_masuk,
+                'istirahat_mulai' => $a->istirahat_mulai,
+                'istirahat_selesai' => $a->istirahat_selesai,
+                'jam_pulang' => $a->jam_pulang,
+                'status' => $a->status,
+                'is_late' => $a->status === 'terlambat' || (int) $a->menit_terlambat > 0,
+                'menit_terlambat' => (int) $a->menit_terlambat,
+                'foto_url' => $a->foto_url,
+            ];
+        });
+
+        return response()->json(['data' => $data]);
     }
 
     /**
@@ -84,7 +140,9 @@ class AbsensiController extends Controller
     {
         $request->validate([
             'aksi' => 'required|in:masuk,istirahat_mulai,istirahat_selesai,pulang',
-            'jam'  => 'required',
+            // `jam` dari klien tidak lagi dipakai untuk perhitungan (rawan salah
+            // zona / dimanipulasi) — tetap diterima untuk kompatibilitas.
+            'jam'  => 'nullable',
             'latitude'  => 'required|numeric|between:-90,90',
             'longitude' => 'required|numeric|between:-180,180',
             'accuracy'  => 'nullable|numeric|min:0',
@@ -94,14 +152,16 @@ class AbsensiController extends Controller
         ]);
 
         $user = $request->user();
-        $tanggal = Carbon::today()->toDateString();
+        // Sumber kebenaran waktu = jam server (WIB), bukan kiriman perangkat.
+        $now = Carbon::now(config('app.attendance_timezone'));
+        $tanggal = $now->toDateString();
 
         try {
             $absensi = $this->recorder->record(
                 user: $user,
                 tanggal: $tanggal,
                 aksi: $request->aksi,
-                jam: $request->jam,
+                jam: $now->format('H:i:s'),
                 foto: $request->file('foto'),
                 requireFoto: true,
                 latitude: (float) $request->latitude,

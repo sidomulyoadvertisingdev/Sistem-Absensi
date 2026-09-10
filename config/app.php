@@ -52,8 +52,21 @@ return [
     |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
+    | Seluruh aplikasi memakai Waktu Indonesia Barat (WIB). Jangan pakai UTC —
+    | Carbon::now()/today(), timestamp Eloquent, penjadwalan, dan tampilan
+    | semuanya mengikuti zona ini.
     */
-    'timezone' => 'UTC',
+    'timezone' => env('APP_TIMEZONE', 'Asia/Jakarta'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Attendance Timezone
+    |--------------------------------------------------------------------------
+    | Zona waktu bisnis khusus absensi & jadwal kerja. Secara default mengikuti
+    | `app.timezone` (WIB); disediakan terpisah supaya bisa dikunci lewat env
+    | walau `app.timezone` diubah.
+    */
+    'attendance_timezone' => env('ATTENDANCE_TIMEZONE', env('APP_TIMEZONE', 'Asia/Jakarta')),
 
     /*
     |--------------------------------------------------------------------------

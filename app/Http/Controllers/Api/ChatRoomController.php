@@ -48,7 +48,7 @@ class ChatRoomController extends Controller
                         'id' => $room->latestMessage->id,
                         'text' => $room->latestMessage->text,
                         'sender_id' => $room->latestMessage->user_id,
-                        'created_at' => $room->latestMessage->created_at?->copy()->utc()->toIso8601String(),
+                        'created_at' => $room->latestMessage->created_at?->toIso8601String(),
                     ]
                     : null,
             ];

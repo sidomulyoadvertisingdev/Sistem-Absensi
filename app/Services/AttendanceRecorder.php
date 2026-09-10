@@ -162,7 +162,7 @@ class AttendanceRecorder
                 }
 
                 if ($jamMasuk->gt($batasMasuk)) {
-                    $menitTerlambat += $batasMasuk->diffInMinutes($jamMasuk);
+                    $menitTerlambat += (int) round($batasMasuk->diffInMinutes($jamMasuk));
                 }
             }
 
@@ -171,7 +171,7 @@ class AttendanceRecorder
                 $batasPulang = Carbon::createFromFormat('Y-m-d H:i:s', $tanggal . ' ' . $jadwalJamPulang);
 
                 if ($jamPulang->lt($batasPulang)) {
-                    $menitTerlambat += $jamPulang->diffInMinutes($batasPulang);
+                    $menitTerlambat += (int) round($jamPulang->diffInMinutes($batasPulang));
                 }
             }
 
@@ -180,6 +180,9 @@ class AttendanceRecorder
 
         $absensi->menit_terlambat = $menitTerlambat;
         $absensi->status = $status;
+        // Jaga kolom boolean `terlambat` tetap sinkron dengan status — sebelumnya
+        // tidak pernah di-update sehingga nilainya selalu basi (default false).
+        $absensi->terlambat = $status === 'terlambat';
 
         $absensi->save();
 

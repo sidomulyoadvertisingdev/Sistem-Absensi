@@ -38,7 +38,7 @@ class MessageSent implements ShouldBroadcastNow
             'room_id' => $this->message->room_id,
             'text' => $this->message->text,
             'sender_id' => $this->message->user_id,
-            'created_at' => $this->message->created_at?->copy()->utc()->toIso8601String(),
+            'created_at' => $this->message->created_at?->toIso8601String(),
             'temp_id' => $this->tempId,
             'unread_totals' => $this->unreadTotals,
         ];

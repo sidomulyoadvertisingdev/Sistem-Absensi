@@ -95,27 +95,40 @@ def main():
         ys[name] = y
         detected[name] = v >= TH
 
+    # Wajib: kepala, bahu, pinggul, lutut. Pergelangan kaki (kaki) OPSIONAL —
+    # supaya user tidak perlu mundur terlalu jauh; cukup sampai lutut kelihatan.
     reasons = []
-    for name in ("kepala", "bahu", "pinggul", "lutut", "kaki"):
+    for name in ("kepala", "bahu", "pinggul", "lutut"):
         if not detected[name]:
             reasons.append(f"{name}_tidak_terlihat")
 
     head_y = ys["kepala"]
     feet_y = ys["kaki"]
-    head_ok = detected["kepala"] and head_y is not None and head_y <= 0.45
-    feet_ok = detected["kaki"] and feet_y is not None and feet_y >= 0.62
+    knee_y = ys["lutut"]
 
-    if detected["kaki"] and not feet_ok:
+    head_ok = detected["kepala"] and head_y is not None and head_y <= 0.50
+
+    # Bagian bawah dianggap cukup bila:
+    #  - pergelangan kaki terlihat & cukup ke bawah (>= 0.55), ATAU
+    #  - minimal lutut terlihat & cukup ke bawah (>= 0.68).
+    lower_ok = (
+        (detected["kaki"] and feet_y is not None and feet_y >= 0.55)
+        or (detected["lutut"] and knee_y is not None and knee_y >= 0.68)
+    )
+
+    if not lower_ok:
         reasons.append("mundur_agar_kaki_masuk_frame")
     if detected["kepala"] and not head_ok:
         reasons.append("turunkan_kamera_atau_maju_sedikit")
 
     full_body = bool(
         detected["kepala"] and detected["bahu"] and detected["pinggul"]
-        and detected["lutut"] and detected["kaki"] and head_ok and feet_ok
+        and detected["lutut"] and head_ok and lower_ok
     )
 
-    score = min(scores.values()) if scores else 0.0
+    # Skor = kepercayaan terendah dari bagian yang WAJIB (kaki opsional).
+    required_scores = [scores[n] for n in ("kepala", "bahu", "pinggul", "lutut")]
+    score = min(required_scores) if required_scores else 0.0
 
     emit({
         "available": True,
