@@ -195,6 +195,7 @@ class AbsensiController extends Controller
     public function checkFullBody(Request $request)
     {
         if (! config('services.pose.enabled', true)) {
+            Log::info('[pose] deteksi dimatikan via config services.pose.enabled=false');
             return response()->json(['available' => false, 'reason' => 'disabled']);
         }
 
@@ -207,6 +208,7 @@ class AbsensiController extends Controller
         $timeout = (int) config('services.pose.timeout', 15);
 
         if (! is_file($script)) {
+            Log::warning('[pose] script tidak ditemukan', ['path' => $script, 'python_bin' => $python]);
             return response()->json(['available' => false, 'reason' => 'script_missing']);
         }
 
@@ -229,6 +231,13 @@ class AbsensiController extends Controller
             if (! is_array($json)) {
                 Log::warning('[pose] output bukan JSON', ['out' => mb_substr($result->output(), 0, 500)]);
                 return response()->json(['available' => false, 'reason' => 'bad_output']);
+            }
+
+            if (($json['available'] ?? true) === false) {
+                Log::warning('[pose] script balas available:false', [
+                    'reason' => $json['reason'] ?? null,
+                    'detail' => $json['detail'] ?? null,
+                ]);
             }
 
             return response()->json($json);
