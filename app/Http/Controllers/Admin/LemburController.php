@@ -15,7 +15,7 @@ class LemburController extends Controller
      */
     public function index()
     {
-        $data = Lembur::with('user')
+        $data = Lembur::with(['user', 'approver'])
             ->orderBy('tanggal', 'desc')
             ->paginate(20);
 
@@ -62,6 +62,8 @@ class LemburController extends Controller
         }
 
         // SIMPAN
+        // Input manual admin = admin sendiri yang input & bertindak sebagai
+        // approver sekaligus -> langsung final, tidak perlu approve ulang.
         Lembur::create([
             'user_id'     => $request->user_id,
             'tanggal'     => $request->tanggal,
@@ -69,6 +71,8 @@ class LemburController extends Controller
             'jam_selesai' => $request->jam_selesai,
             'keterangan'  => $request->keterangan,
             'status'      => 'approved', // admin langsung ACC
+            'approved_at' => now(),
+            'approved_by' => auth()->id(),
         ]);
 
         return redirect()
@@ -77,15 +81,37 @@ class LemburController extends Controller
     }
 
     /**
-     * APPROVE (OPSIONAL)
+     * SETUJUI UNTUK DIHITUNG KE GAJI
+     * ===============================
+     * Murni menyetujui nominal lembur masuk perhitungan gaji.
+     * TIDAK mengubah `status` (progres kerja) -- bisa dipanggil kapan saja,
+     * baik saat lembur masih berjalan (requested) maupun sudah selesai
+     * (finished). Karyawan tetap bisa mengajukan & menyelesaikan lembur
+     * tanpa menunggu langkah ini.
      */
     public function approve($id)
     {
         Lembur::findOrFail($id)->update([
-            'status' => 'approved'
+            'approved_at' => now(),
+            'approved_by' => auth()->id(),
         ]);
 
-        return back()->with('success', 'Lembur disetujui');
+        return back()->with('success', 'Lembur disetujui dan akan dihitung ke gaji');
+    }
+
+    /**
+     * TOLAK PENGAJUAN LEMBUR
+     * ===============================
+     * Menandai lembur sebagai ditolak -- tidak akan pernah dihitung ke gaji
+     * dan tidak bisa diselesaikan/disetujui lagi.
+     */
+    public function reject($id)
+    {
+        Lembur::findOrFail($id)->update([
+            'status' => 'rejected',
+        ]);
+
+        return back()->with('success', 'Lembur ditolak');
     }
 
     /**

@@ -114,17 +114,26 @@ class GajiController extends Controller
         /* ==================================================
          * LEMBUR (SELARAS PAYROLL)
          * ================================================== */
-        $totalJamLembur = Lembur::where('user_id', $user->id)
-            ->where('status', 'approved')
+        $totalJamLembur = Lembur::approvedForPayroll()
+            ->where('user_id', $user->id)
             ->whereMonth('tanggal', $bulan)
             ->whereYear('tanggal', $tahun)
             ->get()
-            ->sum(fn ($l) =>
-                Carbon::parse($l->jam_mulai)
-                    ->diffInMinutes(Carbon::parse($l->jam_selesai)) / 60
-            );
+            ->sum(fn ($l) => $l->durasi_jam);
 
         $uangLembur = $totalJamLembur * (float) ($salary->lembur_per_jam ?? 0);
+
+        // Lembur yang belum disetujui admin -> nominal masih pending, belum
+        // masuk salary_kotor/total_gaji. Ditampilkan terpisah supaya karyawan
+        // tahu ada potensi tambahan yang menunggu approval.
+        $totalJamLemburPending = Lembur::pendingPayroll()
+            ->where('user_id', $user->id)
+            ->whereMonth('tanggal', $bulan)
+            ->whereYear('tanggal', $tahun)
+            ->get()
+            ->sum(fn ($l) => $l->durasi_jam);
+
+        $uangLemburPending = $totalJamLemburPending * (float) ($salary->lembur_per_jam ?? 0);
 
         /* ==================================================
          * BONUS JOB (SELARAS PAYROLL)
@@ -257,6 +266,8 @@ class GajiController extends Controller
                 'jam_lembur'            => round($totalJamLembur, 1),
                 'uang_lembur'           => round($uangLembur),
                 'total_lembur'          => round($uangLembur),
+                'jam_lembur_pending'    => round($totalJamLemburPending, 1),
+                'uang_lembur_pending'   => round($uangLemburPending),
                 'bonus_job'             => round($totalBonusJob),
 
                 'salary_kotor'          => round($salaryKotor),

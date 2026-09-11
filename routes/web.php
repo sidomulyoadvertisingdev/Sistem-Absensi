@@ -179,6 +179,7 @@ Route::prefix('lokasi-absensi')->name('lokasi-absensi.')->group(function () {
         Route::get('/lembur/create', [LemburController::class, 'create'])->name('lembur.create');
         Route::post('/lembur', [LemburController::class, 'store'])->name('lembur.store');
         Route::post('/lembur/{id}/approve', [LemburController::class, 'approve'])->name('lembur.approve');
+        Route::post('/lembur/{id}/reject', [LemburController::class, 'reject'])->name('lembur.reject');
         Route::delete('/lembur/{id}', [LemburController::class, 'destroy'])->name('lembur.destroy');
 
         /* ================= GAJI ================= */

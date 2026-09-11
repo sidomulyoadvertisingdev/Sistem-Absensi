@@ -32,8 +32,10 @@
                         <th>Tanggal</th>
                         <th>Jam Mulai</th>
                         <th>Jam Selesai</th>
+                        <th>Bukti Foto</th>
                         <th>Keterangan</th>
-                        <th>Status</th>
+                        <th>Status Kerja</th>
+                        <th>Status Gaji</th>
                         <th width="15%">Aksi</th>
                     </tr>
                 </thead>
@@ -53,16 +55,38 @@
                         </td>
 
                         <td>
-                            {{ \Carbon\Carbon::parse($item->jam_selesai)->format('H:i') }}
+                            {{ $item->jam_selesai ? \Carbon\Carbon::parse($item->jam_selesai)->format('H:i') : '-' }}
+                        </td>
+
+                        <td class="text-center">
+                            <div class="d-flex justify-content-center" style="gap:6px;">
+                                @if($item->foto_mulai_url)
+                                    <a href="{{ $item->foto_mulai_url }}" target="_blank" title="Foto Mulai Lembur">
+                                        <img src="{{ $item->foto_mulai_url }}" alt="Foto Mulai" width="40" height="40" style="object-fit:cover;border-radius:6px;border:1px solid #dee2e6;">
+                                    </a>
+                                @else
+                                    <span class="text-muted" title="Belum ada foto mulai">-</span>
+                                @endif
+
+                                @if($item->foto_selesai_url)
+                                    <a href="{{ $item->foto_selesai_url }}" target="_blank" title="Foto Selesai Lembur">
+                                        <img src="{{ $item->foto_selesai_url }}" alt="Foto Selesai" width="40" height="40" style="object-fit:cover;border-radius:6px;border:1px solid #dee2e6;">
+                                    </a>
+                                @else
+                                    <span class="text-muted" title="Belum ada foto selesai">-</span>
+                                @endif
+                            </div>
                         </td>
 
                         <td>{{ $item->keterangan ?? '-' }}</td>
 
                         <td>
-                            @if($item->status === 'approved')
-                                <span class="badge badge-success">Disetujui</span>
-                            @elseif($item->status === 'pending')
-                                <span class="badge badge-warning">Menunggu</span>
+                            @if($item->status === 'finished')
+                                <span class="badge badge-success">Selesai</span>
+                            @elseif($item->status === 'requested')
+                                <span class="badge badge-info">Berjalan</span>
+                            @elseif($item->status === 'rejected')
+                                <span class="badge badge-danger">Ditolak</span>
                             @else
                                 <span class="badge badge-secondary">
                                     {{ ucfirst($item->status) }}
@@ -70,15 +94,39 @@
                             @endif
                         </td>
 
+                        <td>
+                            @if($item->approved_at)
+                                <span class="badge badge-success" title="Disetujui oleh {{ $item->approver?->name ?? '-' }} pada {{ $item->approved_at->format('d-m-Y H:i') }}">
+                                    <i class="fas fa-check-circle"></i> Sudah Dihitung
+                                </span>
+                            @elseif($item->status === 'rejected')
+                                <span class="badge badge-secondary">-</span>
+                            @else
+                                <span class="badge badge-warning">
+                                    <i class="fas fa-hourglass-half"></i> Menunggu Approval
+                                </span>
+                            @endif
+                        </td>
+
                         <td class="text-center">
-                            @if($item->status !== 'approved')
+                            @if(!$item->approved_at && $item->status !== 'rejected')
                                 <form action="{{ route('admin.lembur.approve', $item->id) }}"
                                       method="POST"
                                       class="d-inline"
-                                      onsubmit="return confirm('Setujui lembur ini?')">
+                                      onsubmit="return confirm('Setujui lembur ini untuk dihitung ke gaji?')">
                                     @csrf
-                                    <button class="btn btn-sm btn-success">
+                                    <button class="btn btn-sm btn-success" title="Setujui untuk gaji">
                                         <i class="fas fa-check"></i> Setujui
+                                    </button>
+                                </form>
+
+                                <form action="{{ route('admin.lembur.reject', $item->id) }}"
+                                      method="POST"
+                                      class="d-inline"
+                                      onsubmit="return confirm('Tolak pengajuan lembur ini?')">
+                                    @csrf
+                                    <button class="btn btn-sm btn-warning" title="Tolak">
+                                        <i class="fas fa-times"></i> Tolak
                                     </button>
                                 </form>
                             @endif
@@ -97,7 +145,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="text-center text-muted">
+                        <td colspan="10" class="text-center text-muted">
                             Belum ada data lembur
                         </td>
                     </tr>

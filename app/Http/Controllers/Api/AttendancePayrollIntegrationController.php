@@ -384,13 +384,12 @@ class AttendancePayrollIntegrationController extends Controller
         $gajiNormal = (float) ($earlyLeaveSalary['gaji_normal'] ?? 0);
         $gajiTambahan = (float) ($earlyLeaveSalary['gaji_tambahan'] ?? 0);
 
-        $totalJamLembur = Lembur::query()
+        $totalJamLembur = Lembur::approvedForPayroll()
             ->where('user_id', $user->id)
-            ->where('status', 'approved')
             ->whereMonth('tanggal', $bulan)
             ->whereYear('tanggal', $tahun)
             ->get()
-            ->sum(fn ($l) => Carbon::parse($l->jam_mulai)->diffInMinutes(Carbon::parse($l->jam_selesai)) / 60);
+            ->sum(fn ($l) => $l->durasi_jam);
         $uangLembur = (float) $totalJamLembur * (float) ($salary->lembur_per_jam ?? 0);
 
         $bonusJob = (float) DB::table('job_todo_user')

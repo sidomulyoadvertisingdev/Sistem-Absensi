@@ -101,15 +101,12 @@ class PayrollController extends Controller
         ================= LEMBUR
         */
 
-        $totalJamLembur = Lembur::where('user_id', $user->id)
-            ->where('status', 'approved')
+        $totalJamLembur = Lembur::approvedForPayroll()
+            ->where('user_id', $user->id)
             ->whereMonth('tanggal', $bulan)
             ->whereYear('tanggal', $tahun)
             ->get()
-            ->sum(fn ($l) =>
-                Carbon::parse($l->jam_mulai)
-                    ->diffInMinutes(Carbon::parse($l->jam_selesai)) / 60
-            );
+            ->sum(fn ($l) => $l->durasi_jam);
 
         $uangLembur = $totalJamLembur * (float) ($salary->lembur_per_jam ?? 0);
 

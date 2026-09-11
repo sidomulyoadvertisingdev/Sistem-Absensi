@@ -87,19 +87,11 @@ class AttendanceIntegrationReportController extends Controller
             $workingDays = max($estimatedWorkingDays, $present + $izin + $sakit + $alpha);
 
             $overtimeMinutes = (int) round(
-                Lembur::query()
+                Lembur::approvedForPayroll()
                     ->where('user_id', $user->id)
-                    ->where('status', 'approved')
                     ->whereBetween('tanggal', [$dateFrom->toDateString(), $dateTo->toDateString()])
                     ->get()
-                    ->sum(function ($lembur) {
-                        if (empty($lembur->jam_mulai) || empty($lembur->jam_selesai)) {
-                            return 0;
-                        }
-
-                        return Carbon::parse($lembur->jam_mulai)
-                            ->diffInMinutes(Carbon::parse($lembur->jam_selesai));
-                    })
+                    ->sum(fn ($lembur) => $lembur->durasi_jam * 60)
             );
 
             $payrollAmount = 0.0;
@@ -269,20 +261,12 @@ class AttendanceIntegrationReportController extends Controller
         $gajiNormal = (float) ($earlyLeaveSalary['gaji_normal'] ?? 0);
         $gajiTambahan = (float) ($earlyLeaveSalary['gaji_tambahan'] ?? 0);
 
-        $totalJamLembur = Lembur::query()
+        $totalJamLembur = Lembur::approvedForPayroll()
             ->where('user_id', $user->id)
-            ->where('status', 'approved')
             ->whereMonth('tanggal', $bulan)
             ->whereYear('tanggal', $tahun)
             ->get()
-            ->sum(function ($lembur) {
-                if (empty($lembur->jam_mulai) || empty($lembur->jam_selesai)) {
-                    return 0;
-                }
-
-                return Carbon::parse($lembur->jam_mulai)
-                    ->diffInMinutes(Carbon::parse($lembur->jam_selesai)) / 60;
-            });
+            ->sum(fn ($lembur) => $lembur->durasi_jam);
         $uangLembur = (float) $totalJamLembur * (float) ($salary->lembur_per_jam ?? 0);
 
         $totalBonusJob = (float) DB::table('job_todo_user')

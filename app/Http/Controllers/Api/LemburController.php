@@ -35,21 +35,26 @@ class LemburController extends Controller
      * - jam_mulai otomatis (jam request)
      * - jam_selesai NULL
      * - status = requested
+     * - foto_mulai WAJIB (bukti pengajuan lembur)
      */
     public function store(Request $request)
     {
         $request->validate([
             'tanggal'    => 'required|date',
             'keterangan' => 'nullable|string',
+            'foto_mulai' => 'required|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         $now = Carbon::now();
+
+        $fotoPath = $request->file('foto_mulai')->store('lembur', 'public');
 
         $lembur = Lembur::create([
             'user_id'     => $request->user()->id,
             'tanggal'     => $request->tanggal,
             'jam_mulai'   => $now->format('H:i'),
             'jam_selesai' => null,
+            'foto_mulai'  => $fotoPath,
             'keterangan'  => $request->keterangan,
             'status'      => 'requested',
         ]);
@@ -64,9 +69,12 @@ class LemburController extends Controller
      * ===============================
      * SELESAI LEMBUR (USER)
      * ===============================
-     * - hanya jika status = approved
+     * - bisa langsung diselesaikan TANPA menunggu approval admin
+     *   (approval admin hanya menentukan kapan nominal masuk ke gaji,
+     *   bukan syarat untuk menyelesaikan pekerjaan lembur)
      * - jam_selesai otomatis
      * - status = finished
+     * - foto_selesai WAJIB (bukti lembur selesai dikerjakan)
      */
     public function finish(Request $request, Lembur $lembur)
     {
@@ -77,16 +85,23 @@ class LemburController extends Controller
             ], 403);
         }
 
-        // hanya bisa selesai jika sudah di-approve admin
-        if ($lembur->status !== 'approved') {
+        // hanya bisa selesai jika masih berstatus requested (belum selesai/ditolak)
+        if ($lembur->status !== 'requested') {
             return response()->json([
-                'message' => 'Lembur belum disetujui admin'
+                'message' => 'Lembur ini sudah selesai atau tidak bisa diselesaikan lagi'
             ], 422);
         }
 
+        $request->validate([
+            'foto_selesai' => 'required|image|mimes:jpg,jpeg,png|max:2048',
+        ]);
+
+        $fotoPath = $request->file('foto_selesai')->store('lembur', 'public');
+
         $lembur->update([
-            'jam_selesai' => Carbon::now()->format('H:i'),
-            'status'      => 'finished',
+            'jam_selesai'  => Carbon::now()->format('H:i'),
+            'foto_selesai' => $fotoPath,
+            'status'       => 'finished',
         ]);
 
         return response()->json([
