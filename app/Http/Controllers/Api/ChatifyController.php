@@ -384,8 +384,24 @@ class ChatifyController extends Controller
             $ids = array_unique(array_map('intval', $request->input('to_user_ids')));
         } elseif ($request->filled('to_user_id')) {
             $ids = [(int) $request->input('to_user_id')];
+        } elseif ($request->input('room_type') === 'group' && $request->filled('room_id')) {
+            // Chat group: push ke SEMUA anggota grup kecuali pengirim.
+            $ids = DB::table('ch_group_user')
+                ->where('group_id', (int) $request->input('room_id'))
+                ->pluck('user_id')
+                ->all();
         } else {
             return response()->json(['message' => 'Missing recipient'], 422);
+        }
+
+        // Jangan push ke pengirim itu sendiri (sudah melihat pesannya).
+        $senderId = (int) ($request->user()?->id ?? 0);
+        if ($senderId > 0) {
+            $ids = array_values(array_diff($ids, [$senderId]));
+        }
+
+        if ($ids === []) {
+            return response()->json(['status' => 'ok', 'sent' => 0]);
         }
 
         $tokens = PushToken::query()

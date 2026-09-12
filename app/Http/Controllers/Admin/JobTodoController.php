@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Events\JobTodoCreated;
+use App\Services\PushNotifier;
 
 class JobTodoController extends Controller
 {
@@ -138,6 +139,29 @@ class JobTodoController extends Controller
                     'error'   => $e->getMessage(),
                 ]);
             }
+        }
+
+        /**
+         * =================================================
+         * 📲 PUSH NOTIFICATION (UNTUK APP YANG TERTUTUP)
+         * App yang tidak terkoneksi Reverb tidak menerima
+         * event realtime di atas, jadi kirim push Expo.
+         * Fire-and-forget: kegagalan tidak menggagalkan alur.
+         * =================================================
+         */
+        try {
+            app(PushNotifier::class)->send(
+                array_values(array_unique($targetUserIds)),
+                'Job baru dikirim',
+                $validated['broadcast'] ? $validated['title'] : 'Anda mendapat job langsung.',
+                [
+                    'screen' => '/chat?tab=notifikasi',
+                    'job_id' => $todo?->id,
+                    'category' => $validated['broadcast'] ? 'job_broadcast' : 'job_direct',
+                ],
+            );
+        } catch (\Throwable $e) {
+            Log::error('Push job todo gagal', ['error' => $e->getMessage()]);
         }
 
         return redirect()
